@@ -14,13 +14,13 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon, color = 'primary', variation, variationUp = true }: StatCardProps) {
   return (
-    <Card className="hover:scale-[1.02] hover:border-slate-700/60 duration-300">
+    <Card className="hover:scale-[1.02] hover:border-slate-350 duration-300">
       <CardBody className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
-          <span className="text-xs font-display font-medium text-slate-400 tracking-wide uppercase">
+          <span className="text-xs font-display font-medium text-slate-500 tracking-wide uppercase">
             {label}
           </span>
-          <span className="text-2xl font-display font-bold text-white tracking-tight">
+          <span className="text-2xl font-display font-bold text-slate-900 tracking-tight">
             {value}
           </span>
           {variation && (
@@ -43,8 +43,8 @@ export function StatCard({ label, value, icon, color = 'primary', variation, var
         </div>
         <div
           className={cn('p-3 rounded-xl flex items-center justify-center', {
-            'bg-primary-500/10 text-primary-400 border border-primary-500/20': color === 'primary',
-            'bg-accent-500/10 text-accent-400 border border-accent-500/20': color === 'accent',
+            'bg-primary-50 text-primary-600 border border-primary-100': color === 'primary',
+            'bg-accent-50 text-accent-600 border border-accent-100': color === 'accent',
             'bg-success/10 text-success border border-success/20': color === 'success',
             'bg-warning/10 text-warning border border-warning/20': color === 'warning',
             'bg-danger/10 text-danger border border-danger/20': color === 'danger',

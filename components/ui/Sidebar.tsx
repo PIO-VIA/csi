@@ -84,31 +84,31 @@ export function Sidebar() {
   };
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-primary-900 border-r border-primary-800 text-white select-none">
+    <div className="flex flex-col h-full bg-white border-r border-slate-200 text-slate-800 select-none">
       {/* Header */}
-      <div className="px-6 py-5 border-b border-primary-800 flex items-center justify-between">
+      <div className="px-6 py-5 border-b border-slate-200 flex items-center justify-between">
         <Link href="/" className="flex items-center gap-2.5">
-          <Shield className="h-7 w-7 text-accent-400 fill-accent-500/10" />
-          <span className="font-display font-bold text-lg tracking-tight bg-gradient-to-r from-white to-primary-100 bg-clip-text text-transparent">
+          <Shield className="h-7 w-7 text-primary-600 fill-primary-500/10" />
+          <span className="font-display font-bold text-lg tracking-tight text-slate-900">
             CSI Sécurité
           </span>
         </Link>
         <button
           onClick={() => setIsOpen(false)}
-          className="lg:hidden p-1.5 text-primary-300 hover:text-white rounded-lg hover:bg-primary-800 transition"
+          className="lg:hidden p-1.5 text-slate-500 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition"
         >
           <X size={20} />
         </button>
       </div>
 
       {/* User block */}
-      <div className="px-6 py-5 border-b border-primary-800 flex items-center gap-3">
+      <div className="px-6 py-5 border-b border-slate-200 flex items-center gap-3">
         <Avatar nom={user.nom} initials={user.avatarInitiales} size="md" />
         <div className="flex flex-col min-w-0">
-          <span className="font-display font-semibold text-sm truncate text-white">
+          <span className="font-display font-semibold text-sm truncate text-slate-800">
             {user.nom}
           </span>
-          <span className="text-[10px] font-body text-primary-300 truncate mb-1">
+          <span className="text-[10px] font-body text-slate-500 truncate mb-1">
             {user.email}
           </span>
           <RoleBadge role={user.role} className="w-fit scale-90 -ml-1" />
@@ -117,7 +117,7 @@ export function Sidebar() {
 
       {/* Navigation */}
       <nav className="flex-1 px-4 py-6 overflow-y-auto space-y-1">
-        <div className="text-[10px] font-display font-semibold text-primary-300 tracking-wider uppercase px-3 mb-2">
+        <div className="text-[10px] font-display font-semibold text-slate-400 tracking-wider uppercase px-3 mb-2">
           Navigation
         </div>
         {navItems.map((item) => {
@@ -131,11 +131,11 @@ export function Sidebar() {
               className={cn(
                 'flex items-center gap-3.5 px-3 py-3 rounded-xl font-display text-sm font-medium transition-all duration-200 group relative',
                 isActive
-                  ? 'bg-primary-700 text-white border-l-4 border-accent-400 font-semibold'
-                  : 'text-primary-200 hover:bg-primary-800 hover:text-white'
+                  ? 'bg-primary-50 text-primary-600 border-l-4 border-primary-600 font-semibold'
+                  : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
               )}
             >
-              <span className={cn('transition-transform duration-200 group-hover:scale-110', isActive ? 'text-accent-400' : 'text-primary-300 group-hover:text-white')}>
+              <span className={cn('transition-transform duration-200 group-hover:scale-110', isActive ? 'text-primary-600' : 'text-slate-400 group-hover:text-slate-650')}>
                 {item.icon}
               </span>
               <span>{item.label}</span>
@@ -145,11 +145,11 @@ export function Sidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="p-4 border-t border-primary-800 bg-primary-950/45 space-y-1">
+      <div className="p-4 border-t border-slate-200 bg-slate-50 space-y-1">
         <Link
           href="/settings"
           onClick={handleLinkClick}
-          className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-display font-medium text-primary-300 hover:bg-primary-800 hover:text-white transition"
+          className="flex items-center gap-3 px-3.5 py-2.5 rounded-lg text-xs font-display font-medium text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition"
         >
           <Settings size={16} />
           <span>Paramètres</span>
@@ -171,7 +171,7 @@ export function Sidebar() {
       <div className="lg:hidden fixed top-3 left-4 z-40">
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="p-2 bg-slate-900 border border-slate-800 text-slate-100 rounded-xl hover:bg-slate-800 transition focus:outline-none"
+          className="p-2 bg-white border border-slate-200 text-slate-800 rounded-xl hover:bg-slate-50 transition focus:outline-none"
         >
           <Menu size={20} />
         </button>

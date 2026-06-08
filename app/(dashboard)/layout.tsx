@@ -43,7 +43,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-100 flex font-body">
+    <div className="min-h-screen bg-slate-50 text-slate-900 flex font-body">
       {/* Responsive Sidebar */}
       <Sidebar />
 
@@ -53,7 +53,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <TopBar />
 
         {/* Dynamic Main Page Content */}
-        <main className="flex-1 p-4 sm:p-6 bg-slate-900 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-6 bg-slate-50 overflow-y-auto">
           {children}
         </main>
       </div>

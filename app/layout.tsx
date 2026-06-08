@@ -36,7 +36,7 @@ export default function RootLayout({
       lang="fr"
       className={`${jakartaSans.variable} ${dmSans.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full bg-slate-900 text-slate-100 flex flex-col font-body">
+      <body className="min-h-full bg-white text-slate-900 flex flex-col font-body">
         <AuthProvider>
           {children}
         </AuthProvider>

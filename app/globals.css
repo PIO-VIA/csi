@@ -40,30 +40,29 @@
 
 body {
   font-family: var(--font-body), sans-serif;
-  background-color: var(--color-slate-900);
-  color: var(--color-slate-100);
+  background-color: #ffffff;
+  color: var(--color-slate-900);
   margin: 0;
   padding: 0;
 }
 
 /* Design System Utilities */
 .glass-card {
-  background: rgba(30, 41, 59, 0.45);
+  background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .bg-mesh {
   background:
-    radial-gradient(at 10% 20%, rgba(30, 64, 175, 0.25) 0px, transparent 50%),
-    radial-gradient(at 90% 80%, rgba(8, 145, 178, 0.25) 0px, transparent 50%),
-    radial-gradient(at 50% 50%, rgba(23, 37, 84, 0.45) 0px, transparent 70%);
-  background-color: #0f172a;
+    radial-gradient(at 10% 20%, rgba(59, 130, 246, 0.04) 0px, transparent 50%),
+    radial-gradient(at 90% 80%, rgba(8, 145, 178, 0.04) 0px, transparent 50%);
+  background-color: #ffffff;
 }
 
 .btn-primary-shadow {
-  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.35);
+  box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
 }
 
 /* Custom scrollbar */
@@ -72,14 +71,14 @@ body {
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #0f172a;
+  background: #ffffff;
 }
 ::-webkit-scrollbar-thumb {
-  background: #1e293b;
+  background: #cbd5e1;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #94a3b8;
 }
 
 /* Floating animation for cards */

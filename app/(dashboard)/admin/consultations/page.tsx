@@ -36,7 +36,7 @@ export default function ConsultationsAdminPage() {
     const matchesSearch =
       c.assure.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.generaliste.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      c.motif.toLowerCase().includes(searchTerm.toLowerCase());
+      (c.motif || '').toLowerCase().includes(searchTerm.toLowerCase());
 
     const matchesCategory =
       filterCategory === 'ALL' || c.generaliste.type === filterCategory;
@@ -142,8 +142,8 @@ export default function ConsultationsAdminPage() {
                         {c.generaliste.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs max-w-xs truncate" title={c.motif}>
-                      {c.motif}
+                    <TableCell className="text-xs max-w-xs truncate" title={c.motif || ''}>
+                      {c.motif || 'Non renseigné'}
                     </TableCell>
                     <TableCell>
                       {c.feuilleMaladie ? (

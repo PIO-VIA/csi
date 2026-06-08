@@ -103,20 +103,15 @@ export default function LandingPage() {
                 const nextLang = i18n.language?.startsWith('fr') ? 'en' : 'fr';
                 i18n.changeLanguage(nextLang);
               }}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-[10px] font-display font-extrabold uppercase tracking-wider text-slate-300 hover:text-white hover:border-slate-700 transition flex items-center gap-1.5 cursor-pointer mr-1"
+              className="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-[10px] font-display font-extrabold uppercase tracking-wider text-slate-350 hover:text-white hover:border-slate-700 transition flex items-center gap-1.5 cursor-pointer mr-1"
             >
               <Globe size={11} className="text-slate-400" />
               <span>{i18n.language?.startsWith('fr') ? 'FR' : 'EN'}</span>
             </button>
 
             <Link href="/login">
-              <Button variant="outline" size="sm">
-                {t('nav.login')}
-              </Button>
-            </Link>
-            <Link href="/register">
               <Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />}>
-                {t('nav.register')}
+                {t('nav.login')}
               </Button>
             </Link>
           </div>
@@ -163,13 +158,8 @@ export default function LandingPage() {
             <div className="h-px bg-slate-800" />
             <div className="flex flex-col gap-3">
               <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="w-full">
-                <Button variant="outline" className="w-full">
-                  Connexion
-                </Button>
-              </Link>
-              <Link href="/register" onClick={() => setMobileMenuOpen(false)} className="w-full">
                 <Button variant="primary" className="w-full">
-                  S&apos;inscrire
+                  Connexion
                 </Button>
               </Link>
             </div>
@@ -214,9 +204,9 @@ export default function LandingPage() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-2">
-              <Link href="/register">
+              <Link href="/login">
                 <Button variant="primary" size="lg" className="w-full sm:w-auto" rightIcon={<ArrowRight size={16} />}>
-                  {t('nav.register')}
+                  {t('nav.login')}
                 </Button>
               </Link>
               <a href="#features">

@@ -37,7 +37,7 @@ export default function MedecinConsultationsPage() {
 
   const filtered = consultations.filter((c) =>
     c.assure.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.motif.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.motif || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
@@ -115,8 +115,8 @@ export default function MedecinConsultationsPage() {
                         <span>{c.assure.nom}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs max-w-sm truncate" title={c.motif}>
-                      {c.motif}
+                    <TableCell className="text-xs max-w-sm truncate" title={c.motif || ''}>
+                      {c.motif || 'Non renseigné'}
                     </TableCell>
                     <TableCell>
                       {c.prescriptions && c.prescriptions.length > 0 ? (

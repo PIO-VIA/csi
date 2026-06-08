@@ -13,7 +13,7 @@ export function Card({ className, children, variant = 'glass', ...props }: CardP
         'rounded-2xl border transition-all duration-300 overflow-hidden',
         {
           'glass-card shadow-xl': variant === 'glass',
-          'bg-slate-900 border-slate-800 shadow-md': variant === 'solid',
+          'bg-white border-slate-200/80 shadow-md': variant === 'solid',
         },
         className
       )}
@@ -26,7 +26,7 @@ export function Card({ className, children, variant = 'glass', ...props }: CardP
 
 export function CardHeader({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('px-6 py-5 border-b border-slate-800/80', className)} {...props}>
+    <div className={cn('px-6 py-5 border-b border-slate-200/60', className)} {...props}>
       {children}
     </div>
   );
@@ -42,7 +42,7 @@ export function CardBody({ className, children, ...props }: React.HTMLAttributes
 
 export function CardFooter({ className, children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div className={cn('px-6 py-4 border-t border-slate-800/80 bg-slate-900/40', className)} {...props}>
+    <div className={cn('px-6 py-4 border-t border-slate-200/60 bg-slate-50', className)} {...props}>
       {children}
     </div>
   );
