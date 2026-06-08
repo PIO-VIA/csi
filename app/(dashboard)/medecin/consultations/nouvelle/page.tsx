@@ -28,8 +28,8 @@ import Loader from '@/components/ui/Loader';
 const consultationFormSchema = z.object({
   assureId: z.string().min(1, { message: 'Veuillez sélectionner un patient' }),
   motif: z.string().min(5, { message: 'Veuillez saisir un motif de consultation détaillé' }),
-  creerFeuille: z.boolean().default(false),
-  montantSoin: z.preprocess((val) => Number(val), z.number().min(0).optional()),
+  creerFeuille: z.boolean(),
+  montantSoin: z.coerce.number().min(0),
 });
 
 type ConsultationFormValues = z.infer<typeof consultationFormSchema>;

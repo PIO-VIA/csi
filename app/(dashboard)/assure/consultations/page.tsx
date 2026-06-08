@@ -35,7 +35,7 @@ export default function AssureConsultationsPage() {
 
   const filtered = consultations.filter((c) =>
     c.generaliste.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    c.motif.toLowerCase().includes(searchTerm.toLowerCase())
+    (c.motif || '').toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
@@ -106,8 +106,8 @@ export default function AssureConsultationsPage() {
                         {c.generaliste.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs max-w-sm truncate" title={c.motif}>
-                      {c.motif}
+                    <TableCell className="text-xs max-w-sm truncate" title={c.motif || ''}>
+                      {c.motif || 'Non renseigné'}
                     </TableCell>
                     <TableCell>
                       {c.feuilleMaladie ? (
