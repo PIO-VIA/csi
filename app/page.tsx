@@ -21,14 +21,17 @@ import {
   Mail,
   Phone,
   User,
-  ExternalLink
+  ExternalLink,
+  Globe
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Button from '@/components/ui/Button';
 import Card, { CardBody } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { formatFCFA } from '@/lib/utils';
 
 export default function LandingPage() {
+  const { t, i18n } = useTranslation();
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -82,10 +85,10 @@ export default function LandingPage() {
           {/* Desktop Nav Links */}
           <nav className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm font-medium text-slate-300 hover:text-white transition">
-              Fonctionnalités
+              {i18n.language?.startsWith('en') ? 'Features' : 'Fonctionnalités'}
             </a>
             <a href="#acteurs" className="text-sm font-medium text-slate-300 hover:text-white transition">
-              Acteurs
+              {i18n.language?.startsWith('en') ? 'Actors' : 'Acteurs'}
             </a>
             <a href="#contact" className="text-sm font-medium text-slate-300 hover:text-white transition">
               Contact
@@ -94,14 +97,26 @@ export default function LandingPage() {
 
           {/* Desktop Auth Buttons */}
           <div className="hidden md:flex items-center gap-4">
+            {/* Language Switcher Toggle */}
+            <button
+              onClick={() => {
+                const nextLang = i18n.language?.startsWith('fr') ? 'en' : 'fr';
+                i18n.changeLanguage(nextLang);
+              }}
+              className="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-[10px] font-display font-extrabold uppercase tracking-wider text-slate-300 hover:text-white hover:border-slate-700 transition flex items-center gap-1.5 cursor-pointer mr-1"
+            >
+              <Globe size={11} className="text-slate-400" />
+              <span>{i18n.language?.startsWith('fr') ? 'FR' : 'EN'}</span>
+            </button>
+
             <Link href="/login">
               <Button variant="outline" size="sm">
-                Connexion
+                {t('nav.login')}
               </Button>
             </Link>
             <Link href="/register">
               <Button variant="primary" size="sm" rightIcon={<ArrowRight size={14} />}>
-                S&apos;inscrire
+                {t('nav.register')}
               </Button>
             </Link>
           </div>
@@ -174,29 +189,39 @@ export default function LandingPage() {
           >
             <div>
               <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-display font-semibold bg-primary-500/10 text-accent-400 border border-primary-500/20 animate-pulse">
-                🏥 Plateforme Nationale de Santé
+                🏥 {t('landing.subtitle')}
               </span>
             </div>
             
             <h1 className="font-display font-extrabold text-4xl sm:text-5xl md:text-6xl text-white tracking-tight leading-tight">
-              Votre santé, <br />
-              <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">protégée</span> et{' '}
-              <span className="bg-gradient-to-r from-cyan-400 to-accent-400 bg-clip-text text-transparent">remboursée</span>
+              {i18n.language?.startsWith('en') ? (
+                <>
+                  Your health, <br />
+                  <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">protected</span> and{' '}
+                  <span className="bg-gradient-to-r from-cyan-400 to-accent-400 bg-clip-text text-transparent">reimbursed</span>
+                </>
+              ) : (
+                <>
+                  Votre santé, <br />
+                  <span className="bg-gradient-to-r from-blue-400 to-cyan-400 bg-clip-text text-transparent">protégée</span> et{' '}
+                  <span className="bg-gradient-to-r from-cyan-400 to-accent-400 bg-clip-text text-transparent">remboursée</span>
+                </>
+              )}
             </h1>
 
             <p className="font-body text-base sm:text-lg text-slate-300 leading-relaxed max-w-xl">
-              Gérez vos consultations, prescriptions et remboursements en toute simplicité. Une plateforme sécurisée conçue pour les assurés et les professionnels de santé.
+              {t('landing.tagline')}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 mt-2">
               <Link href="/register">
                 <Button variant="primary" size="lg" className="w-full sm:w-auto" rightIcon={<ArrowRight size={16} />}>
-                  Créer un compte
+                  {t('nav.register')}
                 </Button>
               </Link>
               <a href="#features">
                 <Button variant="ghost" size="lg" className="w-full sm:w-auto text-slate-300">
-                  En savoir plus ↓
+                  {i18n.language?.startsWith('en') ? 'Learn more ↓' : 'En savoir plus ↓'}
                 </Button>
               </a>
             </div>
@@ -205,11 +230,11 @@ export default function LandingPage() {
             <div className="grid grid-cols-3 gap-6 pt-10 border-t border-slate-800/80 mt-4 max-w-lg">
               <div className="flex flex-col">
                 <span className="font-display font-extrabold text-2xl md:text-3xl text-white">12K+</span>
-                <span className="text-xs font-body text-slate-400">Assurés Actifs</span>
+                <span className="text-xs font-body text-slate-400">{t('landing.metrics.assures')}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-display font-extrabold text-2xl md:text-3xl text-white">850</span>
-                <span className="text-xs font-body text-slate-400">Médecins Agréés</span>
+                <span className="text-xs font-body text-slate-400">{i18n.language?.startsWith('en') ? 'Approved Doctors' : 'Médecins Agréés'}</span>
               </div>
               <div className="flex flex-col">
                 <span className="font-display font-extrabold text-2xl md:text-3xl text-white">98%</span>

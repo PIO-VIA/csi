@@ -5,12 +5,14 @@ import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import Avatar from './Avatar';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Bell, LogOut, Settings, User } from 'lucide-react';
+import { Bell, LogOut, Settings, User, Globe } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useTranslation } from 'react-i18next';
 
 export function TopBar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const { t, i18n } = useTranslation();
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'Nouveau remboursement validé (15 000 FCFA)', time: 'Il y a 10 min', read: false },
     { id: 2, text: 'Dr. Etoa a enregistré une nouvelle consultation', time: 'Il y a 1h', read: false },
@@ -21,30 +23,31 @@ export function TopBar() {
 
   // Resolve page title based on active path
   const getPageTitle = () => {
-    if (pathname === '/admin') return 'Tableau de Bord';
-    if (pathname === '/admin/assures') return 'Gestion des Assurés';
-    if (pathname.startsWith('/admin/assures/')) return 'Détails de l\'Assuré';
-    if (pathname === '/admin/medecins') return 'Gestion des Médecins';
-    if (pathname.startsWith('/admin/medecins/')) return 'Détails du Médecin';
-    if (pathname === '/admin/consultations') return 'Suivi des Consultations';
-    if (pathname === '/admin/feuilles') return 'Feuilles de Maladie';
-    if (pathname === '/admin/remboursements') return 'Remboursements et Paiements';
+    const isEn = i18n.language?.startsWith('en');
+    if (pathname === '/admin') return isEn ? 'Admin Dashboard' : 'Tableau de Bord';
+    if (pathname === '/admin/assures') return isEn ? 'Manage Insured Citizens' : 'Gestion des Assurés';
+    if (pathname.startsWith('/admin/assures/')) return isEn ? 'Insured Details' : 'Détails de l\'Assuré';
+    if (pathname === '/admin/medecins') return isEn ? 'Manage Medical Practitioners' : 'Gestion des Médecins';
+    if (pathname.startsWith('/admin/medecins/')) return isEn ? 'Practitioner Details' : 'Détails du Médecin';
+    if (pathname === '/admin/consultations') return isEn ? 'Consultations History' : 'Suivi des Consultations';
+    if (pathname === '/admin/feuilles') return isEn ? 'Digital Health Sheets' : 'Feuilles de Maladie';
+    if (pathname === '/admin/remboursements') return isEn ? 'Reimbursements and Payments' : 'Remboursements et Paiements';
 
-    if (pathname === '/assure') return 'Mon Espace Santé';
-    if (pathname === '/assure/consultations') return 'Mes Consultations';
-    if (pathname === '/assure/prescriptions') return 'Mes Prescriptions';
-    if (pathname === '/assure/feuilles') return 'Mes Feuilles de Maladie';
-    if (pathname === '/assure/remboursements') return 'Mes Remboursements';
-    if (pathname === '/assure/medecin') return 'Mon Médecin Traitant';
+    if (pathname === '/assure') return isEn ? 'My Health Portal' : 'Mon Espace Santé';
+    if (pathname === '/assure/consultations') return isEn ? 'My Consultations' : 'Mes Consultations';
+    if (pathname === '/assure/prescriptions') return isEn ? 'My Prescriptions' : 'Mes Prescriptions';
+    if (pathname === '/assure/feuilles') return isEn ? 'My Health Sheets' : 'Mes Feuilles de Maladie';
+    if (pathname === '/assure/remboursements') return isEn ? 'My Reimbursements' : 'Mes Remboursements';
+    if (pathname === '/assure/medecin') return isEn ? 'My Family Physician' : 'Mon Médecin Traitant';
 
-    if (pathname === '/medecin') return 'Tableau de Bord Médical';
-    if (pathname === '/medecin/patients') return 'Gestion de mes Patients';
-    if (pathname === '/medecin/consultations') return 'Historique des Consultations';
-    if (pathname === '/medecin/consultations/nouvelle') return 'Nouvelle Consultation';
-    if (pathname === '/medecin/prescriptions') return 'Prescriptions & Ordonnances';
-    if (pathname === '/medecin/feuilles') return 'Feuilles de Maladie Remplies';
+    if (pathname === '/medecin') return isEn ? 'Medical Dashboard' : 'Tableau de Bord Médical';
+    if (pathname === '/medecin/patients') return isEn ? 'Patient Roster' : 'Gestion de mes Patients';
+    if (pathname === '/medecin/consultations') return isEn ? 'Consultations Archive' : 'Historique des Consultations';
+    if (pathname === '/medecin/consultations/nouvelle') return isEn ? 'New Consultation' : 'Nouvelle Consultation';
+    if (pathname === '/medecin/prescriptions') return isEn ? 'Issued Prescriptions' : 'Prescriptions & Ordonnances';
+    if (pathname === '/medecin/feuilles') return isEn ? 'Filled Health Sheets' : 'Feuilles de Maladie Remplies';
 
-    return 'Espace Personnel';
+    return isEn ? 'Personal Space' : 'Espace Personnel';
   };
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -64,6 +67,18 @@ export function TopBar() {
 
       {/* Right Actions */}
       <div className="flex items-center gap-4">
+        {/* Language Switcher Toggle */}
+        <button
+          onClick={() => {
+            const nextLang = i18n.language?.startsWith('fr') ? 'en' : 'fr';
+            i18n.changeLanguage(nextLang);
+          }}
+          className="px-2.5 py-1.5 rounded-lg border border-slate-800 bg-slate-950 text-[10px] font-display font-extrabold uppercase tracking-wider text-slate-300 hover:text-white hover:border-slate-700 transition flex items-center gap-1.5 cursor-pointer"
+        >
+          <Globe size={11} className="text-slate-400" />
+          <span>{i18n.language?.startsWith('fr') ? 'FR' : 'EN'}</span>
+        </button>
+
         {/* Notifications Dropdown */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>

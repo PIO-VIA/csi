@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "My Space",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "settings": "Settings"
+  },
+  "landing": {
+    "title": "CSI Social Security",
+    "subtitle": "National Health Portal of the Social Security Fund",
+    "tagline": "Manage your consultations, prescriptions, and healthcare reimbursements simply and securely.",
+    "cta_start": "Access my space",
+    "cta_features": "Discover the platform",
+    "features_title": "Modern & simplified management",
+    "features_subtitle": "CSI digitalizes the healthcare path for all Cameroonian insured citizens",
+    "features": {
+      "prescriptions": {
+        "title": "Online Prescriptions",
+        "desc": "Receive digital and secure prescriptions, eliminating loss risks and making pharmacy pickups easier."
+      },
+      "reimbursements": {
+        "title": "Fast Reimbursements",
+        "desc": "Track your health sheets treatment in real time with reimbursement transfers paid directly to your account."
+      },
+      "coordination": {
+        "title": "Coordinated Care Path",
+        "desc": "Declare your family doctor and benefit from optimal coverage (100% at the GP, 80% at specialists)."
+      }
+    },
+    "metrics": {
+      "assures": "Active Insureds",
+      "consultations": "Digital Consultations",
+      "reimbursements": "Reimbursed"
+    }
+  },
+  "auth": {
+    "login_title": "Login to your space",
+    "login_subtitle": "Access your secure Social Security account",
+    "email_label": "Email Address",
+    "email_placeholder": "Enter your work or personal email address",
+    "role_label": "Space Type",
+    "submit_login": "Sign In",
+    "no_account": "Don't have an account?",
+    "register_now": "Register now",
+    "register_title": "Create your insured or practitioner account",
+    "register_subtitle": "Join the national digital health network",
+    "step_account": "Credentials",
+    "step_profile": "Profile Info",
+    "step_confirm": "Validation",
+    "full_name": "Full Name",
+    "phone": "Phone Number",
+    "gender": "Gender",
+    "gender_m": "Male",
+    "gender_f": "Female",
+    "birth_date": "Birth Date",
+    "blood_group": "Blood Group",
+    "profession": "Profession",
+    "matrimonial": "Matrimonial Status",
+    "single": "Single",
+    "married": "Married",
+    "divorced": "Divorced",
+    "widowed": "Widowed",
+    "specialist_domain": "Specialisation Domain",
+    "submit_register": "Complete registration",
+    "back": "Back",
+    "next": "Next"
+  },
+  "dashboard": {
+    "welcome": "Hello",
+    "welcome_admin": "CSI Admin Management Space",
+    "welcome_assure": "Insured Personal Space",
+    "welcome_medecin": "Practitioner Dashboard",
+    "welcome_desc": "Follow consultations and health refunds in real time.",
+    "role": {
+      "admin": "Administrator",
+      "assure": "Insured",
+      "generaliste": "GP Practitioner",
+      "specialiste": "Specialist"
+    },
+    "stats": {
+      "patients": "Followed Patients",
+      "consultations": "Consultations",
+      "prescriptions": "Prescriptions",
+      "reimbursements": "Reimbursements"
+    }
+  },
+  "common": {
+    "date": "Date",
+    "patient": "Patient",
+    "doctor": "Doctor",
+    "type": "Type",
+    "details": "Details",
+    "status": "Status",
+    "amount": "Amount",
+    "actions": "Actions",
+    "none": "None",
+    "save": "Save",
+    "cancel": "Cancel",
+    "close": "Close",
+    "search": "Search..."
+  }
+}

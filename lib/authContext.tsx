@@ -4,6 +4,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserRole } from '@/types';
 import { initLocalStorage } from './api';
+import '@/lib/i18n';
 
 interface AuthContextType {
   user: User | null;

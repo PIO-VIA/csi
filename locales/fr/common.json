@@ -1,0 +1,104 @@
+{
+  "nav": {
+    "home": "Accueil",
+    "dashboard": "Mon Espace",
+    "login": "Se connecter",
+    "register": "S'inscrire",
+    "logout": "Déconnexion",
+    "settings": "Paramètres"
+  },
+  "landing": {
+    "title": "CSI Sécurité Sociale",
+    "subtitle": "Portail National de Santé de la Caisse de Sécurité Sociale",
+    "tagline": "Gérez vos consultations, ordonnances et remboursements de soins en toute simplicité et sécurité.",
+    "cta_start": "Accéder à mon espace",
+    "cta_features": "Découvrir la plateforme",
+    "features_title": "Une gestion moderne & simplifiée",
+    "features_subtitle": "La CSI digitalise le parcours de soins pour tous les assurés camerounais",
+    "features": {
+      "prescriptions": {
+        "title": "Prescriptions en ligne",
+        "desc": "Recevez des ordonnances numérisées et sécurisées, éliminant les risques de perte et facilitant le retrait en pharmacie."
+      },
+      "reimbursements": {
+        "title": "Remboursements rapides",
+        "desc": "Suivez le traitement de vos feuilles de maladie en temps réel avec des virements de remboursement directement sur votre compte."
+      },
+      "coordination": {
+        "title": "Parcours de soins",
+        "desc": "Déclarez votre médecin traitant et bénéficiez d'une prise en charge optimale (100% chez le généraliste, 80% chez le spécialiste)."
+      }
+    },
+    "metrics": {
+      "assures": "Assurés Actifs",
+      "consultations": "Consultations Digitales",
+      "reimbursements": "Remboursés"
+    }
+  },
+  "auth": {
+    "login_title": "Connexion à votre espace",
+    "login_subtitle": "Accédez à votre compte sécurisé de la Sécurité Sociale",
+    "email_label": "Adresse e-mail",
+    "email_placeholder": "Entrez votre adresse email professionnelle ou personnelle",
+    "role_label": "Type d'espace",
+    "submit_login": "Se connecter",
+    "no_account": "Vous n'avez pas de compte ?",
+    "register_now": "S'inscrire maintenant",
+    "register_title": "Créer votre compte assuré ou praticien",
+    "register_subtitle": "Rejoignez le réseau national de santé numérique",
+    "step_account": "Identifiants",
+    "step_profile": "Informations",
+    "step_confirm": "Validation",
+    "full_name": "Nom complet",
+    "phone": "Numéro de téléphone",
+    "gender": "Sexe",
+    "gender_m": "Homme",
+    "gender_f": "Femme",
+    "birth_date": "Date de naissance",
+    "blood_group": "Groupe sanguin",
+    "profession": "Profession",
+    "matrimonial": "Statut matrimonial",
+    "single": "Célibataire",
+    "married": "Marié(e)",
+    "divorced": "Divorcé(e)",
+    "widowed": "Veuf/Veuve",
+    "specialist_domain": "Domaine de spécialisation",
+    "submit_register": "Finaliser l'inscription",
+    "back": "Retour",
+    "next": "Suivant"
+  },
+  "dashboard": {
+    "welcome": "Bonjour",
+    "welcome_admin": "Espace Administration CSI",
+    "welcome_assure": "Espace Personnel Assuré",
+    "welcome_medecin": "Tableau de Bord Praticien",
+    "welcome_desc": "Suivez les consultations et les remboursements de soins en temps réel.",
+    "role": {
+      "admin": "Administrateur",
+      "assure": "Assuré",
+      "generaliste": "Généraliste",
+      "specialiste": "Spécialiste"
+    },
+    "stats": {
+      "patients": "Patients Suivis",
+      "consultations": "Consultations",
+      "prescriptions": "Prescriptions",
+      "reimbursements": "Remboursements"
+    }
+  },
+  "common": {
+    "date": "Date",
+    "patient": "Patient",
+    "doctor": "Médecin",
+    "type": "Type",
+    "details": "Détails",
+    "status": "Statut",
+    "amount": "Montant",
+    "actions": "Actions",
+    "none": "Aucun",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "close": "Fermer",
+    "search": "Rechercher..."
+  }
+}

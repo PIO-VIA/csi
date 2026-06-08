@@ -29,7 +29,7 @@ const registerSchema = z.object({
   email: z.string().email({ message: 'Adresse email invalide' }),
   dateNaissance: z.string().min(1, { message: 'La date de naissance est requise' }),
   sexe: z.string().min(1, { message: 'Veuillez sélectionner le sexe' }),
-  phoneIndicator: z.string().default('+237'),
+  phoneIndicator: z.string(),
   phone: z.string().min(6, { message: 'Numéro de téléphone invalide' }),
   password: z.string().min(6, { message: 'Le mot de passe doit faire au moins 6 caractères' }),
   confirmPassword: z.string().min(6, { message: 'La confirmation est requise' }),
