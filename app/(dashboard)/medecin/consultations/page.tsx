@@ -107,7 +107,7 @@ export default function MedecinConsultationsPage() {
                         {formatDate(c.date)}
                       </span>
                     </TableCell>
-                    <TableCell className="font-display font-medium text-slate-200 text-xs">
+                    <TableCell className="font-display font-medium text-slate-800 text-xs">
                       <div className="flex items-center gap-1.5">
                         <span className="p-1 bg-slate-850 rounded text-slate-400">
                           <User size={12} />

@@ -10,7 +10,7 @@ import {
   RemboursementsService,
   SpCialistesService,
 } from '@/lib2';
-import type { AssureRequestDTO } from '@/lib2';
+import type { AssureRequestDTO, MedecinRequestDTO } from '@/lib2';
 import {
   asArray,
   buildConsultation,
@@ -33,6 +33,10 @@ import type {
 type ApiPayload<T> = { data: T };
 
 const toList = <T>(value: unknown): T[] => asArray<T>(value);
+
+// ============================================================
+// HELPERS INTERNES
+// ============================================================
 
 async function loadMedecins(): Promise<Medecin[]> {
   const raw = await MDecinsService.getAll();
@@ -145,10 +149,17 @@ function randomPassword(length = 12): string {
   return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
 }
 
+// ============================================================
+// UTILITAIRES PUBLICS
+// ============================================================
+
 export function getApiErrorMessage(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.body && typeof error.body === 'object' && 'error' in error.body) {
       return String((error.body as { error: string }).error);
+    }
+    if (error.body && typeof error.body === 'object' && 'message' in error.body) {
+      return String((error.body as { message: string }).message);
     }
     if (typeof error.body === 'string' && error.body.trim()) {
       return error.body;
@@ -162,9 +173,9 @@ export function getApiErrorMessage(error: unknown): string {
 /** @deprecated Conservé pour compatibilité — les données viennent du backend. */
 export const initLocalStorage = () => {};
 
-// ----------------------------------------------------
+// ============================================================
 // ASSURÉS
-// ----------------------------------------------------
+// ============================================================
 
 export const getAssures = async (): Promise<ApiPayload<Assure[]>> => ({
   data: await loadAssures(),
@@ -226,6 +237,13 @@ export const updateAssure = async (
   return { data: mapAssure(raw as Record<string, unknown>, medecins) };
 };
 
+/**
+ * Supprime un assuré via le backend (DELETE /api/assures/{id}).
+ */
+export const deleteAssure = async (id: number): Promise<void> => {
+  await AssurSService.delete(id);
+};
+
 export const choisirMedecin = async (
   assureId: number,
   genId: number,
@@ -237,13 +255,18 @@ export const choisirMedecin = async (
 
 export const choisirMedecinTraitant = choisirMedecin;
 
-// ----------------------------------------------------
+// ============================================================
 // MÉDECINS
-// ----------------------------------------------------
+// ============================================================
 
 export const getMedecins = async (): Promise<ApiPayload<Medecin[]>> => ({
   data: await loadMedecins(),
 });
+
+export const getMedecinById = async (id: number): Promise<ApiPayload<Medecin>> => {
+  const raw = await MDecinsService.getById3(id);
+  return { data: mapMedecin(raw as Record<string, unknown>) };
+};
 
 export const getGeneralistes = async (): Promise<ApiPayload<Medecin[]>> => {
   const raw = await GNRalistesService.getAll4();
@@ -255,17 +278,38 @@ export const getSpecialistes = async (): Promise<ApiPayload<Medecin[]>> => {
   return { data: toList<Record<string, unknown>>(raw).map(mapMedecin) };
 };
 
+export const getGeneralisteById = async (id: number): Promise<ApiPayload<Medecin>> => {
+  const raw = await GNRalistesService.getById4(id);
+  return { data: mapMedecin(raw as Record<string, unknown>) };
+};
+
+/**
+ * Liste les assurés d'un généraliste donné
+ * (endpoint GET /api/generalistes/{id}/assures).
+ * Utilisé par le dashboard médecin pour charger uniquement ses propres patients.
+ */
+export const getAssuresByGeneraliste = async (
+  generalisteId: number,
+): Promise<ApiPayload<Assure[]>> => {
+  const medecins = await loadMedecins();
+  const raw = await GNRalistesService.getAssuresByGeneraliste(generalisteId);
+  return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
+};
+
 export const createMedecin = async (
   data: CreateMedecinInput,
 ): Promise<ApiPayload<Medecin>> => {
   try {
-    const raw = await MDecinsService.enregistrer({
+    const payload: MedecinRequestDTO = {
       nom: data.nom,
       email: data.email,
       numTelephone: data.numTelephone,
       type: data.type,
       domaineSpecialisation: data.domaineSpecialisation,
-    });
+      motDePasse: randomPassword(),
+    };
+
+    const raw = await MDecinsService.enregistrer(payload);
     return { data: mapMedecin(raw as Record<string, unknown>) };
   } catch (error) {
     if (error instanceof ApiError && getApiErrorMessage(error).includes('enregistré')) {
@@ -279,13 +323,19 @@ export const createMedecin = async (
   }
 };
 
-// ----------------------------------------------------
+// ============================================================
 // CONSULTATIONS
-// ----------------------------------------------------
+// ============================================================
 
 export const getConsultations = async (): Promise<ApiPayload<Consultation[]>> => ({
   data: await loadAllConsultations(),
 });
+
+export const getConsultationById = async (id: number): Promise<ApiPayload<Consultation>> => {
+  const raw = await ConsultationsService.getById6(id);
+  const [enriched] = await enrichConsultations([raw as Record<string, unknown>]);
+  return { data: enriched };
+};
 
 export const createConsultation = async (data: {
   assureId: number;
@@ -356,9 +406,9 @@ export const getConsultationsByGeneraliste = async (
 
 export const getConsultationsByMedecin = getConsultationsByGeneraliste;
 
-// ----------------------------------------------------
+// ============================================================
 // PRESCRIPTIONS
-// ----------------------------------------------------
+// ============================================================
 
 export const prescrireMedicament = async (data: {
   consultationId: number;
@@ -378,9 +428,9 @@ export const prescrireConsultation = async (data: {
   return { data: mapPrescription(raw as Record<string, unknown>) };
 };
 
-// ----------------------------------------------------
+// ============================================================
 // FEUILLES MALADIE
-// ----------------------------------------------------
+// ============================================================
 
 export const createFeuille = async (data: {
   consultationId: number;
@@ -388,6 +438,11 @@ export const createFeuille = async (data: {
   idFeuille?: string;
 }): Promise<ApiPayload<FeuillemMaladie>> => {
   const raw = await FeuillesMaladieService.enregistrer1(data);
+  return { data: mapFeuille(raw as Record<string, unknown>) };
+};
+
+export const getFeuilleById = async (id: number): Promise<ApiPayload<FeuillemMaladie>> => {
+  const raw = await FeuillesMaladieService.getById5(id);
   return { data: mapFeuille(raw as Record<string, unknown>) };
 };
 
@@ -425,9 +480,9 @@ export const getFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => (
   data: await loadFeuilles(),
 });
 
-// ----------------------------------------------------
+// ============================================================
 // REMBOURSEMENTS
-// ----------------------------------------------------
+// ============================================================
 
 export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> => {
   const feuilles = await loadFeuilles();
@@ -446,6 +501,27 @@ export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> 
   );
 
   return { data: remboursements.filter((r): r is Remboursement => r != null) };
+};
+
+/**
+ * Liste les feuilles de maladie non encore remboursées
+ * (endpoint GET /api/remboursements/non-rembourses).
+ */
+export const getNonRembourses = async (): Promise<ApiPayload<FeuillemMaladie[]>> => {
+  const raw = await RemboursementsService.getNonRembourses();
+  return { data: toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item)) };
+};
+
+/**
+ * Montant total de tous les remboursements
+ * (endpoint GET /api/remboursements/stats/total).
+ */
+export const getTotalRemboursements = async (): Promise<number> => {
+  const raw = await RemboursementsService.getTotal();
+  // Le backend retourne probablement un nombre ou un objet { total: number }
+  if (typeof raw === 'number') return raw;
+  if (raw && typeof raw === 'object' && 'total' in raw) return Number((raw as Record<string, unknown>).total);
+  return 0;
 };
 
 export const effectuerRemboursement = async (

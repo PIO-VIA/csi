@@ -164,7 +164,7 @@ export default function RemboursementsAdminPage() {
                       <TableCell className="font-mono text-xs font-semibold">
                         {f.idFeuille}
                       </TableCell>
-                      <TableCell className="font-display font-medium text-slate-200">
+                      <TableCell className="font-display font-medium text-slate-800">
                         {details.patientName}
                       </TableCell>
                       <TableCell className="text-xs text-slate-350">

@@ -96,7 +96,7 @@ export default function AssureFeuillesPage() {
                         {f.idFeuille}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-semibold text-slate-200">
+                    <TableCell className="text-xs font-semibold text-slate-700">
                       {formatFCFA(f.montantSoin)}
                     </TableCell>
                     <TableCell className="text-xs">

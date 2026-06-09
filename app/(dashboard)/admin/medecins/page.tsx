@@ -106,29 +106,9 @@ export default function MedecinsAdminPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet enregistrement ?')) {
-      const stored = localStorage.getItem('csi_medecins');
-      if (stored) {
-        try {
-          const list: Medecin[] = JSON.parse(stored);
-          const filtered = list.filter((m) => m.id !== id);
-          localStorage.setItem('csi_medecins', JSON.stringify(filtered));
-
-          // Also delete related user
-          const usersStored = localStorage.getItem('csi_users');
-          if (usersStored) {
-            const users = JSON.parse(usersStored);
-            const filteredUsers = users.filter((u: any) => u.id !== id);
-            localStorage.setItem('csi_users', JSON.stringify(filteredUsers));
-          }
-
-          loadData();
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    }
+  const handleDelete = (_id: number) => {
+    // Le backend ne fournit pas d’endpoint DELETE /api/medecins.
+    alert('La suppression d’un médecin n’est pas disponible via le backend actuel.');
   };
 
   // Unique list of specialities
@@ -226,7 +206,7 @@ export default function MedecinsAdminPage() {
               <select
                 value={filterDomain}
                 onChange={(e) => setFilterDomain(e.target.value)}
-                className="w-full bg-transparent text-sm text-slate-200 focus:outline-none cursor-pointer"
+                className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
               >
                 <option value="ALL">Toutes spécialités</option>
                 {specialities.map((spec) => (
@@ -286,7 +266,7 @@ export default function MedecinsAdminPage() {
                     <TableCell className="text-xs text-slate-600">
                       {m.domaineSpecialisation || <span className="text-slate-500 italic">-</span>}
                     </TableCell>
-                    <TableCell className="text-xs text-center font-semibold text-slate-200">
+                    <TableCell className="text-xs text-center font-semibold text-slate-700">
                       {getPatientCount(m)}
                     </TableCell>
                     <TableCell className="text-xs text-slate-350">
@@ -349,8 +329,8 @@ export default function MedecinsAdminPage() {
             {...register('numTelephone')}
           />
 
-          <div className="w-full flex flex-col gap-1.5">
-            <label className="font-display font-medium text-xs text-slate-600">Type de praticien</label>
+          <div className="form-group">
+            <label className="form-label-inline">Type de praticien</label>
             <select
               className="dashboard-input"
               {...register('type')}

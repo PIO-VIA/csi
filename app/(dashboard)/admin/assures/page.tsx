@@ -17,7 +17,7 @@ import {
   Smartphone,
   Droplet
 } from 'lucide-react';
-import { getAssures, getGeneralistes, createAssure, updateAssure } from '@/lib/api';
+import { getAssures, getGeneralistes, createAssure, updateAssure, deleteAssure, getApiErrorMessage } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -113,28 +113,13 @@ export default function AssuresAdminPage() {
     }
   };
 
-  const handleDelete = (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet assuré ?')) {
-      const stored = localStorage.getItem('csi_assures');
-      if (stored) {
-        try {
-          const list: Assure[] = JSON.parse(stored);
-          const filtered = list.filter((a) => a.id !== id);
-          localStorage.setItem('csi_assures', JSON.stringify(filtered));
-          
-          // Also delete related user
-          const usersStored = localStorage.getItem('csi_users');
-          if (usersStored) {
-            const users = JSON.parse(usersStored);
-            const filteredUsers = users.filter((u: any) => u.id !== id);
-            localStorage.setItem('csi_users', JSON.stringify(filteredUsers));
-          }
-
-          loadData();
-        } catch (e) {
-          console.error(e);
-        }
-      }
+  const handleDelete = async (id: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet assuré ?')) return;
+    try {
+      await deleteAssure(id);
+      loadData();
+    } catch (e) {
+      alert(getApiErrorMessage(e));
     }
   };
 
@@ -217,7 +202,7 @@ export default function AssuresAdminPage() {
                 setFilterMedecin(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-transparent text-sm text-slate-200 focus:outline-none cursor-pointer"
+              className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Tous les médecins</option>
               <option value="NONE">Sans médecin traitant</option>
@@ -238,7 +223,7 @@ export default function AssuresAdminPage() {
                 setFilterBlood(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full bg-transparent text-sm text-slate-200 focus:outline-none cursor-pointer"
+              className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">Tous les groupes</option>
               <option value="A+">A+</option>
@@ -297,7 +282,7 @@ export default function AssuresAdminPage() {
                     <TableCell className="text-xs text-slate-400">{a.profession}</TableCell>
                     <TableCell className="text-xs">
                       {a.medecinTraitant ? (
-                        <span className="text-slate-200 font-medium">{a.medecinTraitant.nom}</span>
+                        <span className="text-slate-700 font-medium">{a.medecinTraitant.nom}</span>
                       ) : (
                         <Badge variant="warning">Non affecté</Badge>
                       )}
@@ -345,6 +330,7 @@ export default function AssuresAdminPage() {
         }}
         title="Création de Dossier Assuré"
         description="Remplissez ce formulaire pour inscrire un nouvel assuré social."
+        size="lg"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -362,8 +348,8 @@ export default function AssuresAdminPage() {
               {...register('dateNaissance')}
             />
 
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-600">Sexe</label>
+            <div className="form-group">
+              <label className="form-label">Sexe</label>
               <select
                 className="dashboard-input"
                 {...register('sexe')}
@@ -392,8 +378,8 @@ export default function AssuresAdminPage() {
           </div>
 
           <div className="grid grid-cols-2 gap-4">
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-600">Statut matrimonial</label>
+            <div className="form-group">
+              <label className="form-label">Statut matrimonial</label>
               <select
                 className="dashboard-input"
                 {...register('statutMatrimoniale')}
@@ -405,8 +391,8 @@ export default function AssuresAdminPage() {
               </select>
             </div>
 
-            <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-600">Groupe sanguin</label>
+            <div className="form-group">
+              <label className="form-label">Groupe sanguin</label>
               <select
                 className="dashboard-input"
                 {...register('groupeSanguin')}
@@ -423,8 +409,8 @@ export default function AssuresAdminPage() {
             </div>
           </div>
 
-          <div className="w-full flex flex-col gap-1.5">
-            <label className="font-display font-medium text-xs text-slate-600">Médecin traitant (Généraliste)</label>
+          <div className="form-group">
+            <label className="form-label">Médecin traitant (Généraliste)</label>
             <select
               className="dashboard-input"
               {...register('medecinTraitantId')}
@@ -444,7 +430,7 @@ export default function AssuresAdminPage() {
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+          <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
             <Button
               type="button"
               variant="ghost"

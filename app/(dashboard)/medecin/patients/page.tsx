@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, User, Smartphone, Droplet, Calendar } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
-import { getAssures, getConsultationsByMedecin } from '@/lib/api';
+import { getAssuresByGeneraliste, getConsultationsByMedecin } from '@/lib/api';
 import { Assure, Consultation } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -24,8 +24,9 @@ export default function MedecinPatientsPage() {
     if (!user) return;
     const loadData = async () => {
       try {
+        // Charge uniquement les patients de ce médecin (GET /api/generalistes/{id}/assures)
         const [resAssures, resConsults] = await Promise.all([
-          getAssures(),
+          getAssuresByGeneraliste(user.id),
           getConsultationsByMedecin(user.id),
         ]);
         setAllAssures(resAssures.data);

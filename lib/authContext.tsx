@@ -24,6 +24,7 @@ interface AuthContextType {
   loading: boolean;
   login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
+  changePassword: (ancienMotDePasse: string, nouveauMotDePasse: string) => Promise<void>;
   registerUser: (data: {
     nom: string;
     email: string;
@@ -40,7 +41,8 @@ async function resolveUserFromLogin(
   response: Record<string, unknown>,
 ): Promise<User> {
   const role = mapBackendRole(String(response.role ?? ''));
-  const username = String(response.username ?? email);
+  // Le backend peut renvoyer username ou email selon la réponse
+  const username = String(response.username ?? response.email ?? email);
 
   if (role === 'GENERALISTE' || role === 'SPECIALISTE') {
     const medecinsRaw = await MDecinsService.getAll();
@@ -95,15 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   ): Promise<boolean> => {
     setLoading(true);
     try {
+      // Le DTO LoginRequestDTO du backend utilise email + password
       const response = (await AuthentificationService.login({
-        username: email,
+        email,
         password,
       })) as Record<string, unknown>;
 
       const token = String(response.token ?? '');
-      const username = String(response.username ?? email);
+      const username = String(response.username ?? response.email ?? email);
 
-      // Stocker le token avant les appels API suivants (profil médecin, etc.)
+      // Stocker le token immédiatement pour les appels API suivants (médecin, etc.)
       localStorage.setItem(
         'csi_session',
         JSON.stringify({ token, username, email, role: mapBackendRole(String(response.role ?? '')) }),
@@ -146,6 +149,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
+  /**
+   * Change le mot de passe de l'utilisateur connecté (médecin uniquement).
+   * Utilise le endpoint PATCH /api/auth/change-password du backend.
+   */
+  const changePassword = async (
+    ancienMotDePasse: string,
+    nouveauMotDePasse: string,
+  ): Promise<void> => {
+    await AuthentificationService.changePassword({
+      ancienMotDePasse,
+      nouveauMotDePasse,
+    });
+  };
+
   const registerUser = async (_data: {
     nom: string;
     email: string;
@@ -157,7 +174,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, registerUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, registerUser }}>
       {children}
     </AuthContext.Provider>
   );

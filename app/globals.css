@@ -46,9 +46,12 @@ body {
   padding: 0;
 }
 
-/* Design System Utilities */
+/* ============================================================
+   DESIGN SYSTEM UTILITIES
+   ============================================================ */
+
 .glass-card {
-  background: rgba(255, 255, 255, 0.7);
+  background: rgba(255, 255, 255, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(0, 0, 0, 0.06);
@@ -65,23 +68,28 @@ body {
   box-shadow: 0 4px 20px rgba(59, 130, 246, 0.15);
 }
 
-/* Custom scrollbar */
+/* ============================================================
+   SCROLLBAR
+   ============================================================ */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #ffffff;
+  background: transparent;
 }
 ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
+  border-radius: 99px;
 }
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Floating animation for cards */
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
 @keyframes float {
   0%, 100% {
     transform: translateY(0px) rotate(0deg);
@@ -94,35 +102,64 @@ body {
   animation: float 4s ease-in-out infinite;
 }
 
-/* Slide in from left for mobile drawer */
 @keyframes slideInLeft {
   from {
     transform: translateX(-100%);
+    opacity: 0;
   }
   to {
     transform: translateX(0);
+    opacity: 1;
   }
 }
 .animate-slide-in-left {
-  animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Dashboard shell background */
+/* ============================================================
+   DASHBOARD SHELL
+   ============================================================ */
+
 .dashboard-shell {
-  background:
-    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
-    radial-gradient(at 100% 100%, rgba(8, 145, 178, 0.05) 0px, transparent 50%),
-    #f1f5f9;
+  background: #f1f5f9;
 }
 
-/* Hero banner for dashboard welcome sections */
 .dashboard-hero {
   background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 50%, #0891b2 100%);
   border: 1px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 20px 40px -12px rgba(29, 78, 216, 0.35);
 }
 
-/* Search input for list pages */
+/* ============================================================
+   SIDEBAR (NEW - COLLAPSIBLE)
+   ============================================================ */
+
+/* Active nav item left accent line */
+.sidebar-nav-item-active {
+  position: relative;
+}
+.sidebar-nav-item-active::before {
+  content: '';
+  position: absolute;
+  left: -12px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 60%;
+  background: var(--color-primary-600);
+  border-radius: 0 3px 3px 0;
+}
+
+/* Tooltip for collapsed state */
+.sidebar-tooltip {
+  pointer-events: none;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   SEARCH INPUT
+   ============================================================ */
+
 .dashboard-search {
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 2.75rem;
@@ -139,24 +176,65 @@ body {
 .dashboard-search:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: white;
 }
 
-/* Form controls for dashboard modals and pages */
+/* ============================================================
+   FORM CONTROLS (DASHBOARD)
+   ============================================================ */
+
 .dashboard-input {
   width: 100%;
-  padding: 0.75rem 1rem;
-  background: white;
+  height: 2.75rem; /* 44px — same as Input component */
+  padding: 0 1rem;
+  background: rgba(248, 250, 252, 0.8);
   border: 1px solid #e2e8f0;
   border-radius: 0.75rem;
   font-size: 0.875rem;
   color: #0f172a;
-  transition: border-color 0.2s, box-shadow 0.2s;
+  font-family: var(--font-body), sans-serif;
+  transition: border-color 0.2s, box-shadow 0.2s, background-color 0.15s;
+  appearance: none;
+  -webkit-appearance: none;
 }
+
+.dashboard-input:hover {
+  border-color: #cbd5e1;
+}
+
 .dashboard-input:focus {
   outline: none;
   border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+  background: white;
+}
+
+/* Form label utility */
+.form-label {
+  display: block;
+  font-family: var(--font-display), sans-serif;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #475569;
+  margin-bottom: 0.375rem;
+  letter-spacing: 0.01em;
+}
+
+/* Form field group */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+/* Inline label style (for select fields in forms) */
+.form-label-inline {
+  display: block;
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #475569;
+  letter-spacing: 0.01em;
 }
 
 .dashboard-filter-bar {
@@ -169,57 +247,46 @@ body {
   padding: 0.25rem;
 }
 
-/* Gmail-style sidebar */
+/* ============================================================
+   LEGACY GMAIL CLASSES (kept for backward compat)
+   ============================================================ */
+
 .gmail-sidebar {
-  background: #f6f8fc;
-  border-right: 1px solid #e0e0e0;
+  background: white;
+  border-right: 1px solid #e2e8f0;
   color: #1f1f1f;
-  font-family: var(--font-body), 'Google Sans', Roboto, sans-serif;
 }
 
 .gmail-compose-btn {
   display: inline-flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0.875rem 1.5rem 0.875rem 1.25rem;
-  background: #c2e7ff;
-  color: #001d35;
+  padding: 0.75rem 1.25rem;
+  background: #2563eb;
+  color: white;
   font-size: 0.875rem;
   font-weight: 500;
-  font-family: var(--font-display), sans-serif;
-  border-radius: 9999px;
-  box-shadow:
-    0 1px 2px 0 rgba(60, 64, 67, 0.3),
-    0 1px 3px 1px rgba(60, 64, 67, 0.15);
+  border-radius: 0.75rem;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
   transition: box-shadow 0.2s, background-color 0.15s;
   max-width: 100%;
 }
 
 .gmail-compose-btn:hover {
-  background: #a8d9f7;
-  box-shadow:
-    0 1px 3px 0 rgba(60, 64, 67, 0.3),
-    0 4px 8px 3px rgba(60, 64, 67, 0.15);
-}
-
-.gmail-compose-btn span {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  background: #1d4ed8;
+  box-shadow: 0 4px 16px rgba(37, 99, 235, 0.4);
 }
 
 .gmail-nav-item {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  padding: 0 0.75rem;
-  min-height: 2rem;
-  border-radius: 0 9999px 9999px 0;
-  margin-right: 0.5rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
   font-size: 0.875rem;
   font-weight: 500;
-  color: #1f1f1f;
-  transition: background-color 0.15s;
+  color: #475569;
+  transition: background-color 0.15s, color 0.15s;
   text-decoration: none;
   cursor: pointer;
   border: none;
@@ -229,17 +296,18 @@ body {
 }
 
 .gmail-nav-item:hover {
-  background: #e8eaed;
+  background: #f1f5f9;
+  color: #0f172a;
 }
 
 .gmail-nav-item-active {
-  background: #d3e3fd;
-  color: #001d35;
+  background: #eff6ff;
+  color: #1d4ed8;
   font-weight: 600;
 }
 
 .gmail-nav-item-active:hover {
-  background: #d3e3fd;
+  background: #dbeafe;
 }
 
 .gmail-nav-icon {
@@ -249,11 +317,6 @@ body {
   width: 1.25rem;
   height: 1.25rem;
   flex-shrink: 0;
-  color: #444746;
-}
-
-.gmail-nav-item-active .gmail-nav-icon {
-  color: #001d35;
 }
 
 .gmail-nav-label {
@@ -262,21 +325,19 @@ body {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  line-height: 1.25rem;
 }
 
 .gmail-sidebar-divider {
   height: 1px;
-  background: #e0e0e0;
-  margin: 0.5rem 0.75rem 0.5rem 3.25rem;
+  background: #e2e8f0;
+  margin: 0.5rem 0;
 }
 
 .gmail-sidebar-section-title {
-  padding: 0.5rem 0.75rem 0.25rem 3.25rem;
+  padding: 0.5rem 0.75rem 0.25rem;
   font-size: 0.6875rem;
   font-weight: 600;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #444746;
+  color: #94a3b8;
 }
-

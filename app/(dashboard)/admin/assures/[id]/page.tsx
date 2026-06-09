@@ -121,19 +121,19 @@ export default function AssureDetailPage({ params }: PageProps) {
               <div className="w-full border-t border-slate-200/80 pt-5 space-y-4 text-xs font-body text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Calendar size={13} /> Nais.</span>
-                  <span className="text-slate-200 font-medium">{formatDate(assure.dateNaissance)}</span>
+                  <span className="text-slate-700 font-medium">{formatDate(assure.dateNaissance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><User size={13} /> Genre / Statut</span>
-                  <span className="text-slate-200 font-medium">{assure.sexe} ({assure.statutMatrimoniale})</span>
+                  <span className="text-slate-700 font-medium">{assure.sexe} ({assure.statutMatrimoniale})</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Smartphone size={13} /> Téléphone</span>
-                  <span className="text-slate-200 font-medium">{assure.numTelephone}</span>
+                  <span className="text-slate-700 font-medium">{assure.numTelephone}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Briefcase size={13} /> Profession</span>
-                  <span className="text-slate-200 font-medium">{assure.profession}</span>
+                  <span className="text-slate-700 font-medium">{assure.profession}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Droplet size={13} /> Grp. Sanguin</span>
@@ -215,7 +215,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                         consultations.map((c) => (
                           <TableRow key={c.id}>
                             <TableCell className="font-semibold text-xs">{formatDate(c.date)}</TableCell>
-                            <TableCell className="text-xs text-slate-200">
+                            <TableCell className="text-xs text-slate-700">
                               <span className="font-semibold">{c.generaliste.nom}</span> <br />
                               <span className="text-[10px] text-slate-400 uppercase tracking-wide">{c.generaliste.type}</span>
                             </TableCell>
@@ -328,7 +328,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                         feuilles.map((f) => (
                           <TableRow key={f.id}>
                             <TableCell className="font-mono text-xs font-semibold">{f.idFeuille}</TableCell>
-                            <TableCell className="font-semibold text-slate-200 text-xs">{formatFCFA(f.montantSoin)}</TableCell>
+                            <TableCell className="font-semibold text-slate-700 text-xs">{formatFCFA(f.montantSoin)}</TableCell>
                             <TableCell className="text-xs text-slate-400">
                               {f.remboursement ? (
                                 <span className="text-success font-semibold">+{formatFCFA(f.remboursement.montant)}</span>

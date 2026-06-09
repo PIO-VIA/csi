@@ -188,8 +188,8 @@ export default function NouvelleConsultationPage() {
                 <div className="h-px bg-slate-800/80" />
 
                 {/* Patient Select */}
-                <div className="w-full flex flex-col gap-1.5">
-                  <label className="font-display font-medium text-xs text-slate-600">Sélectionner l&apos;Assuré</label>
+                <div className="form-group">
+                  <label className="form-label-inline">Sélectionner l&apos;Assuré</label>
                   <select
                     className="dashboard-input"
                     {...register('assureId')}
@@ -205,8 +205,8 @@ export default function NouvelleConsultationPage() {
                 </div>
 
                 {/* Diagnostic motif */}
-                <div className="w-full flex flex-col gap-1.5">
-                  <label className="font-display font-medium text-xs text-slate-600">Motif & Diagnostic</label>
+                <div className="form-group">
+                  <label className="form-label-inline">Motif & Diagnostic</label>
                   <textarea
                     rows={4}
                     placeholder="Saisissez ici les symptômes observés, le diagnostic final posé ou les actes prodigués..."
@@ -346,7 +346,7 @@ export default function NouvelleConsultationPage() {
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      <div className="w-full flex flex-col gap-1.5">
+                      <div className="form-group">
                         <label className="font-display font-medium text-[11px] text-slate-350">Médecin spécialiste cible</label>
                         <select
                           value={specMatricule}
