@@ -172,7 +172,7 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
               label="Adresse email"
-              type="email"
+              type="test"
               placeholder="vous@exemple.com"
               leftIcon={<Mail size={16} />}
               error={errors.email?.message}
