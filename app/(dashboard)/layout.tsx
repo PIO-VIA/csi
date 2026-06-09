@@ -57,7 +57,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     <div className="min-h-screen bg-slate-100/80 text-slate-900 flex font-body dashboard-shell">
       <Sidebar />
 
-      <div className="flex-1 flex flex-col min-w-0 lg:pl-[280px] min-h-screen">
+      <div className="flex-1 flex flex-col min-w-0 lg:pl-[256px] min-h-screen">
         <TopBar />
         <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="max-w-7xl mx-auto w-full">{children}</div>

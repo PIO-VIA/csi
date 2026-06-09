@@ -4,8 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
-import Avatar from './Avatar';
-import RoleBadge from './RoleBadge';
 import { cn } from '@/lib/utils';
 import {
   LayoutDashboard,
@@ -20,21 +18,70 @@ import {
   Shield,
   Activity,
   Pill,
+  PenLine,
+  UserPlus,
+  type LucideIcon,
 } from 'lucide-react';
+
+const SIDEBAR_WIDTH = 256;
 
 function getRoleHome(role: string) {
   if (role === 'ADMIN') return '/admin';
   return '/medecin';
 }
 
-const MEDECIN_NAV = [
+type NavItem = {
+  label: string;
+  href: string;
+  icon: LucideIcon;
+};
+
+const MEDECIN_NAV: NavItem[] = [
   { label: 'Tableau de bord', href: '/medecin', icon: LayoutDashboard },
   { label: 'Mes patients', href: '/medecin/patients', icon: Users },
   { label: 'Consultations', href: '/medecin/consultations', icon: Calendar },
-  { label: 'Nouvelle consultation', href: '/medecin/consultations/nouvelle', icon: Activity },
   { label: 'Prescriptions', href: '/medecin/prescriptions', icon: Pill },
   { label: 'Feuilles de maladie', href: '/medecin/feuilles', icon: FileText },
 ];
+
+const ADMIN_MAIN_NAV: NavItem[] = [
+  { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
+  { label: 'Consultations', href: '/admin/consultations', icon: Calendar },
+  { label: 'Remboursements', href: '/admin/remboursements', icon: CreditCard },
+];
+
+const ADMIN_SECONDARY_NAV: NavItem[] = [
+  { label: 'Assurés', href: '/admin/assures', icon: Users },
+  { label: 'Médecins', href: '/admin/medecins', icon: Stethoscope },
+  { label: 'Feuilles de maladie', href: '/admin/feuilles', icon: FileText },
+];
+
+function NavLink({
+  item,
+  isActive,
+  onNavigate,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  onNavigate: () => void;
+}) {
+  const Icon = item.icon;
+  return (
+    <Link
+      href={item.href}
+      onClick={onNavigate}
+      className={cn(
+        'gmail-nav-item group',
+        isActive && 'gmail-nav-item-active'
+      )}
+    >
+      <span className="gmail-nav-icon">
+        <Icon size={20} strokeWidth={isActive ? 2.25 : 1.75} />
+      </span>
+      <span className="gmail-nav-label">{item.label}</span>
+    </Link>
+  );
+}
 
 export function Sidebar() {
   const pathname = usePathname();
@@ -45,110 +92,101 @@ export function Sidebar() {
 
   const role = user.role;
   const homeHref = getRoleHome(role);
+  const close = () => setIsOpen(false);
 
-  const getNavItems = () => {
-    switch (role) {
-      case 'ADMIN':
-        return [
-          { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
-          { label: 'Assurés', href: '/admin/assures', icon: Users },
-          { label: 'Médecins', href: '/admin/medecins', icon: Stethoscope },
-          { label: 'Consultations', href: '/admin/consultations', icon: Calendar },
-          { label: 'Feuilles de maladie', href: '/admin/feuilles', icon: FileText },
-          { label: 'Remboursements', href: '/admin/remboursements', icon: CreditCard },
-        ];
-      case 'GENERALISTE':
-      case 'SPECIALISTE':
-        return MEDECIN_NAV;
-      default:
-        return [];
-    }
-  };
+  const isActive = (href: string) =>
+    pathname === href || (href !== homeHref && pathname.startsWith(href + '/'));
 
-  const navItems = getNavItems();
+  const compose =
+    role === 'ADMIN'
+      ? { label: 'Nouvel assuré', href: '/admin/assures', icon: UserPlus }
+      : role === 'GENERALISTE' || role === 'SPECIALISTE'
+        ? { label: 'Nouvelle consultation', href: '/medecin/consultations/nouvelle', icon: PenLine }
+        : null;
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white border-r border-slate-200/80 text-slate-800 select-none shadow-sm">
-      {/* Header avec gradient */}
-      <div className="px-5 py-5 bg-gradient-to-br from-primary-600 to-primary-800">
-        <div className="flex items-center justify-between">
-          <Link href={homeHref} className="flex items-center gap-2.5 group">
-            <div className="h-9 w-9 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center">
-              <Shield className="h-5 w-5 text-white" />
-            </div>
-            <div>
-              <span className="font-display font-bold text-sm tracking-tight text-white block leading-tight">
-                CSI Sécurité
-              </span>
-              <span className="text-[10px] text-primary-100/70">Portail national</span>
-            </div>
-          </Link>
-          <button
-            onClick={() => setIsOpen(false)}
-            className="lg:hidden p-1.5 text-white/70 hover:text-white rounded-lg hover:bg-white/10 transition"
-          >
-            <X size={18} />
-          </button>
-        </div>
+    <div className="gmail-sidebar flex flex-col h-full">
+      {/* En-tête compact — style Gmail */}
+      <div className="flex items-center justify-between px-3 pt-3 pb-1 shrink-0">
+        <Link href={homeHref} className="flex items-center gap-2.5 px-2 py-2 rounded-full hover:bg-[#e8eaed] transition-colors min-w-0">
+          <div className="h-9 w-9 rounded-full bg-primary-600 flex items-center justify-center shrink-0">
+            <Shield className="h-[18px] w-[18px] text-white" />
+          </div>
+          <span className="font-display font-semibold text-[15px] text-[#1f1f1f] tracking-tight truncate">
+            CSI
+          </span>
+        </Link>
+        <button
+          onClick={close}
+          className="lg:hidden p-2 rounded-full text-[#444746] hover:bg-[#e8eaed] transition"
+          aria-label="Fermer le menu"
+        >
+          <X size={20} />
+        </button>
       </div>
 
-      {/* Profil utilisateur */}
-      <div className="px-5 py-4 border-b border-slate-100 flex items-center gap-3 bg-slate-50/50">
-        <Avatar nom={user.nom} initials={user.avatarInitiales} size="md" />
-        <div className="flex flex-col min-w-0 flex-1">
-          <span className="font-display font-semibold text-sm truncate text-slate-800">
-            {user.nom}
-          </span>
-          <span className="text-[10px] font-body text-slate-400 truncate">
-            {user.email}
-          </span>
-          <RoleBadge role={user.role} className="w-fit scale-90 -ml-1 mt-0.5" />
+      {/* Bouton action — équivalent « Rédiger » */}
+      {compose && (
+        <div className="px-3 py-3 shrink-0">
+          <Link
+            href={compose.href}
+            onClick={close}
+            className="gmail-compose-btn"
+          >
+            <compose.icon size={20} strokeWidth={2} />
+            <span>{compose.label}</span>
+          </Link>
         </div>
-      </div>
+      )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-5 overflow-y-auto space-y-0.5">
-        <div className="text-[10px] font-display font-semibold text-slate-400 tracking-wider uppercase px-3 mb-2">
-          Menu
-        </div>
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          const isActive =
-            pathname === item.href ||
-            (item.href !== homeHref && pathname.startsWith(item.href + '/'));
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              onClick={() => setIsOpen(false)}
-              className={cn(
-                'flex items-center gap-3 px-3 py-2.5 rounded-xl font-display text-sm font-medium transition-all duration-200 group',
-                isActive
-                  ? 'bg-primary-600 text-white shadow-md shadow-primary-600/25'
-                  : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
-              )}
-            >
-              <Icon
-                size={18}
-                className={cn(
-                  'shrink-0 transition-colors',
-                  isActive ? 'text-white' : 'text-slate-400 group-hover:text-primary-600'
-                )}
+      <nav className="flex-1 overflow-y-auto px-3 py-1 space-y-0.5">
+        {role === 'ADMIN' && (
+          <>
+            {ADMIN_MAIN_NAV.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                isActive={isActive(item.href)}
+                onNavigate={close}
               />
-              <span>{item.label}</span>
-            </Link>
-          );
-        })}
+            ))}
+
+            <div className="gmail-sidebar-divider" />
+
+            <p className="gmail-sidebar-section-title">Gestion</p>
+            {ADMIN_SECONDARY_NAV.map((item) => (
+              <NavLink
+                key={item.href}
+                item={item}
+                isActive={isActive(item.href)}
+                onNavigate={close}
+              />
+            ))}
+          </>
+        )}
+
+        {(role === 'GENERALISTE' || role === 'SPECIALISTE') &&
+          MEDECIN_NAV.map((item) => (
+            <NavLink
+              key={item.href}
+              item={item}
+              isActive={isActive(item.href)}
+              onNavigate={close}
+            />
+          ))}
       </nav>
 
-      {/* Déconnexion */}
-      <div className="p-3 border-t border-slate-100">
+      {/* Pied de page */}
+      <div className="px-3 py-3 shrink-0 border-t border-[#e0e0e0]">
         <button
           onClick={logout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-display font-medium text-slate-500 hover:bg-danger/5 hover:text-danger transition cursor-pointer"
+          className="gmail-nav-item w-full text-[#444746] hover:text-[#1f1f1f]"
         >
-          <LogOut size={16} />
-          <span>Déconnexion</span>
+          <span className="gmail-nav-icon">
+            <LogOut size={20} strokeWidth={1.75} />
+          </span>
+          <span className="gmail-nav-label">Déconnexion</span>
         </button>
       </div>
     </div>
@@ -156,26 +194,37 @@ export function Sidebar() {
 
   return (
     <>
-      <div className="lg:hidden fixed top-4 left-4 z-40">
+      {/* Menu mobile */}
+      <div className="lg:hidden fixed top-3 left-3 z-40">
         <button
-          onClick={() => setIsOpen(!isOpen)}
-          className="p-2.5 bg-white border border-slate-200 text-slate-700 rounded-xl hover:bg-slate-50 transition shadow-sm"
+          onClick={() => setIsOpen(true)}
+          className="p-2.5 rounded-full bg-white text-[#444746] hover:bg-[#f1f3f4] transition shadow-sm border border-[#e0e0e0]"
+          aria-label="Ouvrir le menu"
         >
-          <Menu size={20} />
+          <Menu size={22} />
         </button>
       </div>
 
-      <aside className="hidden lg:block fixed top-0 left-0 bottom-0 z-30 w-[280px]">
+      {/* Desktop */}
+      <aside
+        className="hidden lg:block fixed top-0 left-0 bottom-0 z-30"
+        style={{ width: SIDEBAR_WIDTH }}
+      >
         <SidebarContent />
       </aside>
 
+      {/* Drawer mobile */}
       {isOpen && (
         <div className="lg:hidden fixed inset-0 z-50 flex">
           <div
-            className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"
-            onClick={() => setIsOpen(false)}
+            className="fixed inset-0 bg-black/30"
+            onClick={close}
+            aria-hidden
           />
-          <div className="relative z-50 w-[280px] h-full animate-slide-in-left shadow-2xl">
+          <div
+            className="relative z-50 h-full animate-slide-in-left shadow-xl"
+            style={{ width: SIDEBAR_WIDTH }}
+          >
             <SidebarContent />
           </div>
         </div>
@@ -183,5 +232,7 @@ export function Sidebar() {
     </>
   );
 }
+
+export const SIDEBAR_WIDTH_PX = SIDEBAR_WIDTH;
 
 export default Sidebar;
