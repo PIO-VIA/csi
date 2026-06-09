@@ -3,6 +3,7 @@
 import React, { useState, createContext, useContext } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/lib/authContext';
 import { cn } from '@/lib/utils';
 import {
@@ -21,6 +22,7 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
+  User,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -38,29 +40,31 @@ function getRoleHome(role: string) {
 }
 
 type NavItem = {
-  label: string;
+  key: string;
   href: string;
   icon: LucideIcon;
 };
 
 const MEDECIN_NAV: NavItem[] = [
-  { label: 'Tableau de bord', href: '/medecin', icon: LayoutDashboard },
-  { label: 'Mes patients', href: '/medecin/patients', icon: Users },
-  { label: 'Consultations', href: '/medecin/consultations', icon: Calendar },
-  { label: 'Prescriptions', href: '/medecin/prescriptions', icon: Pill },
-  { label: 'Feuilles de maladie', href: '/medecin/feuilles', icon: FileText },
+  { key: 'medecin.dashboard.title', href: '/medecin', icon: LayoutDashboard },
+  { key: 'medecin.patients.title', href: '/medecin/patients', icon: Users },
+  { key: 'medecin.consultations.title', href: '/medecin/consultations', icon: Calendar },
+  { key: 'medecin.prescriptions.title', href: '/medecin/prescriptions', icon: Pill },
+  { key: 'medecin.feuilles.title', href: '/medecin/feuilles', icon: FileText },
+  { key: 'dashboard.profile.my_profile', href: '/medecin/profil', icon: User },
 ];
 
 const ADMIN_MAIN_NAV: NavItem[] = [
-  { label: 'Tableau de bord', href: '/admin', icon: LayoutDashboard },
-  { label: 'Consultations', href: '/admin/consultations', icon: Calendar },
-  { label: 'Remboursements', href: '/admin/remboursements', icon: CreditCard },
+  { key: 'dashboard.welcome_admin', href: '/admin', icon: LayoutDashboard },
+  { key: 'admin.consultations.title', href: '/admin/consultations', icon: Calendar },
+  { key: 'admin.remboursements.title', href: '/admin/remboursements', icon: CreditCard },
 ];
 
 const ADMIN_SECONDARY_NAV: NavItem[] = [
-  { label: 'Assurés', href: '/admin/assures', icon: Users },
-  { label: 'Médecins', href: '/admin/medecins', icon: Stethoscope },
-  { label: 'Feuilles de maladie', href: '/admin/feuilles', icon: FileText },
+  { key: 'admin.assures.title', href: '/admin/assures', icon: Users },
+  { key: 'admin.medecins.title', href: '/admin/medecins', icon: Stethoscope },
+  { key: 'admin.remboursements.col_feuille', href: '/admin/feuilles', icon: FileText },
+  { key: 'dashboard.profile.my_profile', href: '/admin/profil', icon: User },
 ];
 
 function NavLink({
@@ -74,12 +78,15 @@ function NavLink({
   onNavigate: () => void;
   collapsed: boolean;
 }) {
+  const { t } = useTranslation();
   const Icon = item.icon;
+  const label = t(item.key);
+
   return (
     <Link
       href={item.href}
       onClick={onNavigate}
-      title={collapsed ? item.label : undefined}
+      title={collapsed ? label : undefined}
       className={cn(
         'sidebar-nav-item group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150',
         isActive
@@ -97,7 +104,7 @@ function NavLink({
         <Icon size={20} strokeWidth={isActive ? 2.25 : 1.75} />
       </span>
       {!collapsed && (
-        <span className="flex-1 truncate">{item.label}</span>
+        <span className="flex-1 truncate">{label}</span>
       )}
       {isActive && !collapsed && (
         <span className="w-1.5 h-1.5 rounded-full bg-primary-500 shrink-0" />
@@ -105,7 +112,7 @@ function NavLink({
       {/* Tooltip when collapsed */}
       {collapsed && (
         <div className="sidebar-tooltip pointer-events-none absolute left-full ml-3 z-50 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-150">
-          {item.label}
+          {label}
         </div>
       )}
     </Link>
@@ -113,6 +120,7 @@ function NavLink({
 }
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const [isOpen, setIsOpen] = useState(false);
@@ -129,9 +137,9 @@ export function Sidebar() {
 
   const compose =
     role === 'ADMIN'
-      ? { label: 'Nouvel assuré', href: '/admin/assures', icon: UserPlus }
+      ? { label: t('admin.assures.new'), href: '/admin/assures', icon: UserPlus }
       : role === 'GENERALISTE' || role === 'SPECIALISTE'
-        ? { label: 'Nouvelle consultation', href: '/medecin/consultations/nouvelle', icon: PenLine }
+        ? { label: t('medecin.dashboard.new_consultation'), href: '/medecin/consultations/nouvelle', icon: PenLine }
         : null;
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
@@ -145,7 +153,7 @@ export function Sidebar() {
       {!isMobile && (
         <button
           onClick={() => setCollapsed((c) => !c)}
-          className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 shadow-md text-slate-500 hover:text-primary-600 hover:border-primary-200 transition-all duration-150"
+          className="absolute -right-3 top-6 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white border border-slate-200 shadow-md text-slate-500 hover:text-primary-600 hover:border-primary-200 transition-all duration-150 cursor-pointer"
           aria-label={collapsed ? 'Déplier la sidebar' : 'Réduire la sidebar'}
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
@@ -170,7 +178,7 @@ export function Sidebar() {
                 CSI
               </span>
               <span className="font-body text-[10px] text-slate-400 truncate block leading-none">
-                Santé sociale
+                {t('landing.title')}
               </span>
             </div>
           )}
@@ -277,17 +285,17 @@ export function Sidebar() {
 
         <button
           onClick={logout}
-          title={collapsed && !isMobile ? 'Déconnexion' : undefined}
+          title={collapsed && !isMobile ? t('dashboard.profile.logout') : undefined}
           className={cn(
-            'group relative flex items-center gap-3 w-full rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150',
+            'group relative flex items-center gap-3 w-full rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition-all duration-150 cursor-pointer',
             collapsed && !isMobile ? 'justify-center p-2.5' : 'px-3 py-2.5'
           )}
         >
           <LogOut size={18} strokeWidth={1.75} />
-          {(!collapsed || isMobile) && <span>Déconnexion</span>}
+          {(!collapsed || isMobile) && <span>{t('dashboard.profile.logout')}</span>}
           {collapsed && !isMobile && (
             <div className="sidebar-tooltip pointer-events-none absolute left-full ml-3 z-50 px-2.5 py-1.5 rounded-lg bg-slate-800 text-white text-xs whitespace-nowrap shadow-lg opacity-0 group-hover:opacity-100 translate-x-1 group-hover:translate-x-0 transition-all duration-150">
-              Déconnexion
+              {t('dashboard.profile.logout')}
             </div>
           )}
         </button>

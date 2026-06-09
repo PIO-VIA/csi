@@ -469,6 +469,21 @@
     "page": "Page",
     "of": "of",
     "total": "Total",
-    "showing": "Showing"
+    "showing": "Showing",
+    "not_found_title": "Page not found",
+    "not_found_desc": "Sorry, the page you are looking for does not exist or has been moved.",
+    "home": "Home"
+  },
+  "profile": {
+    "title": "Profile Settings",
+    "subtitle": "Manage your personal information and security preferences",
+    "preferences": "Preferences",
+    "language": "Interface Language",
+    "security": "Security & Password",
+    "current_password": "Current password",
+    "new_password": "New password",
+    "confirm_password": "Confirm new password",
+    "password_success": "Password changed successfully!",
+    "update_btn": "Update Password"
   }
 }

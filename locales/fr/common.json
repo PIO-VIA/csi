@@ -469,6 +469,21 @@
     "page": "Page",
     "of": "sur",
     "total": "Total",
-    "showing": "Affichage"
+    "showing": "Affichage",
+    "not_found_title": "Page introuvable",
+    "not_found_desc": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
+    "home": "Accueil"
+  },
+  "profile": {
+    "title": "Paramètres du Profil",
+    "subtitle": "Gérez vos informations personnelles et vos préférences de sécurité",
+    "preferences": "Préférences",
+    "language": "Langue de l'interface",
+    "security": "Sécurité & Mot de passe",
+    "current_password": "Ancien mot de passe",
+    "new_password": "Nouveau mot de passe",
+    "confirm_password": "Confirmer le nouveau mot de passe",
+    "password_success": "Mot de passe changé avec succès !",
+    "update_btn": "Mettre à jour le mot de passe"
   }
 }
