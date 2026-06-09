@@ -43,7 +43,7 @@ export default function MedecinFeuillesPage() {
       }
     };
     loadData();
-  }, [user, router]);
+  }, [user]);
 
   const filtered = feuilles.filter((f) =>
     f.idFeuille.toLowerCase().includes(searchTerm.toLowerCase()) ||

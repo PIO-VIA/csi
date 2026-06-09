@@ -29,7 +29,7 @@ const consultationFormSchema = z.object({
   assureId: z.string().min(1, { message: 'Veuillez sélectionner un patient' }),
   motif: z.string().min(5, { message: 'Veuillez saisir un motif de consultation détaillé' }),
   creerFeuille: z.boolean(),
-  montantSoin: z.coerce.number().min(0),
+  montantSoin: z.number().min(0, { message: 'Le montant doit être positif' }),
 });
 
 type ConsultationFormValues = z.infer<typeof consultationFormSchema>;
@@ -242,7 +242,7 @@ export default function NouvelleConsultationPage() {
                           type="number"
                           placeholder="Ex: 15000"
                           error={errors.montantSoin?.message}
-                          {...register('montantSoin')}
+                            {...register('montantSoin', { valueAsNumber: true })}
                         />
                       </motion.div>
                     )}
