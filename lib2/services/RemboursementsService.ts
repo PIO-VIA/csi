@@ -34,7 +34,7 @@ export class RemboursementsService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById2(
+    public static getById3(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

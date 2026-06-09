@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Search, Activity, User, ShieldAlert } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { getConsultations } from '@/lib/api';
 import { Consultation } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
@@ -12,6 +14,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function ConsultationsAdminPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -31,16 +34,13 @@ export default function ConsultationsAdminPage() {
     loadData();
   }, []);
 
-  // Filter consultations
   const filteredConsultations = consultations.filter((c) => {
     const matchesSearch =
       c.assure.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       c.generaliste.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (c.motif || '').toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesCategory =
       filterCategory === 'ALL' || c.generaliste.type === filterCategory;
-
     return matchesSearch && matchesCategory;
   });
 
@@ -52,69 +52,70 @@ export default function ConsultationsAdminPage() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Suivi des Consultations</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('admin.consultations.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Historique en temps réel des actes médicaux déclarés sur le réseau national
+          {t('admin.consultations.subtitle')}
         </p>
       </div>
 
-      {/* FILTER BAR */}
       <Card>
         <CardBody className="p-4 flex flex-col md:flex-row gap-4 items-center">
-          {/* Search box */}
           <div className="w-full md:flex-1 relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
               <Search size={18} />
             </span>
             <input
               type="text"
-              placeholder="Rechercher par assuré, médecin, diagnostic..."
+              placeholder={t('admin.consultations.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
             />
           </div>
 
-          {/* Toggle Type */}
           <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
-            {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((t) => (
+            {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((type) => (
               <button
-                key={t}
-                onClick={() => setFilterCategory(t)}
+                key={type}
+                onClick={() => setFilterCategory(type)}
                 className={`flex-1 md:flex-initial px-4 py-1.5 rounded-lg text-xs font-display font-medium uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
-                  filterCategory === t
+                  filterCategory === type
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                {t === 'ALL' ? 'Toutes' : t === 'GENERALISTE' ? 'Générales' : 'Spécialisées'}
+                {type === 'ALL'
+                  ? t('admin.consultations.filter_all')
+                  : type === 'GENERALISTE'
+                  ? t('admin.consultations.filter_general')
+                  : t('admin.consultations.filter_specialist')}
               </button>
             ))}
           </div>
         </CardBody>
       </Card>
 
-      {/* TABLE */}
       <Card>
         <CardBody className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date & Heure</TableHead>
-                <TableHead>Assuré bénéficiaire</TableHead>
-                <TableHead>Praticien</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Motif & Diagnostic</TableHead>
-                <TableHead>Feuille de soin</TableHead>
+                <TableHead>{t('admin.consultations.col_date')}</TableHead>
+                <TableHead>{t('admin.consultations.col_assure')}</TableHead>
+                <TableHead>{t('admin.consultations.col_doctor')}</TableHead>
+                <TableHead>{t('admin.consultations.col_type')}</TableHead>
+                <TableHead>{t('admin.consultations.col_motif')}</TableHead>
+                <TableHead>{t('admin.consultations.col_feuille')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredConsultations.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-body">
-                    Aucune consultation répertoriée.
+                    {t('admin.consultations.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -139,11 +140,13 @@ export default function ConsultationsAdminPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={c.generaliste.type === 'GENERALISTE' ? 'neutral' : 'warning'}>
-                        {c.generaliste.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
+                        {c.generaliste.type === 'GENERALISTE'
+                          ? t('admin.consultations.generaliste')
+                          : t('admin.consultations.specialiste')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs max-w-xs truncate" title={c.motif || ''}>
-                      {c.motif || 'Non renseigné'}
+                      {c.motif || t('admin.consultations.not_set')}
                     </TableCell>
                     <TableCell>
                       {c.feuilleMaladie ? (
@@ -153,7 +156,7 @@ export default function ConsultationsAdminPage() {
                       ) : (
                         <span className="flex items-center gap-1 text-[10px] text-warning font-semibold font-display">
                           <ShieldAlert size={12} />
-                          En attente FM
+                          {t('admin.consultations.pending_fm')}
                         </span>
                       )}
                     </TableCell>

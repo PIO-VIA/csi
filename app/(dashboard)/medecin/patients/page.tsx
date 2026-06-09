@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Search, User, Smartphone, Droplet, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getAssuresByGeneraliste, getConsultationsByMedecin } from '@/lib/api';
 import { Assure, Consultation } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function MedecinPatientsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [allAssures, setAllAssures] = useState<Assure[]>([]);
@@ -24,7 +27,6 @@ export default function MedecinPatientsPage() {
     if (!user) return;
     const loadData = async () => {
       try {
-        // Charge uniquement les patients de ce médecin (GET /api/generalistes/{id}/assures)
         const [resAssures, resConsults] = await Promise.all([
           getAssuresByGeneraliste(user.id),
           getConsultationsByMedecin(user.id),
@@ -68,10 +70,10 @@ export default function MedecinPatientsPage() {
     >
       <div>
         <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
-          Mes patients
+          {t('medecin.patients.title')}
         </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Consultez vos patients et ceux qui vous ont déclaré comme médecin traitant
+          {t('medecin.patients.subtitle')}
         </p>
       </div>
 
@@ -84,7 +86,7 @@ export default function MedecinPatientsPage() {
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          Patients consultés ({consultedPatients.length})
+          {t('medecin.patients.tab_consulted')} ({consultedPatients.length})
         </button>
         <button
           onClick={() => setActiveSubTab('declares')}
@@ -94,7 +96,7 @@ export default function MedecinPatientsPage() {
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          Patients déclarés ({declaredPatients.length})
+          {t('medecin.patients.tab_declared')} ({declaredPatients.length})
         </button>
       </div>
 
@@ -106,7 +108,7 @@ export default function MedecinPatientsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par nom, ID assuré, téléphone..."
+              placeholder={t('medecin.patients.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -120,18 +122,18 @@ export default function MedecinPatientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Assuré</TableHead>
-                <TableHead>ID Assuré</TableHead>
-                <TableHead>Téléphone</TableHead>
-                <TableHead>Groupe sanguin</TableHead>
-                <TableHead>Dernière consultation</TableHead>
+                <TableHead>{t('medecin.patients.col_assure')}</TableHead>
+                <TableHead>{t('medecin.patients.col_id')}</TableHead>
+                <TableHead>{t('medecin.patients.col_phone')}</TableHead>
+                <TableHead>{t('medecin.patients.col_blood')}</TableHead>
+                <TableHead>{t('medecin.patients.col_last_consult')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPatients.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 text-xs">
-                    Aucun patient trouvé.
+                    {t('medecin.patients.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (

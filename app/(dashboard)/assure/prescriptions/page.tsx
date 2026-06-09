@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Pill, Search, Calendar, Stethoscope } from 'lucide-react';
+import { Pill, Search, Calendar } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByAssure } from '@/lib/api';
 import { Consultation, Prescription } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function AssurePrescriptionsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<(Prescription & { date: string; medecin: string })[]>([]);
@@ -24,8 +27,6 @@ export default function AssurePrescriptionsPage() {
       try {
         const res = await getConsultationsByAssure(user.id);
         const consults: Consultation[] = res.data;
-        
-        // Extract all prescriptions
         const list = consults.flatMap((c) =>
           (c.prescriptions || []).map((p) => ({
             ...p,
@@ -33,7 +34,6 @@ export default function AssurePrescriptionsPage() {
             medecin: c.generaliste.nom,
           }))
         );
-        
         setPrescriptions(list);
       } catch (e) {
         console.error(e);
@@ -60,9 +60,11 @@ export default function AssurePrescriptionsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mes Prescriptions & Ordonnances</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('assure.prescriptions.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Visualisez les ordonnances actives prescrites par vos praticiens
+          {t('assure.prescriptions.subtitle')}
         </p>
       </div>
 
@@ -74,7 +76,7 @@ export default function AssurePrescriptionsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par médicament, médecin..."
+              placeholder={t('assure.prescriptions.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -88,17 +90,17 @@ export default function AssurePrescriptionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date d&apos;émission</TableHead>
-                <TableHead>Médecin</TableHead>
-                <TableHead>Type d&apos;ordonnance</TableHead>
-                <TableHead>Détails / Instructions</TableHead>
+                <TableHead>{t('assure.prescriptions.col_date')}</TableHead>
+                <TableHead>{t('assure.prescriptions.col_doctor')}</TableHead>
+                <TableHead>{t('assure.prescriptions.col_type')}</TableHead>
+                <TableHead>{t('assure.prescriptions.col_details')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-12 text-slate-500 font-body">
-                    Aucune ordonnance répertoriée.
+                    {t('assure.prescriptions.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -115,21 +117,25 @@ export default function AssurePrescriptionsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'}>
-                        {p.type === 'MEDICAMENT' ? 'Médicaments' : 'Réf. Spécialiste'}
+                        {p.type === 'MEDICAMENT'
+                          ? t('assure.prescriptions.type_medicament')
+                          : t('assure.prescriptions.type_referral')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs leading-relaxed">
                       {p.type === 'MEDICAMENT' ? (
                         <div>
                           <span className="font-semibold text-sm">{p.medicament}</span> <br />
-                          <span className="text-slate-400 italic text-[11px]">Posologie : {p.posologie}</span>
+                          <span className="text-slate-400 italic text-[11px]">{p.posologie}</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="font-semibold text-sm">Référence vers Spécialiste</span> <br />
+                          <span className="font-semibold text-sm">
+                            {t('assure.prescriptions.type_referral')}
+                          </span> <br />
                           <span className="text-slate-400 text-[11px]">
-                            Médecin matricule : <span className="font-mono text-[10px] text-primary-300 font-medium">{p.matriculeMedecin}</span> <br />
-                            Motif : {p.motif}
+                            <span className="font-mono text-[10px] text-primary-300 font-medium">{p.matriculeMedecin}</span>
+                            {' — '}{p.motif}
                           </span>
                         </div>
                       )}

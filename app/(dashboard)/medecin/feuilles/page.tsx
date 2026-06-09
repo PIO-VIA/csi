@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Calendar, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByMedecin } from '@/lib/api';
 import { Consultation, FeuillemMaladie } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate, formatFCFA } from '@/lib/utils';
 
 export default function MedecinFeuillesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<(FeuillemMaladie & { date: string; patient: string })[]>([]);
@@ -59,9 +62,11 @@ export default function MedecinFeuillesPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Feuilles de Maladie Émises</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('medecin.feuilles.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Suivez l&apos;état de traitement des feuilles de maladie numériques générées lors de vos consultations
+          {t('medecin.feuilles.subtitle')}
         </p>
       </div>
 
@@ -73,7 +78,7 @@ export default function MedecinFeuillesPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par patient, référence..."
+              placeholder={t('medecin.consultations.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -87,18 +92,18 @@ export default function MedecinFeuillesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date d&apos;émission</TableHead>
-                <TableHead>Référence Feuille</TableHead>
-                <TableHead>Patient bénéficiaire</TableHead>
-                <TableHead>Montant de Soin déclaré</TableHead>
-                <TableHead>Statut du remboursement</TableHead>
+                <TableHead>{t('medecin.feuilles.col_id')}</TableHead>
+                <TableHead>{t('medecin.feuilles.col_consultation')}</TableHead>
+                <TableHead>{t('common.patient')}</TableHead>
+                <TableHead>{t('medecin.feuilles.col_amount')}</TableHead>
+                <TableHead>{t('medecin.feuilles.col_status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 font-body">
-                    Aucune feuille de maladie émise.
+                    {t('medecin.feuilles.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -112,24 +117,24 @@ export default function MedecinFeuillesPage() {
                     </TableCell>
                     <TableCell className="font-mono text-xs font-semibold text-accent-400">
                       <span className="flex items-center gap-2">
-                        <FileText size={14} className="text-slate-550" />
+                        <FileText size={14} className="text-slate-500" />
                         {f.idFeuille}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs font-semibold">
                       <span className="flex items-center gap-1.5">
-                        <span className="p-1 bg-slate-850 rounded text-slate-450">
+                        <span className="p-1 bg-slate-850 rounded text-slate-400">
                           <User size={12} />
                         </span>
                         <span>{f.patient}</span>
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-semibold text-slate-250">
+                    <TableCell className="text-xs font-semibold text-slate-700">
                       {formatFCFA(f.montantSoin)}
                     </TableCell>
                     <TableCell>
                       <Badge variant={f.estRembourse ? 'success' : 'warning'}>
-                        {f.estRembourse ? 'Remboursé' : 'En attente traitement'}
+                        {f.estRembourse ? t('medecin.feuilles.reimbursed') : t('medecin.feuilles.pending')}
                       </Badge>
                     </TableCell>
                   </TableRow>

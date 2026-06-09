@@ -14,6 +14,8 @@ import {
   Bookmark,
   Mail,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { getMedecins, getAssures, createMedecin, getApiErrorMessage } from '@/lib/api';
 import { Medecin, Assure, CreateMedecinInput } from '@/types';
 import Button from '@/components/ui/Button';
@@ -35,6 +37,7 @@ const medecinFormSchema = z.object({
 type MedecinFormValues = z.infer<typeof medecinFormSchema>;
 
 export default function MedecinsAdminPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [assures, setAssures] = useState<Assure[]>([]);
@@ -93,7 +96,7 @@ export default function MedecinsAdminPage() {
 
       await createMedecin(payload);
       setSubmitSuccess(
-        `Médecin enregistré. Un mot de passe provisoire sera envoyé à ${data.email} par le backend.`
+        t('admin.medecins.form_success', { email: data.email }) || `Enregistré.`
       );
       reset();
       loadData();
@@ -107,8 +110,7 @@ export default function MedecinsAdminPage() {
   };
 
   const handleDelete = (_id: number) => {
-    // Le backend ne fournit pas d’endpoint DELETE /api/medecins.
-    alert('La suppression d’un médecin n’est pas disponible via le backend actuel.');
+    alert(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
   };
 
   // Unique list of specialities
@@ -152,13 +154,15 @@ export default function MedecinsAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Gestion des Médecins</h1>
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+            {t('admin.medecins.title')}
+          </h1>
           <p className="font-body text-sm text-slate-500 mt-1">
-            Enregistrez les professionnels de santé habilités à utiliser le système
+            {t('admin.medecins.subtitle')}
           </p>
         </div>
         <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
-          Enregistrer médecin
+          {t('admin.medecins.new_doctor')}
         </Button>
       </div>
 
@@ -172,7 +176,7 @@ export default function MedecinsAdminPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par nom, matricule..."
+              placeholder={t('admin.medecins.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -181,25 +185,29 @@ export default function MedecinsAdminPage() {
 
           {/* Toggle Type */}
           <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
-            {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((t) => (
+            {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((tVal) => (
               <button
-                key={t}
+                key={tVal}
                 onClick={() => {
-                  setFilterType(t);
+                  setFilterType(tVal);
                   setFilterDomain('ALL');
                 }}
                 className={`flex-1 md:flex-initial px-4 py-1.5 rounded-lg text-xs font-display font-medium uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
-                  filterType === t
+                  filterType === tVal
                     ? 'bg-primary-600 text-white shadow-sm'
                     : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
-                {t === 'ALL' ? 'Tous' : t === 'GENERALISTE' ? 'Généralistes' : 'Spécialistes'}
+                {tVal === 'ALL'
+                  ? t('admin.medecins.filter_all')
+                  : tVal === 'GENERALISTE'
+                  ? t('admin.medecins.filter_generalists')
+                  : t('admin.medecins.filter_specialists')}
               </button>
             ))}
           </div>
 
-          {/* Select Speciality (only if Specialists is active) */}
+          {/* Select Speciality */}
           {filterType === 'SPECIALISTE' && (
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 animate-fade-in">
               <Bookmark size={16} className="text-slate-400 shrink-0" />
@@ -208,7 +216,7 @@ export default function MedecinsAdminPage() {
                 onChange={(e) => setFilterDomain(e.target.value)}
                 className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
               >
-                <option value="ALL">Toutes spécialités</option>
+                <option value="ALL">{t('admin.medecins.filter_all_specialities')}</option>
                 {specialities.map((spec) => (
                   <option key={spec} value={spec}>
                     {spec}
@@ -226,13 +234,13 @@ export default function MedecinsAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Nom</TableHead>
+                <TableHead>{t('admin.medecins.col_nom')}</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Matricule</TableHead>
-                <TableHead>Type</TableHead>
-                <TableHead>Domaine</TableHead>
-                <TableHead>Patients Suivis</TableHead>
-                <TableHead>Téléphone</TableHead>
+                <TableHead>{t('admin.medecins.col_matricule')}</TableHead>
+                <TableHead>{t('admin.medecins.col_type')}</TableHead>
+                <TableHead>{t('admin.medecins.col_domain')}</TableHead>
+                <TableHead>{t('admin.medecins.col_patients_count')}</TableHead>
+                <TableHead>{t('admin.medecins.col_phone')}</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -240,7 +248,7 @@ export default function MedecinsAdminPage() {
               {filteredMedecins.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
-                    Aucun médecin trouvé avec ces critères.
+                    {t('admin.medecins.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -260,7 +268,9 @@ export default function MedecinsAdminPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={m.type === 'GENERALISTE' ? 'neutral' : 'warning'}>
-                        {m.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
+                        {m.type === 'GENERALISTE'
+                          ? t('admin.medecins.generaliste')
+                          : t('admin.medecins.specialiste')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs text-slate-600">
@@ -302,41 +312,41 @@ export default function MedecinsAdminPage() {
           setSubmitError(null);
           setSubmitSuccess(null);
         }}
-        title="Enregistrement professionnel de santé"
-        description="Le mot de passe généré sera envoyé par email au praticien via le backend."
+        title={t('admin.medecins.new_doctor') || 'Nouveau'}
+        description={t('admin.medecins.form_desc') || ''}
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
-            label="Nom complet du médecin"
+            label={t('admin.medecins.form_name') || 'Nom'}
             placeholder="Ex: Dr. Célestin Etoa"
-            error={errors.nom?.message}
+            error={errors.nom?.message ? String(errors.nom.message) : undefined}
             {...register('nom')}
           />
 
           <Input
-            label="Adresse email professionnelle"
+            label={t('admin.medecins.form_email') || 'Email'}
             type="email"
             placeholder="medecin@csi.cm"
             leftIcon={<Mail size={16} />}
-            error={errors.email?.message}
+            error={errors.email?.message ? String(errors.email.message) : undefined}
             {...register('email')}
           />
 
           <Input
-            label="Numéro de téléphone"
+            label={t('admin.medecins.form_phone') || 'Phone'}
             placeholder="+237 6xx xx xx xx"
-            error={errors.numTelephone?.message}
+            error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
             {...register('numTelephone')}
           />
 
           <div className="form-group">
-            <label className="form-label-inline">Type de praticien</label>
+            <label className="form-label-inline">{t('admin.medecins.form_type')}</label>
             <select
               className="dashboard-input"
               {...register('type')}
             >
-              <option value="GENERALISTE">Médecin Généraliste</option>
-              <option value="SPECIALISTE">Médecin Spécialiste</option>
+              <option value="GENERALISTE">{t('admin.medecins.generaliste')}</option>
+              <option value="SPECIALISTE">{t('admin.medecins.specialiste')}</option>
             </select>
           </div>
 
@@ -346,9 +356,9 @@ export default function MedecinsAdminPage() {
               animate={{ opacity: 1, height: 'auto' }}
             >
               <Input
-                label="Domaine de spécialisation"
+                label={t('admin.medecins.form_speciality') || 'Speciality'}
                 placeholder="Ex: Cardiologie, Pédiatrie, Dermatologie"
-                error={errors.domaineSpecialisation?.message}
+                error={errors.domaineSpecialisation?.message ? String(errors.domaineSpecialisation.message) : undefined}
                 {...register('domaineSpecialisation')}
               />
             </motion.div>
@@ -375,10 +385,10 @@ export default function MedecinsAdminPage() {
                 reset();
               }}
             >
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary">
-              Enregistrer le médecin
+              {t('admin.medecins.form_submit')}
             </Button>
           </div>
         </form>

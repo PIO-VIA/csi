@@ -22,6 +22,8 @@ import {
   Pie,
   Cell,
 } from 'recharts';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { getAssures, getMedecins, getConsultations, getRemboursements, getFeuilles } from '@/lib/api';
 import { Assure, Medecin, Consultation, Remboursement, FeuillemMaladie } from '@/types';
 import StatCard from '@/components/ui/StatCard';
@@ -34,6 +36,7 @@ import { formatFCFA, formatDate } from '@/lib/utils';
 import Loader from '@/components/ui/Loader';
 
 export default function AdminDashboard() {
+  const { t } = useTranslation();
   const [mounted, setMounted] = useState(false);
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
@@ -120,8 +123,8 @@ export default function AdminDashboard() {
   }
 
   const pieData = [
-    { name: 'Généralistes (100%)', value: generalistRefund },
-    { name: 'Spécialistes (80%)', value: specialistRefund },
+    { name: t('dashboard.stats.generaliste_label'), value: generalistRefund },
+    { name: t('dashboard.stats.specialiste_label'), value: specialistRefund },
   ];
 
   const PIE_COLORS = ['#3b82f6', '#06b6d4'];
@@ -143,41 +146,41 @@ export default function AdminDashboard() {
       className="space-y-6"
     >
       <PageHeader
-        title="Tableau de bord administrateur"
-        description={`Vue globale du système — ${dateLabel}`}
+        title={t('dashboard.welcome_admin')}
+        description={`${t('dashboard.welcome_desc')} — ${dateLabel}`}
       />
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Total assurés"
+          label={t('dashboard.stats.total_assures')}
           value={totalAssures}
           icon={<Users size={20} />}
           color="primary"
-          variation="+4.2% ce mois"
+          variation={`+4.2% ${t('dashboard.stats.variation_up')}`}
           variationUp
         />
         <StatCard
-          label="Total médecins"
+          label={t('dashboard.stats.total_medecins')}
           value={totalMedecins}
           icon={<Stethoscope size={20} />}
           color="accent"
-          variation="+1.8% ce mois"
+          variation={`+1.8% ${t('dashboard.stats.variation_up')}`}
           variationUp
         />
         <StatCard
-          label="Consultations ce mois"
+          label={t('dashboard.stats.consults_month')}
           value={consultsCeMois}
           icon={<Calendar size={20} />}
           color="info"
-          variation="-2.4% ce mois"
+          variation={`-2.4% ${t('dashboard.stats.variation_up')}`}
           variationUp={false}
         />
         <StatCard
-          label="Remboursements totaux"
+          label={t('dashboard.stats.total_remb')}
           value={formatFCFA(remboursementsTotaux)}
           icon={<DollarSign size={20} />}
           color="success"
-          variation="+8.3% ce mois"
+          variation={`+8.3% ${t('dashboard.stats.variation_up')}`}
           variationUp
         />
       </div>
@@ -188,9 +191,9 @@ export default function AdminDashboard() {
             <Card variant="solid" className="h-full">
               <CardHeader className="flex justify-between items-center">
                 <span className="font-display font-semibold text-sm text-slate-800">
-                  Évolution des consultations
+                  {t('dashboard.stats.evolution_consults')}
                 </span>
-                <Badge variant="neutral">6 derniers mois</Badge>
+                <Badge variant="neutral">{t('dashboard.stats.last_6_months')}</Badge>
               </CardHeader>
               <CardBody className="h-80 pt-2">
                 <ResponsiveContainer width="100%" height="100%">
@@ -226,7 +229,7 @@ export default function AdminDashboard() {
             <Card variant="solid" className="h-full">
               <CardHeader>
                 <span className="font-display font-semibold text-sm text-slate-800">
-                  Remboursements par catégorie
+                  {t('dashboard.stats.remb_by_category')}
                 </span>
               </CardHeader>
               <CardBody className="h-80 flex flex-col justify-center items-center">
@@ -258,7 +261,7 @@ export default function AdminDashboard() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">
-                      Total
+                      {t('dashboard.stats.total')}
                     </span>
                     <span className="text-sm font-display font-bold text-slate-800">
                       {formatFCFA(generalistRefund + specialistRefund)}
@@ -283,11 +286,11 @@ export default function AdminDashboard() {
         <Card variant="solid">
           <CardHeader className="flex justify-between items-center">
             <span className="font-display font-semibold text-sm text-slate-800">
-              Derniers assurés inscrits
+              {t('dashboard.recent.latest_assures')}
             </span>
             <Link href="/admin/assures">
               <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
-                Voir tout
+                {t('dashboard.recent.see_all')}
               </Button>
             </Link>
           </CardHeader>
@@ -295,11 +298,11 @@ export default function AdminDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nom</TableHead>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Médecin</TableHead>
-                  <TableHead>Statut</TableHead>
+                  <TableHead>{t('admin.assures.col_nom')}</TableHead>
+                  <TableHead>{t('admin.assures.col_id')}</TableHead>
+                  <TableHead>{t('common.date')}</TableHead>
+                  <TableHead>{t('admin.assures.col_doctor')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -309,10 +312,10 @@ export default function AdminDashboard() {
                     <TableCell className="font-mono text-xs text-slate-500">{a.idAssure}</TableCell>
                     <TableCell className="text-xs">{formatDate('2026-06-01')}</TableCell>
                     <TableCell className="text-xs">
-                      {a.medecinTraitant ? a.medecinTraitant.nom : 'Non choisi'}
+                      {a.medecinTraitant ? a.medecinTraitant.nom : t('admin.assures.no_doctor')}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="success">Actif</Badge>
+                      <Badge variant="success">{t('admin.assures.status_active')}</Badge>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -324,11 +327,11 @@ export default function AdminDashboard() {
         <Card variant="solid">
           <CardHeader className="flex justify-between items-center">
             <span className="font-display font-semibold text-sm text-slate-800">
-              Derniers remboursements
+              {t('dashboard.recent.latest_remboursements')}
             </span>
             <Link href="/admin/remboursements">
               <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
-                Voir tout
+                {t('dashboard.recent.see_all')}
               </Button>
             </Link>
           </CardHeader>
@@ -336,18 +339,18 @@ export default function AdminDashboard() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Bénéficiaire</TableHead>
-                  <TableHead>Montant</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Mode</TableHead>
-                  <TableHead>Statut</TableHead>
+                  <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
+                  <TableHead>{t('common.date')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {latestRemboursements.map((r) => {
                   const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
                   const cons = sheet ? consultations.find((c) => c.id === sheet.consultationId) : null;
-                  const patientName = cons ? cons.assure.nom : 'Assuré';
+                  const patientName = cons ? cons.assure.nom : t('common.patient');
 
                   return (
                     <TableRow key={r.id}>
@@ -356,11 +359,11 @@ export default function AdminDashboard() {
                       <TableCell className="text-xs">{formatDate(r.dateRemboursement)}</TableCell>
                       <TableCell>
                         <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
-                          {r.modePaiement}
+                          {r.modePaiement === 'VIREMENT' ? t('admin.remboursements.modal_virement') : t('admin.remboursements.modal_cash')}
                         </Badge>
                       </TableCell>
                       <TableCell>
-                        <Badge variant="success">Remboursé</Badge>
+                        <Badge variant="success">{t('admin.remboursements.status_reimbursed')}</Badge>
                       </TableCell>
                     </TableRow>
                   );

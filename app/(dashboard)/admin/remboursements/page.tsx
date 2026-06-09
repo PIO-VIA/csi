@@ -6,11 +6,9 @@ import {
   CreditCard,
   CheckCircle,
   Clock,
-  ArrowRight,
-  Filter,
-  Search,
-  DollarSign
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { getFeuilles, getConsultations, effectuerRemboursement, getRemboursements } from '@/lib/api';
 import { FeuillemMaladie, Consultation, Remboursement } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -22,6 +20,7 @@ import Loader from '@/components/ui/Loader';
 import { formatFCFA, formatDate } from '@/lib/utils';
 
 export default function RemboursementsAdminPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -68,7 +67,7 @@ export default function RemboursementsAdminPage() {
       setSelectedFeuille(null);
       await loadData(); // Reload all data
     } catch (e) {
-      alert('Erreur lors du paiement');
+      alert(t('common.error'));
     } finally {
       setIsPaying(false);
     }
@@ -88,8 +87,8 @@ export default function RemboursementsAdminPage() {
     return {
       rateLabel: isSpecialist ? '80% (Spécialiste)' : '100% (Généraliste)',
       amount,
-      patientName: cons ? cons.assure.nom : 'Inconnu',
-      doctorName: cons ? cons.generaliste.nom : 'Inconnu',
+      patientName: cons ? cons.assure.nom : t('common.unknown'),
+      doctorName: cons ? cons.generaliste.nom : t('common.unknown'),
       type: cons?.generaliste.type || 'GENERALISTE'
     };
   };
@@ -100,7 +99,7 @@ export default function RemboursementsAdminPage() {
   // Reimbursed sheets with historical records
   const historicalPayments = remboursements.map((r) => {
     const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
-    const details = sheet ? getRefundDetails(sheet) : { patientName: 'Assuré', amount: r.montant, rateLabel: 'Calculé' };
+    const details = sheet ? getRefundDetails(sheet) : { patientName: t('common.patient'), amount: r.montant, rateLabel: 'Calculé' };
     return {
       ...r,
       refFeuille: sheet?.idFeuille || 'N/A',
@@ -119,9 +118,11 @@ export default function RemboursementsAdminPage() {
     >
       {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Remboursements & Paiements</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('admin.remboursements.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Validez les dossiers de prise en charge et effectuez les virements bancaires aux assurés
+          {t('admin.remboursements.subtitle')}
         </p>
       </div>
 
@@ -132,7 +133,9 @@ export default function RemboursementsAdminPage() {
             <span className="p-1.5 bg-warning/10 text-warning rounded-lg">
               <Clock size={16} />
             </span>
-            <span className="font-display font-semibold text-sm text-slate-800">Feuilles de maladie en attente de remboursement</span>
+            <span className="font-display font-semibold text-sm text-slate-800">
+              {t('admin.remboursements.pending_title')}
+            </span>
           </div>
           <Badge variant="warning">{pendingFeuilles.length} dossiers</Badge>
         </CardHeader>
@@ -140,12 +143,12 @@ export default function RemboursementsAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Réf. Feuille</TableHead>
-                <TableHead>Assuré</TableHead>
-                <TableHead>Acté par</TableHead>
-                <TableHead>Montant Soin</TableHead>
-                <TableHead>Taux de Prise en Charge</TableHead>
-                <TableHead>Montant à Rembourser</TableHead>
+                <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_doctor')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_rate')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_amount')}</TableHead>
                 <TableHead className="text-right">Action</TableHead>
               </TableRow>
             </TableHeader>
@@ -153,7 +156,7 @@ export default function RemboursementsAdminPage() {
               {pendingFeuilles.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
-                    Toutes les feuilles de maladie ont été remboursées.
+                    {t('admin.remboursements.pending_none')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -187,7 +190,7 @@ export default function RemboursementsAdminPage() {
                           onClick={() => handleOpenPaymentModal(f)}
                           className="px-3.5 py-1.5 text-xs"
                         >
-                          Rembourser
+                          {t('admin.remboursements.btn_reimburse')}
                         </Button>
                       </TableCell>
                     </TableRow>
@@ -206,28 +209,32 @@ export default function RemboursementsAdminPage() {
             <span className="p-1.5 bg-success/10 text-success rounded-lg">
               <CheckCircle size={16} />
             </span>
-            <span className="font-display font-semibold text-sm text-slate-800">Historique des remboursements effectués</span>
+            <span className="font-display font-semibold text-sm text-slate-800">
+              {t('admin.remboursements.history_title')}
+            </span>
           </div>
-          <Badge variant="success">Total remboursé: {formatFCFA(remboursements.reduce((sum, r) => sum + r.montant, 0))}</Badge>
+          <Badge variant="success">
+            {t('admin.remboursements.history_total')}: {formatFCFA(remboursements.reduce((sum, r) => sum + r.montant, 0))}
+          </Badge>
         </CardHeader>
         <CardBody className="p-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date Paiement</TableHead>
-                <TableHead>Réf. Feuille</TableHead>
-                <TableHead>Assuré bénéficiaire</TableHead>
-                <TableHead>Frais Médicaux</TableHead>
-                <TableHead>Montant Remboursé</TableHead>
-                <TableHead>Mode Paiement</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>{t('admin.remboursements.col_date')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {historicalPayments.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
-                    Aucun remboursement archivé.
+                    {t('admin.remboursements.history_none')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -240,11 +247,11 @@ export default function RemboursementsAdminPage() {
                     <TableCell className="font-display font-bold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                     <TableCell>
                       <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
-                        {r.modePaiement}
+                        {r.modePaiement === 'VIREMENT' ? t('admin.remboursements.modal_virement') : t('admin.remboursements.modal_cash')}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="success">Transmis</Badge>
+                      <Badge variant="success">{t('admin.remboursements.status_reimbursed')}</Badge>
                     </TableCell>
                   </TableRow>
                 ))
@@ -262,8 +269,8 @@ export default function RemboursementsAdminPage() {
             setIsModalOpen(false);
             setSelectedFeuille(null);
           }}
-          title="Validation du Remboursement"
-          description={`Dossier de soins n° ${selectedFeuille.idFeuille}`}
+          title={t('admin.remboursements.modal_title') || ''}
+          description={`${t('admin.remboursements.col_ref')}: ${selectedFeuille.idFeuille}`}
         >
           {(() => {
             const details = getRefundDetails(selectedFeuille);
@@ -272,24 +279,24 @@ export default function RemboursementsAdminPage() {
                 {/* Summary Table */}
                 <div className="bg-slate-950 p-4 border border-slate-800 rounded-2xl space-y-3 font-body text-xs text-slate-600">
                   <div className="flex justify-between">
-                    <span>Bénéficiaire :</span>
+                    <span>{t('admin.remboursements.col_assure')} :</span>
                     <span className="text-white font-semibold">{details.patientName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Acte dispensé par :</span>
+                    <span>{t('admin.remboursements.modal_acted_by')} :</span>
                     <span className="text-white">{details.doctorName}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Frais médicaux réels :</span>
+                    <span>{t('admin.remboursements.col_soin_amount')} :</span>
                     <span className="text-white">{formatFCFA(selectedFeuille.montantSoin)}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span>Taux d&apos;évaluation :</span>
+                    <span>{t('admin.remboursements.modal_rate')} :</span>
                     <span className="text-white font-semibold">{details.rateLabel}</span>
                   </div>
                   <div className="h-px bg-slate-800 my-1" />
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-display font-bold text-slate-800">Montant à rembourser :</span>
+                    <span className="font-display font-bold text-slate-800">{t('admin.remboursements.col_reimb_amount')} :</span>
                     <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
                   </div>
                 </div>
@@ -297,7 +304,7 @@ export default function RemboursementsAdminPage() {
                 {/* Mode Selector */}
                 <div className="space-y-2">
                   <label className="font-display font-semibold text-xs text-slate-350 tracking-wide">
-                    Méthode de règlement
+                    {t('admin.remboursements.modal_method')}
                   </label>
                   <div className="grid grid-cols-2 gap-4">
                     <div
@@ -308,7 +315,7 @@ export default function RemboursementsAdminPage() {
                           : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700/60'
                       }`}
                     >
-                      <span className="font-display font-semibold text-xs">Virement bancaire</span>
+                      <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_virement')}</span>
                       <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
                         paymentMode === 'VIREMENT' ? 'border-primary-500 bg-primary-600' : 'border-slate-700'
                       }`}>
@@ -324,7 +331,7 @@ export default function RemboursementsAdminPage() {
                           : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700/60'
                       }`}
                     >
-                      <span className="font-display font-semibold text-xs">Paiement Cash / Agence</span>
+                      <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_cash')}</span>
                       <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
                         paymentMode === 'CASH' ? 'border-primary-500 bg-primary-600' : 'border-slate-700'
                       }`}>
@@ -344,7 +351,7 @@ export default function RemboursementsAdminPage() {
                       setSelectedFeuille(null);
                     }}
                   >
-                    Annuler
+                    {t('common.cancel')}
                   </Button>
                   <Button
                     type="button"
@@ -352,7 +359,7 @@ export default function RemboursementsAdminPage() {
                     onClick={handleConfirmPayment}
                     isLoading={isPaying}
                   >
-                    Confirmer le Paiement
+                    {t('admin.remboursements.modal_confirm')}
                   </Button>
                 </div>
               </div>

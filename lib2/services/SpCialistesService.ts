@@ -23,7 +23,7 @@ export class SpCialistesService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById1(
+    public static getById2(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

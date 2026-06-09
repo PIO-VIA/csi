@@ -2,7 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Stethoscope, Heart, Check, Search, Phone, ArrowRight } from 'lucide-react';
+import { Stethoscope, Heart, Check, Search, Phone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getAssureById, getGeneralistes, choisirMedecinTraitant } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
@@ -12,6 +14,7 @@ import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
 
 export default function AssureMedecinPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [assureInfo, setAssureInfo] = useState<Assure | null>(null);
@@ -46,13 +49,12 @@ export default function AssureMedecinPage() {
     setSuccessMsg(null);
     try {
       await choisirMedecinTraitant(user.id, medecinId);
-      setSuccessMsg('Votre médecin traitant a été mis à jour avec succès !');
-      await loadData(); // Reload stats
+      setSuccessMsg(t('common.success'));
+      await loadData();
     } catch (e) {
       console.error(e);
     } finally {
       setIsUpdating(false);
-      // clear success message after 4s
       setTimeout(() => setSuccessMsg(null), 4000);
     }
   };
@@ -63,7 +65,7 @@ export default function AssureMedecinPage() {
   );
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
-  if (!assureInfo) return <div className="text-slate-400">Une erreur est survenue lors de la récupération de vos données.</div>;
+  if (!assureInfo) return <div className="text-slate-400">{t('common.error')}</div>;
 
   const currentDoctor = assureInfo.medecinTraitant;
 
@@ -74,9 +76,11 @@ export default function AssureMedecinPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mon Médecin Traitant</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('assure.medecin.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Déclarez votre médecin généraliste référent pour assurer un remboursement optimal de vos soins
+          {t('assure.medecin.subtitle')}
         </p>
       </div>
 
@@ -99,9 +103,9 @@ export default function AssureMedecinPage() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] font-display font-bold text-success uppercase tracking-wider">
-                      Médecin Traitant Actuel
+                      {t('assure.medecin.current_doctor')}
                     </span>
-                    <Badge variant="success">Déclaré</Badge>
+                    <Badge variant="success">{t('common.active')}</Badge>
                   </div>
                   <h3 className="font-display font-bold text-base text-white">
                     Dr. {currentDoctor.nom}
@@ -127,13 +131,13 @@ export default function AssureMedecinPage() {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[10px] font-display font-bold text-warning uppercase tracking-wider">
-                    Attention
+                    {t('assure.dashboard.no_doctor')}
                   </span>
                   <h3 className="font-display font-bold text-sm text-slate-800">
-                    Aucun médecin traitant déclaré
+                    {t('assure.medecin.no_doctor')}
                   </h3>
-                  <p className="font-body text-xs text-slate-455 leading-relaxed max-w-md">
-                    Sans médecin traitant généraliste, vos feuilles de maladie ne pourront pas être évaluées à 100%. Veuillez en choisir un ci-dessous.
+                  <p className="font-body text-xs text-slate-400 leading-relaxed max-w-md">
+                    {t('assure.medecin.no_doctor_desc')}
                   </p>
                 </div>
               </div>
@@ -146,10 +150,10 @@ export default function AssureMedecinPage() {
       <div className="space-y-4 pt-4 border-t border-slate-200/80">
         <div>
           <h2 className="font-display font-bold text-sm text-slate-800 uppercase tracking-wider">
-            Médecins Généralistes Agréés
+            {t('assure.medecin.available_doctors')}
           </h2>
           <p className="font-body text-xs text-slate-400">
-            Sélectionnez un médecin parmi la liste nationale des praticiens de premier recours
+            {t('assure.medecin.choose_doctor')}
           </p>
         </div>
 
@@ -162,7 +166,7 @@ export default function AssureMedecinPage() {
               </span>
               <input
                 type="text"
-                placeholder="Rechercher par nom de médecin, matricule..."
+                placeholder={t('assure.medecin.search_placeholder')}
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="dashboard-search text-xs"
@@ -175,7 +179,7 @@ export default function AssureMedecinPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {filtered.length === 0 ? (
             <div className="col-span-full py-8 text-center text-slate-500 text-xs font-body">
-              Aucun médecin généraliste trouvé.
+              {t('admin.medecins.not_found')}
             </div>
           ) : (
             filtered.map((g) => {
@@ -200,7 +204,7 @@ export default function AssureMedecinPage() {
                       </div>
                       {isSelected && (
                         <Badge variant="success" className="scale-90 origin-right">
-                          Sélectionné
+                          {t('assure.medecin.selected')}
                         </Badge>
                       )}
                     </div>
@@ -210,7 +214,7 @@ export default function AssureMedecinPage() {
                         <Phone size={12} className="text-slate-600" />
                         <span>{g.numTelephone}</span>
                       </div>
-                      <div>Type: Généraliste Référent</div>
+                      <div>Type: {t('admin.medecins.generaliste')}</div>
                     </div>
 
                     <Button
@@ -222,10 +226,10 @@ export default function AssureMedecinPage() {
                     >
                       {isSelected ? (
                         <span className="flex items-center justify-center gap-1">
-                          <Check size={12} /> Déclaré
+                          <Check size={12} /> {t('assure.medecin.selected')}
                         </span>
                       ) : (
-                        <span>Déclarer comme médecin</span>
+                        <span>{t('assure.medecin.select')}</span>
                       )}
                     </Button>
                   </CardBody>

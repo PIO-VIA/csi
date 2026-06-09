@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Search, Calendar, Plus, Activity, User } from 'lucide-react';
+import { Calendar, Search, Activity, User, ShieldAlert, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByMedecin } from '@/lib/api';
 import { Consultation } from '@/types';
@@ -13,8 +14,11 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
+import Link from 'next/link';
+import { Plus } from 'lucide-react';
 
 export default function MedecinConsultationsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -50,14 +54,16 @@ export default function MedecinConsultationsPage() {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Historique des Consultations</h1>
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+            {t('medecin.consultations.title')}
+          </h1>
           <p className="font-body text-sm text-slate-500 mt-1">
-            Visualisez et gérez l&apos;ensemble de vos actes médicaux enregistrés
+            {t('medecin.consultations.subtitle')}
           </p>
         </div>
         <Link href="/medecin/consultations/nouvelle">
           <Button variant="primary" leftIcon={<Plus size={16} />}>
-            Nouvelle consultation
+            {t('medecin.dashboard.new_consultation')}
           </Button>
         </Link>
       </div>
@@ -70,7 +76,7 @@ export default function MedecinConsultationsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par nom de patient, diagnostic..."
+              placeholder={t('medecin.consultations.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -84,18 +90,18 @@ export default function MedecinConsultationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date & Heure</TableHead>
-                <TableHead>Patient</TableHead>
-                <TableHead>Motif & Diagnostic</TableHead>
-                <TableHead>Prescriptions</TableHead>
-                <TableHead>Feuille de maladie</TableHead>
+                <TableHead>{t('medecin.consultations.col_date')}</TableHead>
+                <TableHead>{t('medecin.consultations.col_patient')}</TableHead>
+                <TableHead>{t('medecin.consultations.col_motif')}</TableHead>
+                <TableHead>{t('dashboard.stats.prescriptions')}</TableHead>
+                <TableHead>{t('medecin.consultations.col_feuille')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 font-body">
-                    Aucune consultation enregistrée.
+                    {t('medecin.consultations.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -116,19 +122,19 @@ export default function MedecinConsultationsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-xs max-w-sm truncate" title={c.motif || ''}>
-                      {c.motif || 'Non renseigné'}
+                      {c.motif || t('medecin.consultations.not_set')}
                     </TableCell>
                     <TableCell>
                       {c.prescriptions && c.prescriptions.length > 0 ? (
                         <div className="flex flex-wrap gap-1">
                           {c.prescriptions.map((p) => (
                             <Badge key={p.id} variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'} className="scale-90 origin-left">
-                              {p.type === 'MEDICAMENT' ? p.medicament : 'Réf. Spécialiste'}
+                              {p.type === 'MEDICAMENT' ? p.medicament : t('medecin.prescriptions.type_specialiste')}
                             </Badge>
                           ))}
                         </div>
                       ) : (
-                        <span className="text-slate-500 text-xs italic">Aucune</span>
+                        <span className="text-slate-500 text-xs italic">{t('common.none')}</span>
                       )}
                     </TableCell>
                     <TableCell>
@@ -137,7 +143,9 @@ export default function MedecinConsultationsPage() {
                           {c.feuilleMaladie.idFeuille}
                         </Badge>
                       ) : (
-                        <span className="text-slate-500 text-xs italic">Non générée</span>
+                        <span className="text-slate-500 text-xs italic">
+                          {t('medecin.consultations.no_feuille')}
+                        </span>
                       )}
                     </TableCell>
                   </TableRow>

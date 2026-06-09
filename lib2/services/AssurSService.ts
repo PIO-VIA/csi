@@ -13,7 +13,7 @@ export class AssurSService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById(
+    public static getById1(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

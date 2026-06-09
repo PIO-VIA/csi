@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Pill, Search, Calendar, User } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByMedecin } from '@/lib/api';
 import { Consultation, Prescription } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function MedecinPrescriptionsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<(Prescription & { date: string; patient: string })[]>([]);
@@ -60,9 +63,11 @@ export default function MedecinPrescriptionsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Prescriptions Émises</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('medecin.prescriptions.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Suivi historique des médicaments prescrits et des orientations vers des spécialistes
+          {t('medecin.prescriptions.subtitle')}
         </p>
       </div>
 
@@ -74,7 +79,7 @@ export default function MedecinPrescriptionsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par patient, médicament, motif..."
+              placeholder={t('medecin.prescriptions.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -88,17 +93,17 @@ export default function MedecinPrescriptionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date d&apos;émission</TableHead>
-                <TableHead>Patient bénéficiaire</TableHead>
-                <TableHead>Type d&apos;ordonnance</TableHead>
-                <TableHead>Détails / Posologie / Réf.</TableHead>
+                <TableHead>{t('medecin.prescriptions.col_date')}</TableHead>
+                <TableHead>{t('medecin.prescriptions.col_patient')}</TableHead>
+                <TableHead>{t('medecin.prescriptions.col_type')}</TableHead>
+                <TableHead>{t('medecin.prescriptions.col_details')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-12 text-slate-500 font-body">
-                    Aucune prescription enregistrée.
+                    {t('medecin.prescriptions.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -112,7 +117,7 @@ export default function MedecinPrescriptionsPage() {
                     </TableCell>
                     <TableCell className="text-xs font-semibold">
                       <span className="flex items-center gap-1.5">
-                        <span className="p-1 bg-slate-850 rounded text-slate-450">
+                        <span className="p-1 bg-slate-850 rounded text-slate-400">
                           <User size={12} />
                         </span>
                         <span>{p.patient}</span>
@@ -120,21 +125,21 @@ export default function MedecinPrescriptionsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'}>
-                        {p.type === 'MEDICAMENT' ? 'Médicaments' : 'Réf. Spécialiste'}
+                        {p.type === 'MEDICAMENT' ? t('medecin.prescriptions.type_medicament') : t('medecin.prescriptions.type_specialiste')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs leading-relaxed">
                       {p.type === 'MEDICAMENT' ? (
                         <div>
                           <span className="font-semibold text-sm">{p.medicament}</span> <br />
-                          <span className="text-slate-400 italic text-[11px]">Posologie : {p.posologie}</span>
+                          <span className="text-slate-400 italic text-[11px]">{t('medecin.nouvelle_consultation.posologie')} : {p.posologie}</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="font-semibold text-sm font-display">Orientation Spécialiste</span> <br />
+                          <span className="font-semibold text-sm font-display">{t('medecin.prescriptions.type_specialiste')}</span> <br />
                           <span className="text-slate-400 text-[11px]">
-                            Médecin matricule : <span className="font-mono text-primary-300 font-medium">{p.matriculeMedecin}</span> <br />
-                            Motif : {p.motif}
+                            {t('medecin.nouvelle_consultation.specialiste_matricule')} : <span className="font-mono text-primary-300 font-medium">{p.matriculeMedecin}</span> <br />
+                            {t('medecin.nouvelle_consultation.referral_motif')} : {p.motif}
                           </span>
                         </div>
                       )}

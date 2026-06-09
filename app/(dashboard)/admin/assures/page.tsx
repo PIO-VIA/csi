@@ -17,7 +17,9 @@ import {
   Smartphone,
   Droplet
 } from 'lucide-react';
-import { getAssures, getGeneralistes, createAssure, updateAssure, deleteAssure, getApiErrorMessage } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
+import { getAssures, getGeneralistes, createAssure, deleteAssure, getApiErrorMessage } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -41,6 +43,7 @@ const assureFormSchema = z.object({
 type AssureFormValues = z.infer<typeof assureFormSchema>;
 
 export default function AssuresAdminPage() {
+  const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
   const [generalistes, setGeneralistes] = useState<Medecin[]>([]);
@@ -90,7 +93,6 @@ export default function AssuresAdminPage() {
   const onSubmit = async (data: AssureFormValues) => {
     setSubmitError(null);
     try {
-      // Find selected doctor object
       const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
       
       const payload: Partial<Assure> = {
@@ -107,14 +109,14 @@ export default function AssuresAdminPage() {
       await createAssure(payload);
       setIsModalOpen(false);
       reset();
-      loadData(); // reload
+      loadData();
     } catch (e) {
-      setSubmitError('Une erreur est survenue lors de la création de l\'assuré.');
+      setSubmitError(t('common.error'));
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cet assuré ?')) return;
+    if (!confirm(t('admin.assures.delete_confirm') || 'Supprimer ?')) return;
     try {
       await deleteAssure(id);
       loadData();
@@ -163,13 +165,15 @@ export default function AssuresAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Gestion des Assurés</h1>
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+            {t('admin.assures.title')}
+          </h1>
           <p className="font-body text-sm text-slate-500 mt-1">
-            Gérez la liste des bénéficiaires et affectez leurs médecins traitants
+            {t('admin.assures.subtitle')}
           </p>
         </div>
         <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
-          Nouvel assuré
+          {t('admin.assures.new_assure')}
         </Button>
       </div>
 
@@ -183,7 +187,7 @@ export default function AssuresAdminPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par nom, ID assuré, téléphone..."
+              placeholder={t('admin.assures.search_placeholder')}
               value={searchTerm}
               onChange={(e) => {
                 setSearchTerm(e.target.value);
@@ -204,8 +208,8 @@ export default function AssuresAdminPage() {
               }}
               className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tous les médecins</option>
-              <option value="NONE">Sans médecin traitant</option>
+              <option value="ALL">{t('admin.assures.filter_all_doctors')}</option>
+              <option value="NONE">{t('admin.assures.filter_no_doctor')}</option>
               {generalistes.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.nom}
@@ -225,7 +229,7 @@ export default function AssuresAdminPage() {
               }}
               className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
-              <option value="ALL">Tous les groupes</option>
+              <option value="ALL">{t('admin.assures.filter_all_blood')}</option>
               <option value="A+">A+</option>
               <option value="A-">A-</option>
               <option value="B+">B+</option>
@@ -246,11 +250,11 @@ export default function AssuresAdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead className="w-12 text-center">#</TableHead>
-                <TableHead>ID Assuré</TableHead>
-                <TableHead>Nom</TableHead>
-                <TableHead>Téléphone</TableHead>
-                <TableHead>Profession</TableHead>
-                <TableHead>Médecin Traitant</TableHead>
+                <TableHead>{t('admin.assures.col_id')}</TableHead>
+                <TableHead>{t('admin.assures.col_nom')}</TableHead>
+                <TableHead>{t('admin.assures.col_telephone')}</TableHead>
+                <TableHead>{t('admin.assures.col_profession')}</TableHead>
+                <TableHead>{t('admin.assures.col_doctor')}</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -258,7 +262,7 @@ export default function AssuresAdminPage() {
               {paginatedAssures.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
-                    Aucun assuré trouvé avec ces critères.
+                    {t('admin.assures.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -284,7 +288,7 @@ export default function AssuresAdminPage() {
                       {a.medecinTraitant ? (
                         <span className="text-slate-700 font-medium">{a.medecinTraitant.nom}</span>
                       ) : (
-                        <Badge variant="warning">Non affecté</Badge>
+                        <Badge variant="warning">{t('admin.assures.no_doctor')}</Badge>
                       )}
                     </TableCell>
                     <TableCell className="text-right">
@@ -328,71 +332,71 @@ export default function AssuresAdminPage() {
           setIsModalOpen(false);
           reset();
         }}
-        title="Création de Dossier Assuré"
-        description="Remplissez ce formulaire pour inscrire un nouvel assuré social."
+        title={t('admin.assures.new_assure') || 'Nouveau'}
+        description={t('admin.assures.form_desc') || ''}
         size="lg"
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
-            label="Nom complet de l'assuré"
+            label={t('admin.assures.form_name') || 'Nom'}
             placeholder="Ex: Jean-Marc Fosso"
-            error={errors.nom?.message}
+            error={errors.nom?.message ? String(errors.nom.message) : undefined}
             {...register('nom')}
           />
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Date de naissance"
+              label={t('admin.assures.form_dob') || 'DOB'}
               type="date"
-              error={errors.dateNaissance?.message}
+              error={errors.dateNaissance?.message ? String(errors.dateNaissance.message) : undefined}
               {...register('dateNaissance')}
             />
 
             <div className="form-group">
-              <label className="form-label">Sexe</label>
+              <label className="form-label">{t('admin.assures.form_sex') || 'Sexe'}</label>
               <select
                 className="dashboard-input"
                 {...register('sexe')}
               >
-                <option value="Homme">Homme</option>
-                <option value="Femme">Femme</option>
-                <option value="Autre">Autre</option>
+                <option value="Homme">{t('admin.assures.sex_male')}</option>
+                <option value="Femme">{t('admin.assures.sex_female')}</option>
+                <option value="Autre">{t('admin.assures.sex_other')}</option>
               </select>
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <Input
-              label="Numéro de téléphone"
+              label={t('admin.assures.form_phone') || 'Phone'}
               placeholder="+237 6xx xx xx xx"
-              error={errors.numTelephone?.message}
+              error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
               {...register('numTelephone')}
             />
 
             <Input
-              label="Profession"
+              label={t('admin.assures.form_profession') || 'Profession'}
               placeholder="Ex: Comptable, Enseignant"
-              error={errors.profession?.message}
+              error={errors.profession?.message ? String(errors.profession.message) : undefined}
               {...register('profession')}
             />
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             <div className="form-group">
-              <label className="form-label">Statut matrimonial</label>
+              <label className="form-label">{t('admin.assures.form_matrimonial') || 'Statut'}</label>
               <select
                 className="dashboard-input"
                 {...register('statutMatrimoniale')}
               >
-                <option value="Célibataire">Célibataire</option>
-                <option value="Marié">Marié(e)</option>
-                <option value="Divorcé">Divorcé(e)</option>
-                <option value="Veuf">Veuf/Veuve</option>
+                <option value="Célibataire">{t('admin.assures.matrimonial_single')}</option>
+                <option value="Marié">{t('admin.assures.matrimonial_married')}</option>
+                <option value="Divorcé">{t('admin.assures.matrimonial_divorced')}</option>
+                <option value="Veuf">{t('admin.assures.matrimonial_widowed')}</option>
               </select>
             </div>
 
             <div className="form-group">
-              <label className="form-label">Groupe sanguin</label>
+              <label className="form-label">{t('auth.blood_group')}</label>
               <select
                 className="dashboard-input"
                 {...register('groupeSanguin')}
@@ -410,12 +414,12 @@ export default function AssuresAdminPage() {
           </div>
 
           <div className="form-group">
-            <label className="form-label">Médecin traitant (Généraliste)</label>
+            <label className="form-label">{t('admin.assures.form_doctor')}</label>
             <select
               className="dashboard-input"
               {...register('medecinTraitantId')}
             >
-              <option value="">-- Choisir un médecin --</option>
+              <option value="">-- {t('admin.assures.form_doctor_select')} --</option>
               {generalistes.map((g) => (
                 <option key={g.id} value={g.id}>
                   {g.nom} ({g.matricule})
@@ -439,10 +443,10 @@ export default function AssuresAdminPage() {
                 reset();
               }}
             >
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button type="submit" variant="primary">
-              Enregistrer l&apos;assuré
+              {t('admin.assures.form_submit')}
             </Button>
           </div>
         </form>

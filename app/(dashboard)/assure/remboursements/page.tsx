@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { CreditCard, DollarSign, Calendar, Search } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getFeuillesByAssure } from '@/lib/api';
 import { FeuillemMaladie, Remboursement } from '@/types';
@@ -14,6 +16,7 @@ import { formatDate, formatFCFA } from '@/lib/utils';
 import StatCard from '@/components/ui/StatCard';
 
 export default function AssureRemboursementsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [remboursements, setRemboursements] = useState<(Remboursement & { refFeuille: string; montantSoin: number })[]>([]);
@@ -61,22 +64,24 @@ export default function AssureRemboursementsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Suivi de mes Remboursements</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('assure.remboursements.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Suivi des virements bancaires et règlements en agence effectués par le CSI
+          {t('assure.remboursements.subtitle')}
         </p>
       </div>
 
       {/* KPI */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 max-w-2xl">
         <StatCard
-          label="Total Remboursé"
+          label={t('assure.dashboard.balance')}
           value={formatFCFA(totalRembourse)}
           icon={<DollarSign size={20} />}
           color="success"
         />
         <StatCard
-          label="Dossiers Remboursés"
+          label={t('assure.remboursements.col_feuille')}
           value={`${remboursements.length} dossiers`}
           icon={<CreditCard size={20} />}
           color="primary"
@@ -91,7 +96,7 @@ export default function AssureRemboursementsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par référence de feuille..."
+              placeholder={t('assure.remboursements.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -105,19 +110,19 @@ export default function AssureRemboursementsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date du Paiement</TableHead>
-                <TableHead>Référence Feuille</TableHead>
-                <TableHead>Frais Médicaux</TableHead>
-                <TableHead>Montant Remboursé</TableHead>
-                <TableHead>Mode de Règlement</TableHead>
-                <TableHead>Statut</TableHead>
+                <TableHead>{t('assure.remboursements.col_date')}</TableHead>
+                <TableHead>{t('assure.remboursements.col_feuille')}</TableHead>
+                <TableHead>{t('admin.remboursements.col_amount')}</TableHead>
+                <TableHead>{t('assure.remboursements.col_amount')}</TableHead>
+                <TableHead>{t('assure.remboursements.col_mode')}</TableHead>
+                <TableHead>{t('assure.remboursements.col_status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-body">
-                    Aucun remboursement enregistré.
+                    {t('assure.remboursements.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -134,11 +139,11 @@ export default function AssureRemboursementsPage() {
                     <TableCell className="font-display font-bold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                     <TableCell>
                       <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
-                        {r.modePaiement}
+                        {r.modePaiement === 'VIREMENT' ? t('assure.remboursements.mode_virement') : t('assure.remboursements.mode_cash')}
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant="success">Payé / Reçu</Badge>
+                      <Badge variant="success">{t('assure.remboursements.status_done')}</Badge>
                     </TableCell>
                   </TableRow>
                 ))

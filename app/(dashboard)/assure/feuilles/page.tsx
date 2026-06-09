@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { FileText, Search, Calendar, ShieldAlert } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getFeuillesByAssure } from '@/lib/api';
 import { FeuillemMaladie } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate, formatFCFA } from '@/lib/utils';
 
 export default function AssureFeuillesPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
@@ -46,9 +49,11 @@ export default function AssureFeuillesPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mes Feuilles de Maladie</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('assure.feuilles.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Suivez l&apos;état d&apos;évaluation de vos dossiers de remboursement de soins
+          {t('assure.feuilles.subtitle')}
         </p>
       </div>
 
@@ -60,7 +65,7 @@ export default function AssureFeuillesPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par référence de feuille..."
+              placeholder={t('assure.feuilles.search_placeholder') || t('common.search')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -74,17 +79,17 @@ export default function AssureFeuillesPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Référence Feuille</TableHead>
-                <TableHead>Montant de Soin déclaré</TableHead>
-                <TableHead>Remboursement évalué</TableHead>
-                <TableHead>Statut du dossier</TableHead>
+                <TableHead>{t('assure.feuilles.col_id')}</TableHead>
+                <TableHead>{t('assure.feuilles.col_amount')}</TableHead>
+                <TableHead>{t('assure.feuilles.col_status')}</TableHead>
+                <TableHead>{t('common.status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={4} className="text-center py-12 text-slate-500 font-body">
-                    Aucune feuille de maladie enregistrée.
+                    {t('assure.feuilles.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -103,12 +108,12 @@ export default function AssureFeuillesPage() {
                       {f.remboursement ? (
                         <span className="text-success font-semibold">+{formatFCFA(f.remboursement.montant)}</span>
                       ) : (
-                        <span className="text-slate-500 italic">En attente</span>
+                        <span className="text-slate-500 italic">{t('admin.remboursements.status_pending')}</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <Badge variant={f.estRembourse ? 'success' : 'warning'}>
-                        {f.estRembourse ? 'Traité & Remboursé' : 'En attente d\'évaluation'}
+                        {f.estRembourse ? t('assure.feuilles.reimbursed') : t('assure.feuilles.pending')}
                       </Badge>
                     </TableCell>
                   </TableRow>

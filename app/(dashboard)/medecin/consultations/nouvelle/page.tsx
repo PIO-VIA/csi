@@ -7,16 +7,13 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
-  Stethoscope,
   Plus,
   Trash2,
-  Check,
   ArrowLeft,
-  Pill,
-  Activity,
-  FileText,
   AlertCircle
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getAssures, getMedecins, createConsultation } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
@@ -43,6 +40,7 @@ interface TempPrescription {
 }
 
 export default function NouvelleConsultationPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -101,7 +99,7 @@ export default function NouvelleConsultationPage() {
     setPrescError(null);
     if (prescType === 'MEDICAMENT') {
       if (!medName.trim() || !posology.trim()) {
-        setPrescError('Veuillez renseigner le nom du médicament et sa posologie.');
+        setPrescError(t('medecin.prescriptions.form_error_med') || 'Veuillez renseigner le nom du médicament et sa posologie.');
         return;
       }
       setPrescriptions([
@@ -112,7 +110,7 @@ export default function NouvelleConsultationPage() {
       setPosology('');
     } else {
       if (!specMatricule || !specMotif.trim()) {
-        setPrescError('Veuillez sélectionner le spécialiste ciblé et renseigner le motif.');
+        setPrescError(t('medecin.prescriptions.form_error_spec') || 'Veuillez sélectionner le spécialiste ciblé et renseigner le motif.');
         return;
       }
       setPrescriptions([
@@ -144,7 +142,7 @@ export default function NouvelleConsultationPage() {
       await createConsultation(payload);
       router.push('/medecin/consultations');
     } catch (e) {
-      setSubmitError('Une erreur est survenue lors de l\'enregistrement de la consultation.');
+      setSubmitError(t('common.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -164,14 +162,16 @@ export default function NouvelleConsultationPage() {
         className="flex items-center gap-2 text-xs font-display text-slate-500 hover:text-slate-800 transition w-fit group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition" />
-        <span>Retour</span>
+        <span>{t('common.back')}</span>
       </button>
 
       {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Nouvelle Consultation</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('medecin.dashboard.new_consultation')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Déclarez un acte de soin et préparez les ordonnances associées
+          {t('medecin.consultations.new_subtitle') || 'Déclarez un acte de soin et préparez les ordonnances associées'}
         </p>
       </div>
 
@@ -183,40 +183,40 @@ export default function NouvelleConsultationPage() {
             <Card>
               <CardBody className="p-5 space-y-5">
                 <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
-                  Détails de l&apos;Acte Médical
+                  {t('medecin.consultations.form_title') || 'Détails de l\'Acte Médical'}
                 </h3>
                 <div className="h-px bg-slate-800/80" />
 
                 {/* Patient Select */}
                 <div className="form-group">
-                  <label className="form-label-inline">Sélectionner l&apos;Assuré</label>
+                  <label className="form-label-inline">{t('common.patient')}</label>
                   <select
                     className="dashboard-input"
                     {...register('assureId')}
                   >
-                    <option value="">-- Choisir un patient --</option>
+                    <option value="">-- {t('medecin.consultations.choose_patient') || 'Choisir un patient'} --</option>
                     {assures.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.nom} ({a.idAssure})
                       </option>
                     ))}
                   </select>
-                  {errors.assureId && <p className="text-xs text-danger font-medium">{errors.assureId.message}</p>}
+                  {errors.assureId && <p className="text-xs text-danger font-medium">{String(errors.assureId.message)}</p>}
                 </div>
 
                 {/* Diagnostic motif */}
                 <div className="form-group">
-                  <label className="form-label-inline">Motif & Diagnostic</label>
+                  <label className="form-label-inline">{t('medecin.consultations.col_motif')}</label>
                   <textarea
                     rows={4}
-                    placeholder="Saisissez ici les symptômes observés, le diagnostic final posé ou les actes prodigués..."
+                    placeholder={t('medecin.consultations.motif_placeholder') || "Saisissez ici les symptômes..."}
                     className="dashboard-input resize-none"
                     {...register('motif')}
                   />
-                  {errors.motif && <p className="text-xs text-danger font-medium">{errors.motif.message}</p>}
+                  {errors.motif && <p className="text-xs text-danger font-medium">{String(errors.motif.message)}</p>}
                 </div>
 
-                {/* Feuille de maladie — disponible pour tous les praticiens */}
+                {/* Feuille de maladie */}
                 <div className="pt-4 border-t border-slate-200 space-y-4">
                   <label className="flex items-center gap-3 cursor-pointer group select-none">
                     <input
@@ -225,7 +225,7 @@ export default function NouvelleConsultationPage() {
                       {...register('creerFeuille')}
                     />
                     <span className="font-display font-semibold text-xs text-slate-700 group-hover:text-slate-900 transition">
-                      Générer la feuille de maladie numérique
+                      {t('medecin.consultations.generate_sheet') || 'Générer la feuille de maladie numérique'}
                     </span>
                   </label>
 
@@ -238,11 +238,11 @@ export default function NouvelleConsultationPage() {
                         className="pl-7 overflow-hidden"
                       >
                         <Input
-                          label="Montant total des soins (FCFA)"
+                          label={t('medecin.consultations.soin_amount') || 'Montant total des soins (FCFA)'}
                           type="number"
                           placeholder="Ex: 15000"
-                          error={errors.montantSoin?.message}
-                            {...register('montantSoin', { valueAsNumber: true })}
+                          error={errors.montantSoin?.message ? String(errors.montantSoin.message) : undefined}
+                          {...register('montantSoin', { valueAsNumber: true })}
                         />
                       </motion.div>
                     )}
@@ -259,19 +259,19 @@ export default function NouvelleConsultationPage() {
             <Card>
               <CardBody className="p-5 space-y-5">
                 <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
-                  Prescription & Ordonnance
+                  {t('dashboard.stats.prescriptions')}
                 </h3>
                 <div className="h-px bg-slate-800/80" />
 
                 {/* Current order list */}
                 <div className="space-y-3">
                   <span className="text-[10px] font-display font-bold text-slate-500 tracking-wider uppercase block">
-                    Médicaments & Références écrits ({prescriptions.length})
+                    {t('medecin.prescriptions.written_presc') || 'Médicaments & Références écrits'} ({prescriptions.length})
                   </span>
                   
                   {prescriptions.length === 0 ? (
                     <div className="p-4 border border-dashed border-slate-800 rounded-2xl text-center text-xs text-slate-500 font-body">
-                      Aucun produit prescrit. Utilisez le sélecteur ci-dessous pour ajouter.
+                      {t('medecin.prescriptions.none_added') || 'Aucun produit prescrit.'}
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
@@ -281,11 +281,11 @@ export default function NouvelleConsultationPage() {
                             {p.type === 'MEDICAMENT' ? (
                               <div>
                                 <span className="font-semibold text-white">{p.medicament}</span> <br />
-                                <span className="text-slate-500 text-[10px] italic">Posologie: {p.posologie}</span>
+                                <span className="text-slate-500 text-[10px] italic">{t('medecin.prescriptions.posologie')}: {p.posologie}</span>
                               </div>
                             ) : (
                               <div>
-                                <span className="font-semibold text-white">Réf Specialist ({p.matriculeMedecin})</span> <br />
+                                <span className="font-semibold text-white">{t('medecin.prescriptions.type_spec')} ({p.matriculeMedecin})</span> <br />
                                 <span className="text-slate-500 text-[10px] truncate block">{p.motif}</span>
                               </div>
                             )}
@@ -314,7 +314,7 @@ export default function NouvelleConsultationPage() {
                         prescType === 'MEDICAMENT' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      Médicament
+                      {t('medecin.prescriptions.type_med')}
                     </button>
                     <button
                       type="button"
@@ -323,21 +323,21 @@ export default function NouvelleConsultationPage() {
                         prescType === 'SPECIALISTE' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
-                      Réf. Spécialiste
+                      {t('medecin.prescriptions.type_spec')}
                     </button>
                   </div>
 
                   {prescType === 'MEDICAMENT' ? (
                     <div className="space-y-3">
                       <Input
-                        label="Nom du médicament"
+                        label={t('medecin.prescriptions.med_name') || 'Nom du médicament'}
                         placeholder="Ex: Paracétamol 500mg"
                         value={medName}
                         onChange={(e) => setMedName(e.target.value)}
                         className="py-2.5 text-xs"
                       />
                       <Input
-                        label="Posologie"
+                        label={t('medecin.prescriptions.posologie') || 'Posologie'}
                         placeholder="Ex: 1 cp matin et soir pendant 5 jours"
                         value={posology}
                         onChange={(e) => setPosology(e.target.value)}
@@ -347,13 +347,13 @@ export default function NouvelleConsultationPage() {
                   ) : (
                     <div className="space-y-3">
                       <div className="form-group">
-                        <label className="font-display font-medium text-[11px] text-slate-350">Médecin spécialiste cible</label>
+                        <label className="font-display font-medium text-[11px] text-slate-350">{t('medecin.prescriptions.target_spec')}</label>
                         <select
                           value={specMatricule}
                           onChange={(e) => setSpecMatricule(e.target.value)}
                           className="w-full px-3 py-2 bg-slate-950 border border-slate-850 rounded-xl font-body text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40"
                         >
-                          <option value="">-- Choisir un spécialiste --</option>
+                          <option value="">-- {t('medecin.prescriptions.choose_spec') || 'Choisir un spécialiste'} --</option>
                           {specialists.map((s) => (
                             <option key={s.id} value={s.matricule}>
                               Dr. {s.nom} ({s.domaineSpecialisation})
@@ -362,7 +362,7 @@ export default function NouvelleConsultationPage() {
                         </select>
                       </div>
                       <Input
-                        label="Motif du renvoi"
+                        label={t('medecin.prescriptions.referral_reason') || 'Motif du renvoi'}
                         placeholder="Ex: Évaluation cardiaque complémentaire"
                         value={specMotif}
                         onChange={(e) => setSpecMotif(e.target.value)}
@@ -384,7 +384,7 @@ export default function NouvelleConsultationPage() {
                     onClick={handleAddPrescription}
                     className="w-full text-xs py-2"
                   >
-                    Ajouter à l&apos;ordonnance
+                    {t('medecin.prescriptions.add_btn')}
                   </Button>
                 </div>
               </CardBody>
@@ -405,14 +405,14 @@ export default function NouvelleConsultationPage() {
             variant="ghost"
             onClick={() => router.back()}
           >
-            Annuler
+            {t('common.cancel')}
           </Button>
           <Button
             type="submit"
             variant="primary"
             isLoading={isSubmitting}
           >
-            Enregistrer la consultation
+            {t('medecin.consultations.save_btn') || 'Enregistrer la consultation'}
           </Button>
         </div>
       </form>

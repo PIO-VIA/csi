@@ -14,11 +14,12 @@ import {
   Droplet,
   Smartphone,
   Briefcase,
-  Users
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { getAssureById, getConsultationsByAssure, getFeuillesByAssure } from '@/lib/api';
-import { Assure, Consultation, FeuillemMaladie, Prescription, Remboursement } from '@/types';
-import Card, { CardHeader, CardBody } from '@/components/ui/Card';
+import { Assure, Consultation, FeuillemMaladie, Prescription } from '@/types';
+import Card, { CardBody } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
@@ -30,6 +31,7 @@ interface PageProps {
 }
 
 export default function AssureDetailPage({ params }: PageProps) {
+  const { t } = useTranslation();
   const unwrappedParams = use(params);
   const assureId = Number(unwrappedParams.id);
 
@@ -61,14 +63,12 @@ export default function AssureDetailPage({ params }: PageProps) {
   }, [assureId]);
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
-  if (!assure) return <div className="text-center py-12 text-slate-400">Assuré non trouvé</div>;
+  if (!assure) return <div className="text-center py-12 text-slate-400">{t('admin.assures.not_found')}</div>;
 
-  // Extract all prescriptions from consultations
   const prescriptions: Prescription[] = consultations.flatMap((c) =>
     (c.prescriptions || []).map((p) => ({ ...p, date: c.date, medecin: c.generaliste.nom }))
   );
 
-  // Extract all refunds from sheets
   const remboursements = feuilles
     .filter((f) => f.estRembourse && f.remboursement)
     .map((f) => ({
@@ -78,10 +78,10 @@ export default function AssureDetailPage({ params }: PageProps) {
     }));
 
   const tabs = [
-    { id: 'consultations', label: 'Consultations', count: consultations.length, icon: <Calendar size={15} /> },
-    { id: 'prescriptions', label: 'Prescriptions', count: prescriptions.length, icon: <Pill size={15} /> },
-    { id: 'feuilles', label: 'Feuilles de Maladie', count: feuilles.length, icon: <FileText size={15} /> },
-    { id: 'remboursements', label: 'Remboursements', count: remboursements.length, icon: <CreditCard size={15} /> },
+    { id: 'consultations', label: t('medecin.dashboard.consultations'), count: consultations.length, icon: <Calendar size={15} /> },
+    { id: 'prescriptions', label: t('dashboard.stats.prescriptions'), count: prescriptions.length, icon: <Pill size={15} /> },
+    { id: 'feuilles', label: t('admin.remboursements.col_feuille'), count: feuilles.length, icon: <FileText size={15} /> },
+    { id: 'remboursements', label: t('assure.dashboard.my_remboursements'), count: remboursements.length, icon: <CreditCard size={15} /> },
   ] as const;
 
   return (
@@ -93,7 +93,7 @@ export default function AssureDetailPage({ params }: PageProps) {
       {/* Back Link */}
       <Link href="/admin/assures">
         <Button variant="ghost" size="sm" leftIcon={<ArrowLeft size={14} />}>
-          Retour à la liste
+          {t('common.back')}
         </Button>
       </Link>
 
@@ -113,37 +113,37 @@ export default function AssureDetailPage({ params }: PageProps) {
                 <h2 className="font-display font-bold text-lg text-slate-900">{assure.nom}</h2>
                 <span className="font-mono text-xs text-accent-400 font-medium">{assure.idAssure}</span>
                 <div className="pt-2">
-                  <Badge variant="success">Assuré Social</Badge>
+                  <Badge variant="success">{t('admin.assures.status_active')}</Badge>
                 </div>
               </div>
 
               {/* Personal Details */}
               <div className="w-full border-t border-slate-200/80 pt-5 space-y-4 text-xs font-body text-left">
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5"><Calendar size={13} /> Nais.</span>
+                  <span className="text-slate-400 flex items-center gap-1.5"><Calendar size={13} /> {t('admin.assures.form_dob')}</span>
                   <span className="text-slate-700 font-medium">{formatDate(assure.dateNaissance)}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5"><User size={13} /> Genre / Statut</span>
+                  <span className="text-slate-400 flex items-center gap-1.5"><User size={13} /> {t('admin.assures.form_sex')} / {t('admin.assures.form_matrimonial')}</span>
                   <span className="text-slate-700 font-medium">{assure.sexe} ({assure.statutMatrimoniale})</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5"><Smartphone size={13} /> Téléphone</span>
+                  <span className="text-slate-400 flex items-center gap-1.5"><Smartphone size={13} /> {t('admin.assures.form_phone')}</span>
                   <span className="text-slate-700 font-medium">{assure.numTelephone}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5"><Briefcase size={13} /> Profession</span>
+                  <span className="text-slate-400 flex items-center gap-1.5"><Briefcase size={13} /> {t('admin.assures.form_profession')}</span>
                   <span className="text-slate-700 font-medium">{assure.profession}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-slate-400 flex items-center gap-1.5"><Droplet size={13} /> Grp. Sanguin</span>
+                  <span className="text-slate-400 flex items-center gap-1.5"><Droplet size={13} /> {t('auth.blood_group')}</span>
                   <span className="text-danger font-display font-bold">{assure.groupeSanguin}</span>
                 </div>
               </div>
 
               {/* Traitement Physician */}
               <div className="w-full border-t border-slate-200/80 pt-5 text-left space-y-2">
-                <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">Médecin Traitant</span>
+                <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">{t('admin.assures.form_doctor')}</span>
                 {assure.medecinTraitant ? (
                   <div className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl">
                     <div className="p-2 bg-primary-500/10 text-primary-400 rounded-lg">
@@ -156,7 +156,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                   </div>
                 ) : (
                   <div className="p-3 border border-dashed border-slate-800 text-center rounded-xl text-xs text-slate-500">
-                    Aucun médecin traitant assigné
+                    {t('admin.assures.no_doctor')}
                   </div>
                 )}
               </div>
@@ -198,17 +198,17 @@ export default function AssureDetailPage({ params }: PageProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Médecin</TableHead>
-                        <TableHead>Prescriptions</TableHead>
-                        <TableHead>Feuille de soin</TableHead>
+                        <TableHead>{t('common.date')}</TableHead>
+                        <TableHead>{t('admin.medecins.col_type')}</TableHead>
+                        <TableHead>{t('dashboard.stats.prescriptions')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {consultations.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center py-8 text-slate-500 text-xs">
-                            Aucune consultation enregistrée
+                            {t('medecin.dashboard.no_consultation')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -224,11 +224,11 @@ export default function AssureDetailPage({ params }: PageProps) {
                                 {c.prescriptions && c.prescriptions.length > 0 ? (
                                   c.prescriptions.map((p) => (
                                     <Badge key={p.id} variant="neutral" className="scale-90 origin-left">
-                                      {p.type === 'MEDICAMENT' ? p.medicament : 'Spécialiste'}
+                                      {p.type === 'MEDICAMENT' ? p.medicament : t('admin.medecins.specialiste')}
                                     </Badge>
                                   ))
                                 ) : (
-                                  <span className="text-slate-500">Aucune</span>
+                                  <span className="text-slate-500">{t('common.none')}</span>
                                 )}
                               </div>
                             </TableCell>
@@ -238,7 +238,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                                   {c.feuilleMaladie.idFeuille}
                                 </Badge>
                               ) : (
-                                <span className="text-slate-500 text-xs">Aucune</span>
+                                <span className="text-slate-500 text-xs">{t('common.none')}</span>
                               )}
                             </TableCell>
                           </TableRow>
@@ -257,17 +257,17 @@ export default function AssureDetailPage({ params }: PageProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Médecin émetteur</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Détails / Posologie / Motif</TableHead>
+                        <TableHead>{t('common.date')}</TableHead>
+                        <TableHead>{t('admin.remboursements.modal_acted_by')}</TableHead>
+                        <TableHead>{t('admin.medecins.col_type')}</TableHead>
+                        <TableHead>{t('admin.remboursements.modal_details')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {prescriptions.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center py-8 text-slate-500 text-xs">
-                            Aucune prescription émise
+                            {t('common.none')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -279,7 +279,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                             <TableCell className="text-xs text-slate-600">{(p as any).medecin}</TableCell>
                             <TableCell>
                               <Badge variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'}>
-                                {p.type === 'MEDICAMENT' ? 'Médicament' : 'Consult. Spécialiste'}
+                                {p.type === 'MEDICAMENT' ? t('medecin.prescriptions.type_med') : t('medecin.prescriptions.type_spec')}
                               </Badge>
                             </TableCell>
                             <TableCell className="text-xs leading-normal">
@@ -311,17 +311,17 @@ export default function AssureDetailPage({ params }: PageProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Réf. Feuille</TableHead>
-                        <TableHead>Montant Soins</TableHead>
-                        <TableHead>Remboursement</TableHead>
-                        <TableHead>Statut</TableHead>
+                        <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
+                        <TableHead>{t('common.status')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {feuilles.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={4} className="text-center py-8 text-slate-500 text-xs">
-                            Aucune feuille de maladie enregistrée
+                            {t('medecin.feuilles.empty_list')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -333,12 +333,12 @@ export default function AssureDetailPage({ params }: PageProps) {
                               {f.remboursement ? (
                                 <span className="text-success font-semibold">+{formatFCFA(f.remboursement.montant)}</span>
                               ) : (
-                                <span className="italic">Non évalué</span>
+                                <span className="italic">{t('common.none')}</span>
                               )}
                             </TableCell>
                             <TableCell>
                               <Badge variant={f.estRembourse ? 'success' : 'warning'}>
-                                {f.estRembourse ? 'Evalué / Remboursé' : 'En attente traitement'}
+                                {f.estRembourse ? t('admin.remboursements.status_reimbursed') : t('admin.remboursements.pending_title')}
                               </Badge>
                             </TableCell>
                           </TableRow>
@@ -357,18 +357,18 @@ export default function AssureDetailPage({ params }: PageProps) {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date remboursement</TableHead>
-                        <TableHead>Feuille associée</TableHead>
-                        <TableHead>Montant soin</TableHead>
-                        <TableHead>Montant remboursé</TableHead>
-                        <TableHead>Mode paiement</TableHead>
+                        <TableHead>{t('admin.remboursements.col_date')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
+                        <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {remboursements.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={5} className="text-center py-8 text-slate-500 text-xs">
-                            Aucun virement ou paiement effectué
+                            {t('admin.remboursements.history_none')}
                           </TableCell>
                         </TableRow>
                       ) : (
@@ -380,7 +380,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                             <TableCell className="font-semibold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                             <TableCell>
                               <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
-                                {r.modePaiement}
+                                {r.modePaiement === 'VIREMENT' ? t('admin.remboursements.modal_virement') : t('admin.remboursements.modal_cash')}
                               </Badge>
                             </TableCell>
                           </TableRow>

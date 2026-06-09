@@ -13,6 +13,8 @@ import {
   Pill,
   Activity,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByAssure, getFeuillesByAssure, getAssureById } from '@/lib/api';
 import { Consultation, FeuillemMaladie, Assure } from '@/types';
@@ -23,6 +25,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate, formatFCFA } from '@/lib/utils';
 
 export default function AssureDashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [assureInfo, setAssureInfo] = useState<Assure | null>(null);
@@ -53,7 +56,7 @@ export default function AssureDashboardPage() {
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
   if (!assureInfo)
-    return <div className="text-slate-500 text-sm">Erreur lors du chargement de vos données.</div>;
+    return <div className="text-slate-500 text-sm">{t('common.error')}</div>;
 
   const timelineEvents: {
     id: string;
@@ -69,7 +72,7 @@ export default function AssureDashboardPage() {
   sortedConsultations.forEach((c) => {
     timelineEvents.push({
       id: `c-${c.id}`,
-      title: 'Consultation médicale',
+      title: t('assure.dashboard.last_consult'),
       description: `Avec Dr. ${c.generaliste.nom} — "${c.motif}"`,
       date: c.date,
       icon: <Calendar size={13} />,
@@ -79,7 +82,7 @@ export default function AssureDashboardPage() {
     if (c.prescriptions && c.prescriptions.length > 0) {
       timelineEvents.push({
         id: `p-${c.id}`,
-        title: 'Ordonnance émise',
+        title: t('dashboard.stats.prescriptions'),
         description: `${c.prescriptions.length} prescription(s) lors de votre consultation.`,
         date: c.date,
         icon: <Pill size={13} />,
@@ -90,7 +93,7 @@ export default function AssureDashboardPage() {
     if (c.feuilleMaladie) {
       timelineEvents.push({
         id: `f-${c.id}`,
-        title: 'Feuille de maladie créée',
+        title: t('admin.remboursements.col_feuille'),
         description: `Réf: ${c.feuilleMaladie.idFeuille} — ${formatFCFA(c.feuilleMaladie.montantSoin)}`,
         date: c.date,
         icon: <FileText size={13} />,
@@ -100,7 +103,7 @@ export default function AssureDashboardPage() {
       if (c.feuilleMaladie.estRembourse && c.feuilleMaladie.remboursement) {
         timelineEvents.push({
           id: `r-${c.id}`,
-          title: 'Remboursement validé',
+          title: t('admin.remboursements.status_reimbursed'),
           description: `${formatFCFA(c.feuilleMaladie.remboursement.montant)} via ${c.feuilleMaladie.remboursement.modePaiement}`,
           date: c.feuilleMaladie.remboursement.dateRemboursement,
           icon: <CreditCard size={13} />,
@@ -133,13 +136,13 @@ export default function AssureDashboardPage() {
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="space-y-3">
             <span className="text-xs font-display font-semibold text-primary-200 tracking-wider uppercase">
-              Espace assuré
+              {t('dashboard.welcome_assure')}
             </span>
             <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white tracking-tight">
-              Bonjour, {assureInfo.nom} !
+              {t('dashboard.welcome')}, {assureInfo.nom} !
             </h1>
             <p className="text-sm text-primary-100/90 max-w-lg leading-relaxed">
-              Suivez vos consultations, remboursements et feuilles de maladie en temps réel.
+              {t('dashboard.welcome_desc')}
             </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
@@ -150,7 +153,7 @@ export default function AssureDashboardPage() {
                 className="bg-white text-primary-700 hover:bg-primary-50 border-none w-full sm:w-auto"
                 rightIcon={<ArrowRight size={14} />}
               >
-                Mes consultations
+                {t('assure.dashboard.my_consultations')}
               </Button>
             </Link>
             <Link href="/assure/remboursements">
@@ -159,7 +162,7 @@ export default function AssureDashboardPage() {
                 size="sm"
                 className="border-white/30 text-white hover:bg-white/10 w-full sm:w-auto"
               >
-                Mes remboursements
+                {t('assure.dashboard.my_remboursements')}
               </Button>
             </Link>
           </div>
@@ -173,7 +176,7 @@ export default function AssureDashboardPage() {
             <div className="p-5 flex flex-col gap-5 h-full">
               <div>
                 <span className="text-[10px] font-display font-bold text-slate-400 tracking-wider uppercase">
-                  Médecin traitant
+                  {t('assure.dashboard.doctor_card')}
                 </span>
                 <div className="h-px bg-slate-100 mt-2" />
               </div>
@@ -194,7 +197,7 @@ export default function AssureDashboardPage() {
                     </div>
                   </div>
                   <div className="bg-success/5 border border-success/20 p-3.5 rounded-xl text-xs text-slate-600 leading-relaxed">
-                    <span className="text-success font-semibold">Remboursement à 100%</span> pour les
+                    <span className="text-success font-semibold">{t('admin.remboursements.coverage_100')}</span> pour les
                     consultations chez votre médecin traitant.
                   </div>
                 </div>
@@ -205,7 +208,7 @@ export default function AssureDashboardPage() {
                   </div>
                   <div className="space-y-1">
                     <h3 className="font-display font-bold text-sm text-slate-800">
-                      Aucun médecin déclaré
+                      {t('assure.dashboard.no_doctor')}
                     </h3>
                     <p className="text-xs text-slate-500 max-w-xs">
                       Déclarez un médecin traitant pour bénéficier d&apos;un remboursement optimal.
@@ -213,7 +216,7 @@ export default function AssureDashboardPage() {
                   </div>
                   <Link href="/assure/medecin" className="w-full">
                     <Button variant="primary" size="sm" className="w-full text-xs">
-                      Choisir mon médecin
+                      {t('assure.dashboard.choose_doctor')}
                     </Button>
                   </Link>
                 </div>
@@ -221,7 +224,7 @@ export default function AssureDashboardPage() {
 
               <div className="flex items-center justify-between border-t border-slate-100 pt-4 mt-auto">
                 <span className="text-[10px] font-display font-medium text-slate-400 uppercase">
-                  Groupe sanguin
+                  {t('auth.blood_group')}
                 </span>
                 <span className="text-danger font-display font-bold text-sm bg-danger/10 border border-danger/20 px-2.5 py-1 rounded-lg">
                   {assureInfo.groupeSanguin || 'O+'}

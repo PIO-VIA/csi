@@ -7,6 +7,8 @@ import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import {
   Mail,
   Lock,
@@ -35,6 +37,7 @@ function redirectByRole(router: ReturnType<typeof useRouter>, role: string) {
 }
 
 export default function LoginPage() {
+  const { t } = useTranslation();
   const router = useRouter();
   const { user, login } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
@@ -65,12 +68,10 @@ export default function LoginPage() {
           redirectByRole(router, u.role);
         }
       } else {
-        setErrorMsg(
-          'Identifiants incorrects ou accès refusé. Seuls les administrateurs et les médecins peuvent se connecter.'
-        );
+        setErrorMsg(t('auth.error_credentials'));
       }
     } catch {
-      setErrorMsg('Une erreur est survenue. Veuillez réessayer.');
+      setErrorMsg(t('common.error'));
     } finally {
       setIsLoading(false);
     }
@@ -102,7 +103,7 @@ export default function LoginPage() {
             </div>
             <div>
               <p className="font-display font-extrabold text-xl text-white tracking-tight">
-                CSI Sécurité Sociale
+                {t('landing.title')}
               </p>
               <p className="text-xs text-primary-100/80">République du Cameroun</p>
             </div>
@@ -114,17 +115,16 @@ export default function LoginPage() {
                 Votre santé, notre priorité nationale
               </h2>
               <p className="mt-4 text-sm text-primary-100/90 leading-relaxed">
-                Plateforme de coordination des soins, remboursements et suivi médical
-                pour assurés, praticiens et administrateurs.
+                {t('landing.tagline')}
               </p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               {[
                 { icon: Heart, label: 'Couverture santé', value: '100%' },
-                { icon: Activity, label: 'Consultations', value: '12K+' },
-                { icon: Users, label: 'Assurés actifs', value: '8 500' },
-                { icon: CheckCircle2, label: 'Remboursements', value: '98%' },
+                { icon: Activity, label: t('dashboard.stats.consultations'), value: '12K+' },
+                { icon: Users, label: t('landing.metrics.assures'), value: '8 500' },
+                { icon: CheckCircle2, label: t('landing.metrics.reimbursements'), value: '98%' },
               ].map(({ icon: Icon, label, value }) => (
                 <div
                   key={label}
@@ -162,33 +162,33 @@ export default function LoginPage() {
 
           <div className="space-y-2">
             <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-slate-900 tracking-tight">
-              Connexion
+              {t('nav.login')}
             </h1>
             <p className="text-sm text-slate-500">
-              Accédez à votre espace professionnel sécurisé
+              {t('auth.login_subtitle')}
             </p>
           </div>
 
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <Input
-              label="Adresse email"
-              type="test"
+              label={t('auth.email_label')}
+              type="text"
               placeholder="vous@exemple.com"
               leftIcon={<Mail size={16} />}
-              error={errors.email?.message}
+              error={errors.email?.message ? String(errors.email.message) : undefined}
               {...register('email')}
             />
 
             <div className="space-y-1">
               <div className="flex items-center justify-between mb-1">
                 <span className="text-xs font-display font-semibold text-slate-700">
-                  Mot de passe
+                  {t('auth.password_label')}
                 </span>
                 <a
                   href="#"
                   className="text-[11px] font-display font-semibold text-primary-600 hover:underline"
                 >
-                  Mot de passe oublié ?
+                  {t('auth.forgot_password')}
                 </a>
               </div>
               <Input
@@ -204,7 +204,7 @@ export default function LoginPage() {
                     {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 }
-                error={errors.password?.message}
+                error={errors.password?.message ? String(errors.password.message) : undefined}
                 {...register('password')}
               />
             </div>
@@ -221,12 +221,12 @@ export default function LoginPage() {
               className="w-full py-3.5 font-semibold text-sm btn-primary-shadow"
               isLoading={isLoading}
             >
-              Se connecter
+              {t('nav.login')}
             </Button>
           </form>
 
           <p className="text-center text-[11px] text-slate-400 leading-relaxed">
-            Connectez-vous avec vos identifiants CSI (email ou matricule médecin + mot de passe).
+            {t('auth.medecin_hint')}
           </p>
         </motion.div>
       </div>

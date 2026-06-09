@@ -13,6 +13,8 @@ import {
   ArrowRight,
   Heart,
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByMedecin, getAssures, getMedecins } from '@/lib/api';
 import { Consultation, Assure, Medecin } from '@/types';
@@ -25,6 +27,7 @@ import { formatDate } from '@/lib/utils';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 export default function MedecinDashboardPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -69,8 +72,8 @@ export default function MedecinDashboardPage() {
 
   const typeLabel =
     medecinInfo?.type === 'SPECIALISTE'
-      ? `Spécialiste${medecinInfo.domaineSpecialisation ? ` — ${medecinInfo.domaineSpecialisation}` : ''}`
-      : 'Généraliste';
+      ? `${t('dashboard.role.specialiste')}${medecinInfo.domaineSpecialisation ? ` — ${medecinInfo.domaineSpecialisation}` : ''}`
+      : t('dashboard.role.generaliste');
 
   return (
     <motion.div
@@ -92,12 +95,12 @@ export default function MedecinDashboardPage() {
           <div className="space-y-2">
             <div className="flex items-center gap-2">
               <span className="text-[10px] font-display font-bold text-primary-200 tracking-wider uppercase">
-                Espace praticien
+                {t('dashboard.welcome_medecin')}
               </span>
               <Badge variant="neutral">{typeLabel}</Badge>
             </div>
             <h1 className="font-display font-extrabold text-2xl sm:text-3xl text-white tracking-tight">
-              Bonjour, Dr. {user.nom}
+              {t('dashboard.welcome')}, Dr. {user.nom}
             </h1>
             <p className="text-sm text-primary-100/80">{user.email}</p>
           </div>
@@ -108,7 +111,7 @@ export default function MedecinDashboardPage() {
               className="bg-white text-primary-700 hover:bg-primary-50 border-none"
               leftIcon={<Plus size={16} />}
             >
-              Nouvelle consultation
+              {t('medecin.dashboard.new_consultation')}
             </Button>
           </Link>
         </div>
@@ -116,19 +119,19 @@ export default function MedecinDashboardPage() {
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          label="Patients consultés"
+          label={t('medecin.patients.title')}
           value={patientsCount}
           icon={<Users size={20} />}
           color="primary"
         />
         <StatCard
-          label="Consultations effectuées"
+          label={t('dashboard.stats.consultations')}
           value={totalConsults}
           icon={<Calendar size={20} />}
           color="accent"
         />
         <StatCard
-          label="Prescriptions émises"
+          label={t('dashboard.stats.prescriptions')}
           value={totalPrescriptions}
           icon={<Pill size={20} />}
           color="success"
@@ -152,11 +155,11 @@ export default function MedecinDashboardPage() {
           <Card variant="solid" className="h-full">
             <CardHeader className="flex justify-between items-center">
               <span className="font-display font-semibold text-sm text-slate-800">
-                Dernières consultations
+                {t('medecin.dashboard.recent_consultations')}
               </span>
               <Link href="/medecin/consultations">
                 <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
-                  Voir tout
+                  {t('medecin.dashboard.see_all')}
                 </Button>
               </Link>
             </CardHeader>
@@ -164,17 +167,17 @@ export default function MedecinDashboardPage() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Patient</TableHead>
-                    <TableHead>Motif</TableHead>
-                    <TableHead>Ordonnance</TableHead>
+                    <TableHead>{t('common.date')}</TableHead>
+                    <TableHead>{t('common.patient')}</TableHead>
+                    <TableHead>{t('medecin.consultations.col_motif')}</TableHead>
+                    <TableHead>{t('dashboard.stats.prescriptions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {latestConsultations.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={4} className="text-center py-12 text-slate-400 text-xs">
-                        Aucune consultation enregistrée.
+                        {t('medecin.dashboard.no_consultation')}
                       </TableCell>
                     </TableRow>
                   ) : (
@@ -189,7 +192,7 @@ export default function MedecinDashboardPage() {
                           {c.prescriptions && c.prescriptions.length > 0 ? (
                             <Badge variant="info">{c.prescriptions.length} prescriptions</Badge>
                           ) : (
-                            <span className="text-slate-400 text-xs italic">Aucune</span>
+                            <span className="text-slate-400 text-xs italic">{t('common.none')}</span>
                           )}
                         </TableCell>
                       </TableRow>
@@ -205,7 +208,7 @@ export default function MedecinDashboardPage() {
           <Card variant="solid" className="h-full">
             <CardBody className="p-5 space-y-4">
               <h3 className="font-display font-bold text-xs text-slate-700 uppercase tracking-wider">
-                Parcours de soins coordonné
+                {t('landing.features.coordination.title')}
               </h3>
               <div className="h-px bg-slate-100" />
               <div className="space-y-4 text-xs text-slate-600 leading-relaxed">

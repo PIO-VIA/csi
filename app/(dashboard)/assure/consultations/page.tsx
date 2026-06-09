@@ -3,6 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, Search, Stethoscope, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
+import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
 import { getConsultationsByAssure } from '@/lib/api';
 import { Consultation } from '@/types';
@@ -13,6 +15,7 @@ import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function AssureConsultationsPage() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -47,9 +50,11 @@ export default function AssureConsultationsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mes Consultations</h1>
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+          {t('assure.consultations.title')}
+        </h1>
         <p className="font-body text-sm text-slate-500 mt-1">
-          Historique complet de vos rendez-vous et examens médicaux enregistrés
+          {t('assure.consultations.subtitle')}
         </p>
       </div>
 
@@ -61,7 +66,7 @@ export default function AssureConsultationsPage() {
             </span>
             <input
               type="text"
-              placeholder="Rechercher par médecin, motif, diagnostic..."
+              placeholder={t('assure.consultations.search_placeholder')}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="dashboard-search"
@@ -75,18 +80,18 @@ export default function AssureConsultationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Date</TableHead>
-                <TableHead>Médecin</TableHead>
-                <TableHead>Type d&apos;Acte</TableHead>
-                <TableHead>Motif & Diagnostic</TableHead>
-                <TableHead>Feuille de soin</TableHead>
+                <TableHead>{t('assure.consultations.col_date')}</TableHead>
+                <TableHead>{t('assure.consultations.col_doctor')}</TableHead>
+                <TableHead>{t('assure.consultations.col_type')}</TableHead>
+                <TableHead>{t('assure.consultations.col_motif')}</TableHead>
+                <TableHead>{t('assure.consultations.col_feuille')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center py-12 text-slate-500 font-body">
-                    Aucune consultation trouvée.
+                    {t('assure.consultations.not_found')}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -103,11 +108,13 @@ export default function AssureConsultationsPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant={c.generaliste.type === 'GENERALISTE' ? 'neutral' : 'warning'}>
-                        {c.generaliste.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
+                        {c.generaliste.type === 'GENERALISTE'
+                          ? t('assure.consultations.generaliste')
+                          : t('assure.consultations.specialiste')}
                       </Badge>
                     </TableCell>
                     <TableCell className="text-xs max-w-sm truncate" title={c.motif || ''}>
-                      {c.motif || 'Non renseigné'}
+                      {c.motif || t('assure.consultations.not_set')}
                     </TableCell>
                     <TableCell>
                       {c.feuilleMaladie ? (
@@ -115,7 +122,9 @@ export default function AssureConsultationsPage() {
                           {c.feuilleMaladie.idFeuille}
                         </Badge>
                       ) : (
-                        <span className="text-slate-500 text-xs italic">Non générée</span>
+                        <span className="text-slate-500 text-xs italic">
+                          {t('assure.consultations.no_feuille')}
+                        </span>
                       )}
                     </TableCell>
                   </TableRow>
