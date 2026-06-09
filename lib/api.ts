@@ -57,7 +57,7 @@ async function loadFeuilles(): Promise<FeuillemMaladie[]> {
     feuilles.map(async (feuille) => {
       if (!feuille.estRembourse) return feuille;
       try {
-        const remb = await RemboursementsService.getById2(feuille.id);
+        const remb = await RemboursementsService.getById3(feuille.id);
         return mapFeuille(
           {
             id: feuille.id,
@@ -183,7 +183,7 @@ export const getAssures = async (): Promise<ApiPayload<Assure[]>> => ({
 
 export const getAssureById = async (id: number): Promise<ApiPayload<Assure>> => {
   const medecins = await loadMedecins();
-  const raw = await AssurSService.getById(id);
+  const raw = await AssurSService.getById1(id);
   return { data: mapAssure(raw as Record<string, unknown>, medecins) };
 };
 
@@ -264,7 +264,7 @@ export const getMedecins = async (): Promise<ApiPayload<Medecin[]>> => ({
 });
 
 export const getMedecinById = async (id: number): Promise<ApiPayload<Medecin>> => {
-  const raw = await MDecinsService.getById3(id);
+  const raw = await MDecinsService.getById(id);
   return { data: mapMedecin(raw as Record<string, unknown>) };
 };
 
@@ -456,7 +456,7 @@ export const getFeuillesByAssure = async (
     feuilles.map(async (feuille) => {
       if (!feuille.estRembourse) return feuille;
       try {
-        const remb = await RemboursementsService.getById2(feuille.id);
+        const remb = await RemboursementsService.getById3(feuille.id);
         return mapFeuille(
           {
             id: feuille.id,
@@ -492,7 +492,7 @@ export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> 
       .map(async (feuille) => {
         if (feuille.remboursement) return feuille.remboursement;
         try {
-          const raw = await RemboursementsService.getById2(feuille.id);
+          const raw = await RemboursementsService.getById3(feuille.id);
           return mapRemboursement(raw as Record<string, unknown>);
         } catch {
           return null;
