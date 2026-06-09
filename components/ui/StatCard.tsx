@@ -1,4 +1,5 @@
 import React from 'react';
+import Link from 'next/link';
 import { Card, CardBody } from './Card';
 import { cn } from '@/lib/utils';
 import { ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -10,11 +11,12 @@ interface StatCardProps {
   color?: 'primary' | 'accent' | 'success' | 'warning' | 'danger' | 'info';
   variation?: string;
   variationUp?: boolean;
+  href?: string;
 }
 
-export function StatCard({ label, value, icon, color = 'primary', variation, variationUp = true }: StatCardProps) {
-  return (
-    <Card variant="solid" className="hover:shadow-lg hover:border-primary-100 duration-300">
+export function StatCard({ label, value, icon, color = 'primary', variation, variationUp = true, href }: StatCardProps) {
+  const inner = (
+    <Card variant="solid" className="hover:shadow-lg hover:border-primary-100 duration-300 cursor-pointer">
       <CardBody className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-display font-medium text-slate-500 tracking-wide uppercase">
@@ -56,6 +58,8 @@ export function StatCard({ label, value, icon, color = 'primary', variation, var
       </CardBody>
     </Card>
   );
+
+  return href ? <Link href={href} className="block">{inner}</Link> : inner;
 }
 
 export default StatCard;

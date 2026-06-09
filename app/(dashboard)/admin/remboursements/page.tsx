@@ -6,12 +6,15 @@ import {
   CreditCard,
   CheckCircle,
   Clock,
+  DollarSign,
+  Calendar,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { getFeuilles, getConsultations, effectuerRemboursement, getRemboursements } from '@/lib/api';
 import { FeuillemMaladie, Consultation, Remboursement } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
+import StatCard from '@/components/ui/StatCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
@@ -110,6 +113,13 @@ export default function RemboursementsAdminPage() {
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
 
+  const now = new Date();
+  const totalRembourse = remboursements.reduce((s, r) => s + r.montant, 0);
+  const thisMonth = remboursements.filter((r) => {
+    const d = new Date(r.dateRemboursement);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).reduce((s, r) => s + r.montant, 0);
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 15 }}
@@ -124,6 +134,28 @@ export default function RemboursementsAdminPage() {
         <p className="font-body text-sm text-slate-500 mt-1">
           {t('admin.remboursements.subtitle')}
         </p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Total remboursé"
+          value={formatFCFA(totalRembourse)}
+          icon={<DollarSign size={20} />}
+          color="success"
+        />
+        <StatCard
+          label="Dossiers en attente"
+          value={pendingFeuilles.length}
+          icon={<Clock size={20} />}
+          color="warning"
+        />
+        <StatCard
+          label="Remboursés ce mois"
+          value={formatFCFA(thisMonth)}
+          icon={<Calendar size={20} />}
+          color="primary"
+        />
       </div>
 
       {/* PENDING REQUESTS SECTION */}
@@ -220,20 +252,21 @@ export default function RemboursementsAdminPage() {
         <CardBody className="p-0">
           <Table>
             <TableHeader>
-              <TableRow>
-                <TableHead>{t('admin.remboursements.col_date')}</TableHead>
-                <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
-                <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
-                <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
-                <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
-                <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
-                <TableHead>{t('common.status')}</TableHead>
-              </TableRow>
+                <TableRow>
+                  <TableHead>{t('admin.remboursements.col_date')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_soin_amount')}</TableHead>
+                  <TableHead>{t('admin.remboursements.col_reimb_amount')}</TableHead>
+                  <TableHead>Taux</TableHead>
+                  <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
+                  <TableHead>{t('common.status')}</TableHead>
+                </TableRow>
             </TableHeader>
             <TableBody>
               {historicalPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
                     {t('admin.remboursements.history_none')}
                   </TableCell>
                 </TableRow>
@@ -245,6 +278,12 @@ export default function RemboursementsAdminPage() {
                     <TableCell className="font-display font-medium text-xs">{r.patientName}</TableCell>
                     <TableCell className="text-xs text-slate-600">{formatFCFA(r.montantSoin)}</TableCell>
                     <TableCell className="font-display font-bold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
+                    <TableCell>
+                      {(() => {
+                        const rate = r.montantSoin > 0 ? Math.round((r.montant / r.montantSoin) * 100) : 0;
+                        return <Badge variant={rate >= 100 ? 'success' : 'warning'}>{rate}%</Badge>;
+                      })()}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
                         {r.modePaiement === 'VIREMENT' ? t('admin.remboursements.modal_virement') : t('admin.remboursements.modal_cash')}
@@ -300,6 +339,12 @@ export default function RemboursementsAdminPage() {
                     <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
                   </div>
                 </div>
+
+                <p className="text-xs text-slate-400 leading-relaxed">
+                  {details.type === 'SPECIALISTE'
+                    ? 'Consultation chez un spécialiste — prise en charge à 80%'
+                    : 'Consultation chez un généraliste — prise en charge à 100%'}
+                </p>
 
                 {/* Mode Selector */}
                 <div className="space-y-2">

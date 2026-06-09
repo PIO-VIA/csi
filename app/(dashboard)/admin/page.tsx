@@ -9,6 +9,8 @@ import {
   Calendar,
   DollarSign,
   ArrowRight,
+  Plus,
+  Eye,
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -150,6 +152,20 @@ export default function AdminDashboard() {
         description={`${t('dashboard.welcome_desc')} — ${dateLabel}`}
       />
 
+      {/* Quick Actions Bar */}
+      <div className="flex gap-3 flex-wrap">
+        <Link href="/admin/assures">
+          <Button variant="primary" leftIcon={<Plus size={16} />}>
+            Nouvel assuré
+          </Button>
+        </Link>
+        <Link href="/admin/medecins">
+          <Button variant="secondary" leftIcon={<Stethoscope size={16} />}>
+            Enregistrer médecin
+          </Button>
+        </Link>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
           label={t('dashboard.stats.total_assures')}
@@ -158,6 +174,7 @@ export default function AdminDashboard() {
           color="primary"
           variation={`+4.2% ${t('dashboard.stats.variation_up')}`}
           variationUp
+          href="/admin/assures"
         />
         <StatCard
           label={t('dashboard.stats.total_medecins')}
@@ -166,6 +183,7 @@ export default function AdminDashboard() {
           color="accent"
           variation={`+1.8% ${t('dashboard.stats.variation_up')}`}
           variationUp
+          href="/admin/medecins"
         />
         <StatCard
           label={t('dashboard.stats.consults_month')}
@@ -174,6 +192,7 @@ export default function AdminDashboard() {
           color="info"
           variation={`-2.4% ${t('dashboard.stats.variation_up')}`}
           variationUp={false}
+          href="/admin/consultations"
         />
         <StatCard
           label={t('dashboard.stats.total_remb')}
@@ -182,6 +201,7 @@ export default function AdminDashboard() {
           color="success"
           variation={`+8.3% ${t('dashboard.stats.variation_up')}`}
           variationUp
+          href="/admin/remboursements"
         />
       </div>
 
@@ -303,6 +323,7 @@ export default function AdminDashboard() {
                   <TableHead>{t('common.date')}</TableHead>
                   <TableHead>{t('admin.assures.col_doctor')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -316,6 +337,13 @@ export default function AdminDashboard() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="success">{t('admin.assures.status_active')}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Link href={`/admin/assures/${a.id}`}>
+                        <Button variant="ghost" size="sm" leftIcon={<Eye size={13} />}>
+                          Voir
+                        </Button>
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))}

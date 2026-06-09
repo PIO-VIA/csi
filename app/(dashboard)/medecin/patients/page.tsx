@@ -1,6 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { Search, User, Smartphone, Droplet, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
@@ -11,12 +13,15 @@ import { Assure, Consultation } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import EmptyState from '@/components/ui/EmptyState';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
 export default function MedecinPatientsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [allAssures, setAllAssures] = useState<Assure[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -127,13 +132,26 @@ export default function MedecinPatientsPage() {
                 <TableHead>{t('medecin.patients.col_phone')}</TableHead>
                 <TableHead>{t('medecin.patients.col_blood')}</TableHead>
                 <TableHead>{t('medecin.patients.col_last_consult')}</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredPatients.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-slate-500 text-xs">
-                    {t('medecin.patients.not_found')}
+                  <TableCell colSpan={6} className="text-center py-12 text-slate-500 text-xs">
+                    {activeSubTab === 'consultes' ? (
+                      <EmptyState
+                        title="Aucun patient consulté"
+                        description="Vous n'avez pas encore enregistré de consultation."
+                        actionText="Première consultation"
+                        onAction={() => router.push('/medecin/consultations/nouvelle')}
+                      />
+                    ) : (
+                      <EmptyState
+                        title="Aucun assuré déclaré"
+                        description="Aucun assuré ne vous a encore déclaré comme médecin traitant."
+                      />
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -167,13 +185,29 @@ export default function MedecinPatientsPage() {
                       </TableCell>
                       <TableCell className="text-xs text-slate-500">
                         {lastConsult ? (
-                          <span className="flex items-center gap-1">
-                            <Calendar size={12} />
-                            {formatDate(lastConsult.date)}
-                          </span>
+                          <div className="flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1 text-xs">
+                              <Calendar size={11} /> {formatDate(lastConsult.date)}
+                            </span>
+                            <span
+                              className="text-[10px] text-slate-400 truncate max-w-32"
+                              title={lastConsult.motif || ''}
+                            >
+                              {lastConsult.motif || 'Motif non renseigné'}
+                            </span>
+                          </div>
                         ) : (
-                          '—'
+                          <span className="text-slate-400">—</span>
                         )}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/medecin/consultations/nouvelle?assureId=${p.id}`}>
+                            <Button variant="primary" size="sm" className="text-xs px-3">
+                              Consulter
+                            </Button>
+                          </Link>
+                        </div>
                       </TableCell>
                     </TableRow>
                   );

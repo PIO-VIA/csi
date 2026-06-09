@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as Dialog from '@radix-ui/react-dialog';
 import { X } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -23,6 +23,12 @@ const SIZE_MAP = {
 };
 
 export function Modal({ isOpen, onClose, title, description, children, className, size = 'md' }: ModalProps) {
+  useEffect(() => {
+    if (isOpen) { document.body.style.overflow = 'hidden'; }
+    else { document.body.style.overflow = ''; }
+    return () => { document.body.style.overflow = ''; };
+  }, [isOpen]);
+
   return (
     <Dialog.Root open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <Dialog.Portal>

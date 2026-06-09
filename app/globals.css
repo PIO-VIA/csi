@@ -341,3 +341,56 @@ body {
   text-transform: uppercase;
   color: #94a3b8;
 }
+
+/* ============================================================
+   CUSTOM UTILITIES (missing classes used in codebase)
+   ============================================================ */
+
+.text-slate-650 { color: #44556a; }
+.bg-slate-850   { background-color: #18222f; }
+.border-slate-850 { border-color: #18222f; }
+
+/* ============================================================
+   ANIMATIONS
+   ============================================================ */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in {
+  animation: fadeIn 0.25s ease-out forwards;
+}
+
+/* ============================================================
+   SELECT CUSTOM ARROW (dashboard-input)
+   ============================================================ */
+
+select.dashboard-input {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%2394a3b8' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 1.25em 1.25em;
+  padding-right: 2.5rem;
+  cursor: pointer;
+}
+
+/* ============================================================
+   DASHBOARD HERO — MOBILE RESPONSIVE
+   ============================================================ */
+
+@media (max-width: 640px) {
+  .dashboard-hero {
+    padding: 1.25rem;
+    border-radius: 1.25rem;
+  }
+}
+
+/* ============================================================
+   TABLE SCROLL CONTAINER
+   ============================================================ */
+
+.table-scroll-container {
+  scrollbar-width: thin;
+  scrollbar-color: #e2e8f0 transparent;
+}

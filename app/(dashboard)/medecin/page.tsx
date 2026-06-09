@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 import {
   Stethoscope,
   Users,
@@ -13,6 +14,15 @@ import {
   ArrowRight,
   Heart,
 } from 'lucide-react';
+import {
+  ResponsiveContainer,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+} from 'recharts';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
@@ -23,12 +33,14 @@ import StatCard from '@/components/ui/StatCard';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
+import EmptyState from '@/components/ui/EmptyState';
 import { formatDate } from '@/lib/utils';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 export default function MedecinDashboardPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [allAssures, setAllAssures] = useState<Assure[]>([]);
@@ -74,6 +86,29 @@ export default function MedecinDashboardPage() {
     medecinInfo?.type === 'SPECIALISTE'
       ? `${t('dashboard.role.specialiste')}${medecinInfo.domaineSpecialisation ? ` — ${medecinInfo.domaineSpecialisation}` : ''}`
       : t('dashboard.role.generaliste');
+
+  const dateLabel = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
+
+  // Agenda du jour
+  const today = new Date().toISOString().split('T')[0];
+  const todayConsultations = consultations.filter((c) => c.date.startsWith(today));
+
+  // BarChart data — consultations par semaine (4 dernières semaines)
+  const barData = Array.from({ length: 4 }).map((_, idx) => {
+    const weekStart = new Date();
+    weekStart.setDate(weekStart.getDate() - (3 - idx) * 7);
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    const count = consultations.filter((c) => {
+      const d = new Date(c.date);
+      return d >= weekStart && d <= weekEnd;
+    }).length;
+    return { name: 'S' + (idx + 1), Consultations: count };
+  });
 
   return (
     <motion.div
@@ -150,6 +185,43 @@ export default function MedecinDashboardPage() {
         </Card>
       )}
 
+      {/* Agenda du jour */}
+      <Card variant="solid">
+        <CardHeader className="flex justify-between items-center">
+          <span className="font-display font-semibold text-sm text-slate-800">
+            Consultations d&apos;aujourd&apos;hui — {dateLabel}
+          </span>
+          <Badge variant={todayConsultations.length > 0 ? 'info' : 'neutral'}>
+            {todayConsultations.length}
+          </Badge>
+        </CardHeader>
+        <CardBody>
+          {todayConsultations.length === 0 ? (
+            <EmptyState
+              title="Pas de consultation"
+              description="Aucune consultation enregistrée pour aujourd'hui."
+              actionText="Nouvelle consultation"
+              onAction={() => router.push('/medecin/consultations/nouvelle')}
+            />
+          ) : (
+            <div className="space-y-3">
+              {todayConsultations.map((c) => (
+                <div
+                  key={c.id}
+                  className="flex items-center justify-between p-3 bg-slate-50 rounded-xl text-xs"
+                >
+                  <div>
+                    <span className="font-semibold">{c.assure.nom}</span>
+                    <span className="text-slate-400 ml-2">{c.motif}</span>
+                  </div>
+                  <Badge variant="neutral">{formatDate(c.date)}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </CardBody>
+      </Card>
+
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8">
           <Card variant="solid" className="h-full">
@@ -206,30 +278,30 @@ export default function MedecinDashboardPage() {
 
         <div className="lg:col-span-4">
           <Card variant="solid" className="h-full">
-            <CardBody className="p-5 space-y-4">
-              <h3 className="font-display font-bold text-xs text-slate-700 uppercase tracking-wider">
-                {t('landing.features.coordination.title')}
-              </h3>
-              <div className="h-px bg-slate-100" />
-              <div className="space-y-4 text-xs text-slate-600 leading-relaxed">
-                <div className="flex gap-3 items-start">
-                  <span className="h-8 w-8 bg-primary-50 text-primary-600 flex items-center justify-center rounded-xl shrink-0">
-                    <Heart size={14} />
-                  </span>
-                  <p>
-                    Générez une feuille de maladie pour chaque acte afin de permettre le remboursement
-                    de l&apos;assuré.
-                  </p>
-                </div>
-                <div className="flex gap-3 items-start">
-                  <span className="h-8 w-8 bg-warning/10 text-warning flex items-center justify-center rounded-xl shrink-0">
-                    <Stethoscope size={14} />
-                  </span>
-                  <p>
-                    Orientez vers un spécialiste via une prescription de référence si nécessaire.
-                  </p>
-                </div>
-              </div>
+            <CardHeader>
+              <span className="font-display font-semibold text-sm text-slate-800">
+                Consultations / semaine
+              </span>
+            </CardHeader>
+            <CardBody className="h-64 pt-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={barData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+                  <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                  <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      borderColor: '#e2e8f0',
+                      borderRadius: '12px',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    }}
+                    labelStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                    itemStyle={{ color: '#2563eb' }}
+                  />
+                  <Bar dataKey="Consultations" fill="#2563eb" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
             </CardBody>
           </Card>
         </div>

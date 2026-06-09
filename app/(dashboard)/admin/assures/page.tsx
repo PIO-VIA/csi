@@ -12,14 +12,15 @@ import {
   Plus,
   Eye,
   Trash2,
-  Filter,
+  Pencil,
+  Download,
   UserCheck,
   Smartphone,
   Droplet
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getAssures, getGeneralistes, createAssure, deleteAssure, getApiErrorMessage } from '@/lib/api';
+import { getAssures, getGeneralistes, createAssure, deleteAssure, updateAssure, getApiErrorMessage } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -42,13 +43,138 @@ const assureFormSchema = z.object({
 
 type AssureFormValues = z.infer<typeof assureFormSchema>;
 
+function AssureForm({
+  onSubmit,
+  register,
+  errors,
+  generalistes,
+  submitError,
+  onCancel,
+  submitLabel,
+  t,
+}: {
+  onSubmit: (e: React.FormEvent) => void;
+  register: ReturnType<typeof useForm<AssureFormValues>>['register'];
+  errors: ReturnType<typeof useForm<AssureFormValues>>['formState']['errors'];
+  generalistes: Medecin[];
+  submitError: string | null;
+  onCancel: () => void;
+  submitLabel: string;
+  t: (key: string) => string;
+}) {
+  return (
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Input
+        label={t('admin.assures.form_name') || 'Nom'}
+        placeholder="Ex: Jean-Marc Fosso"
+        error={errors.nom?.message ? String(errors.nom.message) : undefined}
+        {...register('nom')}
+      />
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label={t('admin.assures.form_dob') || 'DOB'}
+          type="date"
+          error={errors.dateNaissance?.message ? String(errors.dateNaissance.message) : undefined}
+          {...register('dateNaissance')}
+        />
+
+        <div className="form-group">
+          <label className="form-label">{t('admin.assures.form_sex') || 'Sexe'}</label>
+          <select className="dashboard-input" {...register('sexe')}>
+            <option value="Homme">{t('admin.assures.sex_male')}</option>
+            <option value="Femme">{t('admin.assures.sex_female')}</option>
+            <option value="Autre">{t('admin.assures.sex_other')}</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <Input
+          label={t('admin.assures.form_phone') || 'Phone'}
+          placeholder="+237 6xx xx xx xx"
+          error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
+          {...register('numTelephone')}
+        />
+
+        <Input
+          label={t('admin.assures.form_profession') || 'Profession'}
+          placeholder="Ex: Comptable, Enseignant"
+          error={errors.profession?.message ? String(errors.profession.message) : undefined}
+          {...register('profession')}
+        />
+      </div>
+
+      <div className="grid grid-cols-2 gap-4">
+        <div className="form-group">
+          <label className="form-label">{t('admin.assures.form_matrimonial') || 'Statut'}</label>
+          <select className="dashboard-input" {...register('statutMatrimoniale')}>
+            <option value="Célibataire">{t('admin.assures.matrimonial_single')}</option>
+            <option value="Marié">{t('admin.assures.matrimonial_married')}</option>
+            <option value="Divorcé">{t('admin.assures.matrimonial_divorced')}</option>
+            <option value="Veuf">{t('admin.assures.matrimonial_widowed')}</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label className="form-label">{t('auth.blood_group')}</label>
+          <select className="dashboard-input" {...register('groupeSanguin')}>
+            <option value="A+">A+</option>
+            <option value="A-">A-</option>
+            <option value="B+">B+</option>
+            <option value="B-">B-</option>
+            <option value="AB+">AB+</option>
+            <option value="AB-">AB-</option>
+            <option value="O+">O+</option>
+            <option value="O-">O-</option>
+          </select>
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">{t('admin.assures.form_doctor')}</label>
+        <select className="dashboard-input" {...register('medecinTraitantId')}>
+          <option value="">-- {t('admin.assures.form_doctor_select')} --</option>
+          {generalistes.map((g) => (
+            <option key={g.id} value={g.id}>
+              {g.nom} ({g.matricule})
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {submitError && (
+        <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs">
+          {submitError}
+        </div>
+      )}
+
+      <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+        <Button type="button" variant="ghost" onClick={onCancel}>
+          {t('common.cancel')}
+        </Button>
+        <Button type="submit" variant="primary">
+          {submitLabel}
+        </Button>
+      </div>
+    </form>
+  );
+}
+
 export default function AssuresAdminPage() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
   const [generalistes, setGeneralistes] = useState<Medecin[]>([]);
+
+  // Create modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  // Edit modal
+  const [editingAssure, setEditingAssure] = useState<Assure | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editSubmitError, setEditSubmitError] = useState<string | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -76,6 +202,7 @@ export default function AssuresAdminPage() {
     loadData();
   }, []);
 
+  // Create form
   const {
     register,
     handleSubmit,
@@ -83,18 +210,23 @@ export default function AssuresAdminPage() {
     formState: { errors },
   } = useForm<AssureFormValues>({
     resolver: zodResolver(assureFormSchema),
-    defaultValues: {
-      sexe: 'Homme',
-      statutMatrimoniale: 'Célibataire',
-      groupeSanguin: 'O+',
-    }
+    defaultValues: { sexe: 'Homme', statutMatrimoniale: 'Célibataire', groupeSanguin: 'O+' },
+  });
+
+  // Edit form
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: errorsEdit },
+  } = useForm<AssureFormValues>({
+    resolver: zodResolver(assureFormSchema),
   });
 
   const onSubmit = async (data: AssureFormValues) => {
     setSubmitError(null);
     try {
       const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
-      
       const payload: Partial<Assure> = {
         nom: data.nom,
         dateNaissance: data.dateNaissance,
@@ -105,13 +237,36 @@ export default function AssuresAdminPage() {
         numTelephone: data.numTelephone,
         medecinTraitant: doc,
       };
-
       await createAssure(payload);
       setIsModalOpen(false);
       reset();
       loadData();
     } catch (e) {
       setSubmitError(t('common.error'));
+    }
+  };
+
+  const onEditSubmit = async (data: AssureFormValues) => {
+    if (!editingAssure) return;
+    setEditSubmitError(null);
+    try {
+      const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
+      await updateAssure(editingAssure.id, {
+        nom: data.nom,
+        dateNaissance: data.dateNaissance,
+        sexe: data.sexe,
+        profession: data.profession,
+        statutMatrimoniale: data.statutMatrimoniale,
+        groupeSanguin: data.groupeSanguin,
+        numTelephone: data.numTelephone,
+        medecinTraitant: doc,
+      });
+      setIsEditModalOpen(false);
+      setEditingAssure(null);
+      resetEdit();
+      loadData();
+    } catch (e) {
+      setEditSubmitError(getApiErrorMessage(e));
     }
   };
 
@@ -123,6 +278,21 @@ export default function AssuresAdminPage() {
     } catch (e) {
       alert(getApiErrorMessage(e));
     }
+  };
+
+  const openEditModal = (a: Assure) => {
+    setEditingAssure(a);
+    resetEdit({
+      nom: a.nom,
+      dateNaissance: a.dateNaissance || '',
+      sexe: a.sexe || 'Homme',
+      profession: a.profession || '',
+      statutMatrimoniale: a.statutMatrimoniale || 'Célibataire',
+      groupeSanguin: a.groupeSanguin || 'O+',
+      numTelephone: a.numTelephone || '',
+      medecinTraitantId: a.medecinTraitant ? String(a.medecinTraitant.id) : '',
+    });
+    setIsEditModalOpen(true);
   };
 
   // Filter logic
@@ -141,6 +311,27 @@ export default function AssuresAdminPage() {
 
     return matchesSearch && matchesMedecin && matchesBlood;
   });
+
+  // CSV Export
+  const exportCSV = () => {
+    const headers = ['ID', 'Nom', 'Telephone', 'Profession', 'Medecin', 'Groupe Sanguin'];
+    const rows = filteredAssures.map((a) => [
+      a.idAssure,
+      a.nom,
+      a.numTelephone,
+      a.profession,
+      a.medecinTraitant?.nom || 'Non affecte',
+      a.groupeSanguin,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'assures_csi.csv';
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   // Pagination calculation
   const totalItems = filteredAssures.length;
@@ -172,15 +363,19 @@ export default function AssuresAdminPage() {
             {t('admin.assures.subtitle')}
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
-          {t('admin.assures.new_assure')}
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="secondary" leftIcon={<Download size={16} />} onClick={exportCSV}>
+            Exporter CSV
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
+            {t('admin.assures.new_assure')}
+          </Button>
+        </div>
       </div>
 
       {/* FILTER BAR */}
       <Card>
         <CardBody className="p-4 flex flex-col md:flex-row gap-4 items-center">
-          {/* Search box */}
           <div className="w-full md:flex-1 relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
               <Search size={18} />
@@ -197,36 +392,26 @@ export default function AssuresAdminPage() {
             />
           </div>
 
-          {/* Select Medecin */}
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
             <UserCheck size={16} className="text-slate-400 shrink-0" />
             <select
               value={filterMedecin}
-              onChange={(e) => {
-                setFilterMedecin(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => { setFilterMedecin(e.target.value); setCurrentPage(1); }}
               className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">{t('admin.assures.filter_all_doctors')}</option>
               <option value="NONE">{t('admin.assures.filter_no_doctor')}</option>
               {generalistes.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nom}
-                </option>
+                <option key={g.id} value={g.id}>{g.nom}</option>
               ))}
             </select>
           </div>
 
-          {/* Select Blood Group */}
           <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
             <Droplet size={16} className="text-slate-400 shrink-0" />
             <select
               value={filterBlood}
-              onChange={(e) => {
-                setFilterBlood(e.target.value);
-                setCurrentPage(1);
-              }}
+              onChange={(e) => { setFilterBlood(e.target.value); setCurrentPage(1); }}
               className="w-full bg-transparent text-sm text-slate-700 focus:outline-none cursor-pointer"
             >
               <option value="ALL">{t('admin.assures.filter_all_blood')}</option>
@@ -274,7 +459,7 @@ export default function AssuresAdminPage() {
                     <TableCell className="font-mono text-xs text-accent-400 font-medium">
                       {a.idAssure}
                     </TableCell>
-                    <TableCell className="font-display font-semibold text-white">
+                    <TableCell className="font-display font-semibold text-slate-800">
                       {a.nom}
                     </TableCell>
                     <TableCell className="text-xs text-slate-600">
@@ -292,12 +477,20 @@ export default function AssuresAdminPage() {
                       )}
                     </TableCell>
                     <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-1">
                         <Link href={`/admin/assures/${a.id}`}>
                           <Button variant="ghost" size="sm" className="p-1.5 h-8 w-8 text-primary-400">
                             <Eye size={15} />
                           </Button>
                         </Link>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5 h-8 w-8 text-primary-400"
+                          onClick={() => openEditModal(a)}
+                        >
+                          <Pencil size={15} />
+                        </Button>
                         <Button
                           onClick={() => handleDelete(a.id)}
                           variant="ghost"
@@ -315,141 +508,65 @@ export default function AssuresAdminPage() {
           </Table>
 
           {/* Table Footer / Pagination */}
-          <TablePagination
-            currentPage={currentPage}
-            totalPages={totalPages}
-            onPageChange={handlePageChange}
-            totalItems={totalItems}
-            itemsPerPage={itemsPerPage}
-          />
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <select
+              value={itemsPerPage}
+              onChange={(e) => { setItemsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+              className="dashboard-input w-28 text-xs h-8"
+            >
+              <option value={10}>10 / page</option>
+              <option value={25}>25 / page</option>
+              <option value={50}>50 / page</option>
+            </select>
+            <TablePagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+              totalItems={totalItems}
+              itemsPerPage={itemsPerPage}
+            />
+          </div>
         </CardBody>
       </Card>
 
       {/* CREATE MODAL */}
       <Modal
         isOpen={isModalOpen}
-        onClose={() => {
-          setIsModalOpen(false);
-          reset();
-        }}
+        onClose={() => { setIsModalOpen(false); reset(); }}
         title={t('admin.assures.new_assure') || 'Nouveau'}
         description={t('admin.assures.form_desc') || ''}
         size="lg"
       >
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          <Input
-            label={t('admin.assures.form_name') || 'Nom'}
-            placeholder="Ex: Jean-Marc Fosso"
-            error={errors.nom?.message ? String(errors.nom.message) : undefined}
-            {...register('nom')}
-          />
+        <AssureForm
+          onSubmit={handleSubmit(onSubmit)}
+          register={register}
+          errors={errors}
+          generalistes={generalistes}
+          submitError={submitError}
+          onCancel={() => { setIsModalOpen(false); reset(); }}
+          submitLabel={t('admin.assures.form_submit')}
+          t={t}
+        />
+      </Modal>
 
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label={t('admin.assures.form_dob') || 'DOB'}
-              type="date"
-              error={errors.dateNaissance?.message ? String(errors.dateNaissance.message) : undefined}
-              {...register('dateNaissance')}
-            />
-
-            <div className="form-group">
-              <label className="form-label">{t('admin.assures.form_sex') || 'Sexe'}</label>
-              <select
-                className="dashboard-input"
-                {...register('sexe')}
-              >
-                <option value="Homme">{t('admin.assures.sex_male')}</option>
-                <option value="Femme">{t('admin.assures.sex_female')}</option>
-                <option value="Autre">{t('admin.assures.sex_other')}</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label={t('admin.assures.form_phone') || 'Phone'}
-              placeholder="+237 6xx xx xx xx"
-              error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
-              {...register('numTelephone')}
-            />
-
-            <Input
-              label={t('admin.assures.form_profession') || 'Profession'}
-              placeholder="Ex: Comptable, Enseignant"
-              error={errors.profession?.message ? String(errors.profession.message) : undefined}
-              {...register('profession')}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div className="form-group">
-              <label className="form-label">{t('admin.assures.form_matrimonial') || 'Statut'}</label>
-              <select
-                className="dashboard-input"
-                {...register('statutMatrimoniale')}
-              >
-                <option value="Célibataire">{t('admin.assures.matrimonial_single')}</option>
-                <option value="Marié">{t('admin.assures.matrimonial_married')}</option>
-                <option value="Divorcé">{t('admin.assures.matrimonial_divorced')}</option>
-                <option value="Veuf">{t('admin.assures.matrimonial_widowed')}</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label className="form-label">{t('auth.blood_group')}</label>
-              <select
-                className="dashboard-input"
-                {...register('groupeSanguin')}
-              >
-                <option value="A+">A+</option>
-                <option value="A-">A-</option>
-                <option value="B+">B+</option>
-                <option value="B-">B-</option>
-                <option value="AB+">AB+</option>
-                <option value="AB-">AB-</option>
-                <option value="O+">O+</option>
-                <option value="O-">O-</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">{t('admin.assures.form_doctor')}</label>
-            <select
-              className="dashboard-input"
-              {...register('medecinTraitantId')}
-            >
-              <option value="">-- {t('admin.assures.form_doctor_select')} --</option>
-              {generalistes.map((g) => (
-                <option key={g.id} value={g.id}>
-                  {g.nom} ({g.matricule})
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {submitError && (
-            <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs">
-              {submitError}
-            </div>
-          )}
-
-          <div className="flex justify-end gap-3 pt-5 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => {
-                setIsModalOpen(false);
-                reset();
-              }}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button type="submit" variant="primary">
-              {t('admin.assures.form_submit')}
-            </Button>
-          </div>
-        </form>
+      {/* EDIT MODAL */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => { setIsEditModalOpen(false); setEditingAssure(null); resetEdit(); }}
+        title="Modifier l'assuré"
+        description={editingAssure ? `Modification de ${editingAssure.nom}` : ''}
+        size="lg"
+      >
+        <AssureForm
+          onSubmit={handleSubmitEdit(onEditSubmit)}
+          register={registerEdit}
+          errors={errorsEdit}
+          generalistes={generalistes}
+          submitError={editSubmitError}
+          onCancel={() => { setIsEditModalOpen(false); setEditingAssure(null); resetEdit(); }}
+          submitLabel="Enregistrer les modifications"
+          t={t}
+        />
       </Modal>
     </motion.div>
   );

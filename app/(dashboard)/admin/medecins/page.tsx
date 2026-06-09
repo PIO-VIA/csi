@@ -13,6 +13,8 @@ import {
   Phone,
   Bookmark,
   Mail,
+  Download,
+  KeyRound,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
@@ -113,6 +115,32 @@ export default function MedecinsAdminPage() {
     alert(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
   };
 
+  const handleResetPassword = async (id: number) => {
+    if (!confirm('Envoyer un nouveau mot de passe par email ?')) return;
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { MDecinsService } = await import('@/lib2') as any;
+      await MDecinsService.resetPassword(id);
+      alert('Nouveau mot de passe envoyé par email.');
+    } catch (e) {
+      alert(getApiErrorMessage(e));
+    }
+  };
+
+  const exportCSV = () => {
+    const headers = ['Matricule', 'Nom', 'Email', 'Type', 'Specialisation', 'Telephone'];
+    const rows = filteredMedecins.map((m) => [
+      m.matricule, m.nom, m.email || '', m.type,
+      m.domaineSpecialisation || '', m.numTelephone,
+    ]);
+    const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'medecins_csi.csv'; link.click();
+    URL.revokeObjectURL(url);
+  };
+
   // Unique list of specialities
   const specialities = Array.from(
     new Set(
@@ -161,9 +189,14 @@ export default function MedecinsAdminPage() {
             {t('admin.medecins.subtitle')}
           </p>
         </div>
-        <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
-          {t('admin.medecins.new_doctor')}
-        </Button>
+        <div className="flex gap-2 flex-wrap">
+          <Button variant="secondary" leftIcon={<Download size={16} />} onClick={exportCSV}>
+            Exporter CSV
+          </Button>
+          <Button variant="primary" onClick={() => setIsModalOpen(true)} leftIcon={<Plus size={16} />}>
+            {t('admin.medecins.new_doctor')}
+          </Button>
+        </div>
       </div>
 
       {/* FILTER BAR */}
@@ -267,7 +300,7 @@ export default function MedecinsAdminPage() {
                       {m.matricule}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={m.type === 'GENERALISTE' ? 'neutral' : 'warning'}>
+                      <Badge variant={m.type === 'GENERALISTE' ? 'info' : 'warning'}>
                         {m.type === 'GENERALISTE'
                           ? t('admin.medecins.generaliste')
                           : t('admin.medecins.specialiste')}
@@ -286,14 +319,25 @@ export default function MedecinsAdminPage() {
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        onClick={() => handleDelete(m.id)}
-                        variant="ghost"
-                        size="sm"
-                        className="p-1.5 h-8 w-8 text-danger hover:bg-danger/10"
-                      >
-                        <Trash2 size={15} />
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5 h-8 w-8 text-success hover:bg-success/10"
+                          title="Réinitialiser le mot de passe"
+                          onClick={() => handleResetPassword(m.id)}
+                        >
+                          <KeyRound size={15} />
+                        </Button>
+                        <Button
+                          onClick={() => handleDelete(m.id)}
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5 h-8 w-8 text-danger hover:bg-danger/10"
+                        >
+                          <Trash2 size={15} />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -376,7 +420,7 @@ export default function MedecinsAdminPage() {
             </div>
           )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
             <Button
               type="button"
               variant="ghost"

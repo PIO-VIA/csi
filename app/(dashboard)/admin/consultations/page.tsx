@@ -2,14 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Search, Activity, User, ShieldAlert } from 'lucide-react';
+import { Calendar, Search, Activity, User, ShieldAlert, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getConsultations } from '@/lib/api';
+import { getConsultations, createFeuille } from '@/lib/api';
 import { Consultation } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 
@@ -19,18 +21,27 @@ export default function ConsultationsAdminPage() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterCategory, setFilterCategory] = useState<'ALL' | 'GENERALISTE' | 'SPECIALISTE'>('ALL');
+  const [filterFrom, setFilterFrom] = useState('');
+  const [filterTo, setFilterTo] = useState('');
+
+  // Créer feuille modal
+  const [selectedConsultForFeuille, setSelectedConsultForFeuille] = useState<Consultation | null>(null);
+  const [isFeuilleModalOpen, setIsFeuilleModalOpen] = useState(false);
+  const [montantSoin, setMontantSoin] = useState(0);
+  const [isCreatingFeuille, setIsCreatingFeuille] = useState(false);
+
+  const loadData = async () => {
+    try {
+      const res = await getConsultations();
+      setConsultations(res.data);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const loadData = async () => {
-      try {
-        const res = await getConsultations();
-        setConsultations(res.data);
-      } catch (e) {
-        console.error(e);
-      } finally {
-        setLoading(false);
-      }
-    };
     loadData();
   }, []);
 
@@ -41,8 +52,28 @@ export default function ConsultationsAdminPage() {
       (c.motif || '').toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory =
       filterCategory === 'ALL' || c.generaliste.type === filterCategory;
-    return matchesSearch && matchesCategory;
+    const matchesDate =
+      (!filterFrom || c.date >= filterFrom) &&
+      (!filterTo || c.date <= filterTo);
+    return matchesSearch && matchesCategory && matchesDate;
   });
+
+  const handleCreateFeuille = async () => {
+    if (!selectedConsultForFeuille) return;
+    setIsCreatingFeuille(true);
+    try {
+      await createFeuille({ consultationId: selectedConsultForFeuille.id, montantSoin });
+      setIsFeuilleModalOpen(false);
+      setSelectedConsultForFeuille(null);
+      setMontantSoin(0);
+      loadData();
+    } catch (e) {
+      console.error(e);
+      alert('Erreur lors de la création de la feuille.');
+    } finally {
+      setIsCreatingFeuille(false);
+    }
+  };
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
 
@@ -61,6 +92,7 @@ export default function ConsultationsAdminPage() {
         </p>
       </div>
 
+      {/* FILTER BAR */}
       <Card>
         <CardBody className="p-4 flex flex-col md:flex-row gap-4 items-center">
           <div className="w-full md:flex-1 relative">
@@ -75,6 +107,19 @@ export default function ConsultationsAdminPage() {
               className="dashboard-search"
             />
           </div>
+
+          <input
+            type="date"
+            value={filterFrom}
+            onChange={(e) => setFilterFrom(e.target.value)}
+            className="dashboard-input w-36 text-xs"
+          />
+          <input
+            type="date"
+            value={filterTo}
+            onChange={(e) => setFilterTo(e.target.value)}
+            className="dashboard-input w-36 text-xs"
+          />
 
           <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
             {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((type) => (
@@ -97,6 +142,11 @@ export default function ConsultationsAdminPage() {
           </div>
         </CardBody>
       </Card>
+
+      {/* Result counter */}
+      <p className="text-xs text-slate-500 font-body">
+        {filteredConsultations.length} consultation(s) trouvée(s)
+      </p>
 
       <Card>
         <CardBody className="p-0">
@@ -129,7 +179,7 @@ export default function ConsultationsAdminPage() {
                     </TableCell>
                     <TableCell className="font-display font-semibold text-xs">
                       <div className="flex items-center gap-2">
-                        <span className="p-1 bg-slate-800 rounded text-slate-400">
+                        <span className="p-1 bg-slate-100 rounded text-slate-500">
                           <User size={12} />
                         </span>
                         <span>{c.assure.nom}</span>
@@ -139,7 +189,7 @@ export default function ConsultationsAdminPage() {
                       {c.generaliste.nom}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={c.generaliste.type === 'GENERALISTE' ? 'neutral' : 'warning'}>
+                      <Badge variant={c.generaliste.type === 'GENERALISTE' ? 'info' : 'warning'}>
                         {c.generaliste.type === 'GENERALISTE'
                           ? t('admin.consultations.generaliste')
                           : t('admin.consultations.specialiste')}
@@ -154,10 +204,17 @@ export default function ConsultationsAdminPage() {
                           {c.feuilleMaladie.idFeuille}
                         </Badge>
                       ) : (
-                        <span className="flex items-center gap-1 text-[10px] text-warning font-semibold font-display">
-                          <ShieldAlert size={12} />
-                          {t('admin.consultations.pending_fm')}
-                        </span>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs px-2 py-1"
+                          onClick={() => {
+                            setSelectedConsultForFeuille(c);
+                            setIsFeuilleModalOpen(true);
+                          }}
+                        >
+                          + Créer feuille
+                        </Button>
                       )}
                     </TableCell>
                   </TableRow>
@@ -167,6 +224,55 @@ export default function ConsultationsAdminPage() {
           </Table>
         </CardBody>
       </Card>
+
+      {/* Créer Feuille Modal */}
+      {selectedConsultForFeuille && (
+        <Modal
+          isOpen={isFeuilleModalOpen}
+          onClose={() => {
+            setIsFeuilleModalOpen(false);
+            setSelectedConsultForFeuille(null);
+            setMontantSoin(0);
+          }}
+          title="Créer une feuille de maladie"
+          description={`Patient: ${selectedConsultForFeuille.assure.nom}`}
+        >
+          <div className="space-y-4">
+            <div className="form-group">
+              <label className="form-label">Montant des soins (FCFA)</label>
+              <input
+                type="number"
+                min={0}
+                value={montantSoin}
+                onChange={(e) => setMontantSoin(Number(e.target.value))}
+                className="dashboard-input"
+                placeholder="Ex: 15000"
+              />
+            </div>
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsFeuilleModalOpen(false);
+                  setSelectedConsultForFeuille(null);
+                  setMontantSoin(0);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                isLoading={isCreatingFeuille}
+                onClick={handleCreateFeuille}
+              >
+                Créer la feuille
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
     </motion.div>
   );
 }

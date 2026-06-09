@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import Sidebar, { useSidebarContext, SIDEBAR_EXPANDED_W, SIDEBAR_COLLAPSED_W } from '@/components/ui/Sidebar';
@@ -14,10 +14,22 @@ function getRoleHome(role: string) {
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { collapsed } = useSidebarContext();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 1024);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
+
   return (
     <div
-      className="flex-1 flex flex-col min-w-0 min-h-screen transition-all duration-300 ease-in-out"
-      style={{ paddingLeft: `${collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W}px` }}
+      className="flex-1 flex flex-col min-w-0 min-h-screen"
+      style={{
+        paddingLeft: isMobile ? 0 : (collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W),
+        transition: 'padding-left 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+      }}
     >
       <TopBar />
       <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">

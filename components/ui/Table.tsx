@@ -5,9 +5,11 @@ import Button from './Button';
 
 interface TableProps extends React.TableHTMLAttributes<HTMLTableElement> {
   children: React.ReactNode;
+  isLoading?: boolean;
+  colCount?: number;
 }
 
-export function Table({ className, children, ...props }: TableProps) {
+export function Table({ className, children, isLoading, colCount, ...props }: TableProps) {
   return (
     <div className="w-full overflow-x-auto rounded-xl border border-slate-200/80 bg-white shadow-sm">
       <table className={cn('w-full border-collapse text-left text-sm', className)} {...props}>
@@ -19,23 +21,38 @@ export function Table({ className, children, ...props }: TableProps) {
 
 export function TableHeader({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
   return (
-    <thead className={cn('bg-slate-50 border-b border-slate-200 text-xs text-slate-650 font-display font-medium uppercase tracking-wider', className)} {...props}>
+    <thead className={cn('bg-slate-50 border-b border-slate-200 text-xs text-slate-600 font-display font-medium uppercase tracking-wider', className)} {...props}>
       {children}
     </thead>
   );
 }
 
-export function TableBody({ className, children, ...props }: React.HTMLAttributes<HTMLTableSectionElement>) {
+interface TableBodyProps extends React.HTMLAttributes<HTMLTableSectionElement> {
+  isLoading?: boolean;
+  colCount?: number;
+}
+
+export function TableBody({ className, children, isLoading, colCount, ...props }: TableBodyProps) {
   return (
     <tbody className={cn('divide-y divide-slate-100 font-body', className)} {...props}>
-      {children}
+      {isLoading && colCount && colCount > 0
+        ? Array.from({ length: 5 }).map((_, i) => (
+            <tr key={'skeleton-' + i}>
+              {Array.from({ length: colCount }).map((_, j) => (
+                <td key={j} className="px-6 py-4">
+                  <div className="h-4 bg-slate-100 rounded-lg animate-pulse w-3/4" />
+                </td>
+              ))}
+            </tr>
+          ))
+        : children}
     </tbody>
   );
 }
 
 export function TableRow({ className, children, ...props }: React.HTMLAttributes<HTMLTableRowElement>) {
   return (
-    <tr className={cn('hover:bg-slate-50/50 transition-colors duration-150', className)} {...props}>
+    <tr className={cn('hover:bg-primary-50/30 transition-colors duration-150', className)} {...props}>
       {children}
     </tr>
   );
@@ -43,7 +60,7 @@ export function TableRow({ className, children, ...props }: React.HTMLAttributes
 
 export function TableHead({ className, children, ...props }: React.ThHTMLAttributes<HTMLTableCellElement>) {
   return (
-    <th className={cn('px-6 py-4 font-semibold text-slate-650', className)} {...props}>
+    <th className={cn('px-6 py-4 font-semibold text-slate-600', className)} {...props}>
       {children}
     </th>
   );

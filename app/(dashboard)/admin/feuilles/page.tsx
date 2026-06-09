@@ -14,10 +14,12 @@ import '@/lib/i18n';
 import { getFeuilles, getConsultations } from '@/lib/api';
 import { FeuillemMaladie, Consultation } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
+import StatCard from '@/components/ui/StatCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TablePagination } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
+import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
-import { formatFCFA } from '@/lib/utils';
+import { formatFCFA, formatDate } from '@/lib/utils';
 
 export default function AdminFeuillesPage() {
   const { t } = useTranslation();
@@ -102,6 +104,28 @@ export default function AdminFeuillesPage() {
         </p>
       </div>
 
+      {/* Stats */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <StatCard
+          label="Total feuilles"
+          value={feuilles.length}
+          icon={<FileText size={20} />}
+          color="primary"
+        />
+        <StatCard
+          label="Remboursées"
+          value={feuilles.filter((f) => f.estRembourse).length}
+          icon={<CheckCircle size={20} />}
+          color="success"
+        />
+        <StatCard
+          label="En attente"
+          value={feuilles.filter((f) => !f.estRembourse).length}
+          icon={<Clock size={20} />}
+          color="warning"
+        />
+      </div>
+
       {/* FILTER BAR */}
       <Card>
         <CardBody className="p-4 flex flex-col md:flex-row gap-4 items-center">
@@ -155,17 +179,19 @@ export default function AdminFeuillesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>{t('admin.remboursements.col_ref') || 'Réf. Feuille'}</TableHead>
+                <TableHead>Date</TableHead>
                 <TableHead>{t('admin.remboursements.col_assure') || 'Assuré'}</TableHead>
                 <TableHead>{t('admin.remboursements.col_doctor') || 'Médecin'}</TableHead>
                 <TableHead>{t('admin.remboursements.col_soin_amount') || 'Montant Soin'}</TableHead>
                 <TableHead>{t('admin.remboursements.col_reimb_amount') || 'Remboursement'}</TableHead>
                 <TableHead>{t('common.status') || 'Statut'}</TableHead>
+                <TableHead>Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {paginatedFeuilles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
                     {t('medecin.feuilles.empty_list') || 'Aucune feuille de maladie trouvée.'}
                   </TableCell>
                 </TableRow>
@@ -178,6 +204,7 @@ export default function AdminFeuillesPage() {
                   return (
                     <TableRow key={f.id}>
                       <TableCell className="font-mono text-xs font-semibold">{f.idFeuille}</TableCell>
+                      <TableCell className="text-xs text-slate-500">{cons ? formatDate(cons.date) : '—'}</TableCell>
                       <TableCell className="font-display font-medium text-slate-800">{patientName}</TableCell>
                       <TableCell className="text-xs text-slate-600">{doctorName}</TableCell>
                       <TableCell className="text-xs font-semibold text-slate-700">{formatFCFA(f.montantSoin)}</TableCell>
@@ -192,6 +219,20 @@ export default function AdminFeuillesPage() {
                         <Badge variant={f.estRembourse ? 'success' : 'warning'}>
                           {f.estRembourse ? t('admin.remboursements.status_reimbursed') || 'Remboursé' : t('admin.remboursements.pending_title') || 'En attente'}
                         </Badge>
+                      </TableCell>
+                      <TableCell>
+                        {!f.estRembourse ? (
+                          <Button
+                            variant="primary"
+                            size="sm"
+                            className="text-xs px-3"
+                            onClick={() => window.location.href = '/admin/remboursements'}
+                          >
+                            Rembourser
+                          </Button>
+                        ) : (
+                          <Badge variant="success">Remboursé</Badge>
+                        )}
                       </TableCell>
                     </TableRow>
                   );

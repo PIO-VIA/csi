@@ -12,7 +12,7 @@ import { useTranslation } from 'react-i18next';
 export function TopBar() {
   const pathname = usePathname();
   const { user, logout } = useAuth();
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const [notifications, setNotifications] = useState([
     { id: 1, text: 'Nouveau remboursement validé (15 000 FCFA)', time: 'Il y a 10 min', read: false },
     { id: 2, text: 'Dr. Etoa a enregistré une nouvelle consultation', time: 'Il y a 1h', read: false },
@@ -26,7 +26,8 @@ export function TopBar() {
   const getPageTitle = () => {
     if (pathname === '/admin') return isEn ? 'Admin Dashboard' : 'Tableau de bord';
     if (pathname === '/admin/assures') return isEn ? 'Manage Insured Citizens' : 'Gestion des assurés';
-    if (pathname.startsWith('/admin/assures/')) return isEn ? 'Insured Details' : "Détails de l'assuré";
+    if (pathname.startsWith('/admin/assures/') && pathname !== '/admin/assures')
+      return isEn ? 'Assurés > Détail' : 'Assurés > Détail';
     if (pathname === '/admin/medecins') return isEn ? 'Manage Doctors' : 'Gestion des médecins';
     if (pathname === '/admin/consultations') return isEn ? 'Consultations' : 'Consultations';
     if (pathname === '/admin/feuilles') return isEn ? 'Health Sheets' : 'Feuilles de maladie';
@@ -117,11 +118,16 @@ export function TopBar() {
                     onClick={markAllRead}
                     className="text-[10px] font-body text-primary-600 hover:underline cursor-pointer"
                   >
-                    Tout marquer lu
+                    {t('dashboard.notifications.mark_all_read') || 'Tout marquer lu'}
                   </button>
                 )}
               </div>
               <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
+                {notifications.length === 0 && (
+                  <p className="text-xs text-slate-400 text-center py-6">
+                    Aucune notification
+                  </p>
+                )}
                 {notifications.map((n) => (
                   <div
                     key={n.id}
