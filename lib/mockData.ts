@@ -8,12 +8,12 @@ export const mockUsers: User[] = [
 ];
 
 export const mockMedecins: Medecin[] = [
-  { id: 3, nom: 'Dr. Célestin Etoa', matricule: 'MED-GEN-001', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 677 89 45 12' },
-  { id: 10, nom: 'Dr. Samuel Tchoutouo', matricule: 'MED-GEN-002', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 699 12 34 56' },
-  { id: 11, nom: 'Dr. Alice Ondoua', matricule: 'MED-GEN-003', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 655 43 21 09' },
-  { id: 4, nom: 'Dr. Thérèse Ngo', matricule: 'MED-SPC-001', type: 'SPECIALISTE', domaineSpecialisation: 'Cardiologie', estAssure: false, numTelephone: '+237 691 88 77 66' },
-  { id: 12, nom: 'Dr. Jean-Pierre Belinga', matricule: 'MED-SPC-002', type: 'SPECIALISTE', domaineSpecialisation: 'Pédiatrie', estAssure: false, numTelephone: '+237 671 22 33 44' },
-  { id: 13, nom: 'Dr. Marie Mbarga', matricule: 'MED-SPC-003', type: 'SPECIALISTE', domaineSpecialisation: 'Gynécologie', estAssure: false, numTelephone: '+237 680 55 66 77' },
+  { id: 3, nom: 'Dr. Célestin Etoa', matricule: 'MED-GEN-001', email: 'etoa@csi.cm', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 677 89 45 12' },
+  { id: 10, nom: 'Dr. Samuel Tchoutouo', matricule: 'MED-GEN-002', email: 'samuel.tchoutouo@csi.cm', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 699 12 34 56' },
+  { id: 11, nom: 'Dr. Alice Ondoua', matricule: 'MED-GEN-003', email: 'alice.ondua@csi.cm', type: 'GENERALISTE', estAssure: false, numTelephone: '+237 655 43 21 09' },
+  { id: 4, nom: 'Dr. Thérèse Ngo', matricule: 'MED-SPC-001', email: 'ngo@csi.cm', type: 'SPECIALISTE', domaineSpecialisation: 'Cardiologie', estAssure: false, numTelephone: '+237 691 88 77 66' },
+  { id: 12, nom: 'Dr. Jean-Pierre Belinga', matricule: 'MED-SPC-002', email: 'jp.belinga@csi.cm', type: 'SPECIALISTE', domaineSpecialisation: 'Pédiatrie', estAssure: false, numTelephone: '+237 671 22 33 44' },
+  { id: 13, nom: 'Dr. Marie Mbarga', matricule: 'MED-SPC-003', email: 'marie.mbarga@csi.cm', type: 'SPECIALISTE', domaineSpecialisation: 'Gynécologie', estAssure: false, numTelephone: '+237 680 55 66 77' },
 ];
 
 export const mockAssures: Assure[] = [

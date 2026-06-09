@@ -74,8 +74,8 @@ export default function AssureMedecinPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Mon Médecin Traitant</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mon Médecin Traitant</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Déclarez votre médecin généraliste référent pour assurer un remboursement optimal de vos soins
         </p>
       </div>
@@ -129,7 +129,7 @@ export default function AssureMedecinPage() {
                   <span className="text-[10px] font-display font-bold text-warning uppercase tracking-wider">
                     Attention
                   </span>
-                  <h3 className="font-display font-bold text-sm text-white">
+                  <h3 className="font-display font-bold text-sm text-slate-800">
                     Aucun médecin traitant déclaré
                   </h3>
                   <p className="font-body text-xs text-slate-455 leading-relaxed max-w-md">
@@ -143,9 +143,9 @@ export default function AssureMedecinPage() {
       </div>
 
       {/* SEARCH AND LIST OF GENERAL PRACTITIONERS */}
-      <div className="space-y-4 pt-4 border-t border-slate-800/80">
+      <div className="space-y-4 pt-4 border-t border-slate-200/80">
         <div>
-          <h2 className="font-display font-bold text-sm text-white uppercase tracking-wider">
+          <h2 className="font-display font-bold text-sm text-slate-800 uppercase tracking-wider">
             Médecins Généralistes Agréés
           </h2>
           <p className="font-body text-xs text-slate-400">
@@ -165,7 +165,7 @@ export default function AssureMedecinPage() {
                 placeholder="Rechercher par nom de médecin, matricule..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-slate-900 border border-slate-800 rounded-xl text-xs text-slate-100 focus:outline-none focus:border-primary-500 transition"
+                className="dashboard-search text-xs"
               />
             </div>
           </CardBody>
@@ -194,7 +194,7 @@ export default function AssureMedecinPage() {
                           <Stethoscope size={20} />
                         </div>
                         <div>
-                          <h4 className="font-display font-bold text-xs text-white">Dr. {g.nom}</h4>
+                          <h4 className="font-display font-bold text-xs text-slate-800">Dr. {g.nom}</h4>
                           <span className="font-mono text-[9px] text-slate-500">{g.matricule}</span>
                         </div>
                       </div>

@@ -14,7 +14,7 @@ interface StatCardProps {
 
 export function StatCard({ label, value, icon, color = 'primary', variation, variationUp = true }: StatCardProps) {
   return (
-    <Card className="hover:scale-[1.02] hover:border-slate-350 duration-300">
+    <Card variant="solid" className="hover:shadow-lg hover:border-primary-100 duration-300">
       <CardBody className="flex items-center justify-between">
         <div className="flex flex-col gap-2">
           <span className="text-xs font-display font-medium text-slate-500 tracking-wide uppercase">

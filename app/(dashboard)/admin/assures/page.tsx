@@ -178,8 +178,8 @@ export default function AssuresAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Gestion des Assurés</h1>
-          <p className="font-body text-xs text-slate-400 mt-1">
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Gestion des Assurés</h1>
+          <p className="font-body text-sm text-slate-500 mt-1">
             Gérez la liste des bénéficiaires et affectez leurs médecins traitants
           </p>
         </div>
@@ -204,12 +204,12 @@ export default function AssuresAdminPage() {
                 setSearchTerm(e.target.value);
                 setCurrentPage(1);
               }}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
 
           {/* Select Medecin */}
-          <div className="w-full md:w-56 flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
             <UserCheck size={16} className="text-slate-400 shrink-0" />
             <select
               value={filterMedecin}
@@ -230,7 +230,7 @@ export default function AssuresAdminPage() {
           </div>
 
           {/* Select Blood Group */}
-          <div className="w-full md:w-48 flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5">
             <Droplet size={16} className="text-slate-400 shrink-0" />
             <select
               value={filterBlood}
@@ -288,7 +288,7 @@ export default function AssuresAdminPage() {
                     <TableCell className="font-display font-semibold text-white">
                       {a.nom}
                     </TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs text-slate-600">
                       <span className="flex items-center gap-1">
                         <Smartphone size={13} className="text-slate-500" />
                         {a.numTelephone}
@@ -363,9 +363,9 @@ export default function AssuresAdminPage() {
             />
 
             <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-300">Sexe</label>
+              <label className="font-display font-medium text-xs text-slate-600">Sexe</label>
               <select
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                className="dashboard-input"
                 {...register('sexe')}
               >
                 <option value="Homme">Homme</option>
@@ -393,9 +393,9 @@ export default function AssuresAdminPage() {
 
           <div className="grid grid-cols-2 gap-4">
             <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-300">Statut matrimonial</label>
+              <label className="font-display font-medium text-xs text-slate-600">Statut matrimonial</label>
               <select
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                className="dashboard-input"
                 {...register('statutMatrimoniale')}
               >
                 <option value="Célibataire">Célibataire</option>
@@ -406,9 +406,9 @@ export default function AssuresAdminPage() {
             </div>
 
             <div className="w-full flex flex-col gap-1.5">
-              <label className="font-display font-medium text-xs text-slate-300">Groupe sanguin</label>
+              <label className="font-display font-medium text-xs text-slate-600">Groupe sanguin</label>
               <select
-                className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                className="dashboard-input"
                 {...register('groupeSanguin')}
               >
                 <option value="A+">A+</option>
@@ -424,9 +424,9 @@ export default function AssuresAdminPage() {
           </div>
 
           <div className="w-full flex flex-col gap-1.5">
-            <label className="font-display font-medium text-xs text-slate-300">Médecin traitant (Généraliste)</label>
+            <label className="font-display font-medium text-xs text-slate-600">Médecin traitant (Généraliste)</label>
             <select
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              className="dashboard-input"
               {...register('medecinTraitantId')}
             >
               <option value="">-- Choisir un médecin --</option>

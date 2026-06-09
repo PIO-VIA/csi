@@ -8,11 +8,7 @@ import {
   Stethoscope,
   Calendar,
   DollarSign,
-  TrendingUp,
   ArrowRight,
-  TrendingDown,
-  Activity,
-  FileText
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -22,16 +18,16 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  Legend,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
 import { getAssures, getMedecins, getConsultations, getRemboursements, getFeuilles } from '@/lib/api';
 import { Assure, Medecin, Consultation, Remboursement, FeuillemMaladie } from '@/types';
 import StatCard from '@/components/ui/StatCard';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
+import PageHeader from '@/components/ui/PageHeader';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Button from '@/components/ui/Button';
 import { formatFCFA, formatDate } from '@/lib/utils';
@@ -50,13 +46,14 @@ export default function AdminDashboard() {
     setMounted(true);
     const fetchData = async () => {
       try {
-        const [resAssures, resMedecins, resConsultations, resRemboursements, resFeuilles] = await Promise.all([
-          getAssures(),
-          getMedecins(),
-          getConsultations(),
-          getRemboursements(),
-          getFeuilles()
-        ]);
+        const [resAssures, resMedecins, resConsultations, resRemboursements, resFeuilles] =
+          await Promise.all([
+            getAssures(),
+            getMedecins(),
+            getConsultations(),
+            getRemboursements(),
+            getFeuilles(),
+          ]);
         setAssures(resAssures.data);
         setMedecins(resMedecins.data);
         setConsultations(resConsultations.data);
@@ -73,11 +70,9 @@ export default function AdminDashboard() {
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
 
-  // Calculate statistics
   const totalAssures = assures.length;
   const totalMedecins = medecins.length;
-  
-  // Consultations current month
+
   const now = new Date();
   const currentMonth = now.getMonth();
   const currentYear = now.getFullYear();
@@ -86,10 +81,8 @@ export default function AdminDashboard() {
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
 
-  // Total reimbursements
   const remboursementsTotaux = remboursements.reduce((acc, r) => acc + r.montant, 0);
 
-  // Group consultations by month (for last 6 months to make it readable)
   const monthsList = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
   const chartLineData = Array.from({ length: 6 }).map((_, idx) => {
     const d = new Date();
@@ -104,12 +97,10 @@ export default function AdminDashboard() {
     return { name: mLabel, Consultations: count };
   });
 
-  // Calculate Generalist vs Specialist refund split
   let generalistRefund = 0;
   let specialistRefund = 0;
 
   remboursements.forEach((r) => {
-    // Find matching sheet and consultation
     const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
     if (sheet) {
       const cons = consultations.find((c) => c.id === sheet.consultationId);
@@ -123,7 +114,6 @@ export default function AdminDashboard() {
     }
   });
 
-  // If both are 0, use defaults to show a pie chart
   if (generalistRefund === 0 && specialistRefund === 0) {
     generalistRefund = 120000;
     specialistRefund = 85000;
@@ -134,50 +124,45 @@ export default function AdminDashboard() {
     { name: 'Spécialistes (80%)', value: specialistRefund },
   ];
 
-  const PIE_COLORS = ['#3b82f6', '#06b6d4']; // primary-500 and accent-500
+  const PIE_COLORS = ['#3b82f6', '#06b6d4'];
 
-  // Latest 4 users
-  const latestAssures = [...assures]
-    .sort((a, b) => b.id - a.id)
-    .slice(0, 4);
+  const latestAssures = [...assures].sort((a, b) => b.id - a.id).slice(0, 4);
+  const latestRemboursements = [...remboursements].sort((a, b) => b.id - a.id).slice(0, 4);
 
-  // Latest 4 refunds
-  const latestRemboursements = [...remboursements]
-    .sort((a, b) => b.id - a.id)
-    .slice(0, 4);
-
-  const fadeUp = {
-    hidden: { opacity: 0, y: 15 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.4 } },
-  };
+  const dateLabel = new Date().toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
-    <motion.div initial="hidden" animate="visible" variants={fadeUp} className="space-y-6">
-      {/* Page Header */}
-      <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Tableau de bord</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
-          Vue globale du système — {new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-        </p>
-      </div>
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        title="Tableau de bord administrateur"
+        description={`Vue globale du système — ${dateLabel}`}
+      />
 
-      {/* STAT CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <StatCard
-          label="Total Assurés"
+          label="Total assurés"
           value={totalAssures}
           icon={<Users size={20} />}
           color="primary"
           variation="+4.2% ce mois"
-          variationUp={true}
+          variationUp
         />
         <StatCard
-          label="Total Médecins"
+          label="Total médecins"
           value={totalMedecins}
           icon={<Stethoscope size={20} />}
           color="accent"
           variation="+1.8% ce mois"
-          variationUp={true}
+          variationUp
         />
         <StatCard
           label="Consultations ce mois"
@@ -188,41 +173,46 @@ export default function AdminDashboard() {
           variationUp={false}
         />
         <StatCard
-          label="Remboursements Totaux"
+          label="Remboursements totaux"
           value={formatFCFA(remboursementsTotaux)}
           icon={<DollarSign size={20} />}
           color="success"
           variation="+8.3% ce mois"
-          variationUp={true}
+          variationUp
         />
       </div>
 
-      {/* CHARTS */}
       {mounted && (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          {/* Left Chart (Line chart - 60%) */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div className="lg:col-span-7">
-            <Card className="h-full">
+            <Card variant="solid" className="h-full">
               <CardHeader className="flex justify-between items-center">
-                <span className="font-display font-semibold text-sm text-white">Évolution des Consultations</span>
-                <Badge variant="neutral">Derniers 6 mois</Badge>
+                <span className="font-display font-semibold text-sm text-slate-800">
+                  Évolution des consultations
+                </span>
+                <Badge variant="neutral">6 derniers mois</Badge>
               </CardHeader>
-              <CardBody className="h-80 pt-6">
+              <CardBody className="h-80 pt-2">
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={chartLineData} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" opacity={0.3} />
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                     <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
                     <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                     <Tooltip
-                      contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
-                      labelStyle={{ color: '#fff', fontWeight: 'bold' }}
-                      itemStyle={{ color: '#60a5fa' }}
+                      contentStyle={{
+                        backgroundColor: '#fff',
+                        borderColor: '#e2e8f0',
+                        borderRadius: '12px',
+                        boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      }}
+                      labelStyle={{ color: '#0f172a', fontWeight: 'bold' }}
+                      itemStyle={{ color: '#2563eb' }}
                     />
                     <Line
                       type="monotone"
                       dataKey="Consultations"
-                      stroke="#60a5fa" // primary-400
-                      strokeWidth={3}
+                      stroke="#2563eb"
+                      strokeWidth={2.5}
                       activeDot={{ r: 6 }}
                       dot={{ strokeWidth: 2, r: 4 }}
                     />
@@ -232,11 +222,12 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          {/* Right Chart (Pie Chart - 40%) */}
           <div className="lg:col-span-5">
-            <Card className="h-full">
+            <Card variant="solid" className="h-full">
               <CardHeader>
-                <span className="font-display font-semibold text-sm text-white">Remboursements par Catégorie</span>
+                <span className="font-display font-semibold text-sm text-slate-800">
+                  Remboursements par catégorie
+                </span>
               </CardHeader>
               <CardBody className="h-80 flex flex-col justify-center items-center">
                 <div className="h-56 w-full relative">
@@ -251,30 +242,34 @@ export default function AdminDashboard() {
                         paddingAngle={5}
                         dataKey="value"
                       >
-                        {pieData.map((entry, index) => (
+                        {pieData.map((_, index) => (
                           <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                         ))}
                       </Pie>
                       <Tooltip
-                        contentStyle={{ backgroundColor: '#0f172a', borderColor: '#1e293b', borderRadius: '12px' }}
-                        itemStyle={{ color: '#fff' }}
-                        formatter={(value: any) => formatFCFA(value)}
+                        contentStyle={{
+                          backgroundColor: '#fff',
+                          borderColor: '#e2e8f0',
+                          borderRadius: '12px',
+                        }}
+                        formatter={(value) => formatFCFA(Number(value))}
                       />
                     </PieChart>
                   </ResponsiveContainer>
-                  {/* Total Overlay inside Donut */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">Total</span>
-                    <span className="text-sm font-display font-bold text-white">{formatFCFA(generalistRefund + specialistRefund)}</span>
+                    <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">
+                      Total
+                    </span>
+                    <span className="text-sm font-display font-bold text-slate-800">
+                      {formatFCFA(generalistRefund + specialistRefund)}
+                    </span>
                   </div>
                 </div>
-
-                {/* Custom Legends */}
                 <div className="flex gap-6 mt-2 text-xs font-body">
                   {pieData.map((d, index) => (
                     <div key={d.name} className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded" style={{ backgroundColor: PIE_COLORS[index] }} />
-                      <span className="text-slate-300">{d.name}</span>
+                      <span className="text-slate-600">{d.name}</span>
                     </div>
                   ))}
                 </div>
@@ -284,14 +279,14 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* RECENT TABLES */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Latest Assures */}
-        <Card>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Card variant="solid">
           <CardHeader className="flex justify-between items-center">
-            <span className="font-display font-semibold text-sm text-white">Derniers Assurés Inscrits</span>
+            <span className="font-display font-semibold text-sm text-slate-800">
+              Derniers assurés inscrits
+            </span>
             <Link href="/admin/assures">
-              <Button variant="ghost" size="sm" className="text-xs hover:text-white" rightIcon={<ArrowRight size={12} />}>
+              <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
                 Voir tout
               </Button>
             </Link>
@@ -301,8 +296,8 @@ export default function AdminDashboard() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nom</TableHead>
-                  <TableHead>ID Assuré</TableHead>
-                  <TableHead>Date Inscription</TableHead>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Date</TableHead>
                   <TableHead>Médecin</TableHead>
                   <TableHead>Statut</TableHead>
                 </TableRow>
@@ -310,10 +305,10 @@ export default function AdminDashboard() {
               <TableBody>
                 {latestAssures.map((a) => (
                   <TableRow key={a.id}>
-                    <TableCell className="font-display font-medium text-white">{a.nom}</TableCell>
-                    <TableCell className="font-mono text-xs text-slate-400">{a.idAssure}</TableCell>
+                    <TableCell className="font-display font-medium">{a.nom}</TableCell>
+                    <TableCell className="font-mono text-xs text-slate-500">{a.idAssure}</TableCell>
                     <TableCell className="text-xs">{formatDate('2026-06-01')}</TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs">
                       {a.medecinTraitant ? a.medecinTraitant.nom : 'Non choisi'}
                     </TableCell>
                     <TableCell>
@@ -326,12 +321,13 @@ export default function AdminDashboard() {
           </CardBody>
         </Card>
 
-        {/* Latest Refunds */}
-        <Card>
+        <Card variant="solid">
           <CardHeader className="flex justify-between items-center">
-            <span className="font-display font-semibold text-sm text-white">Derniers Remboursements</span>
+            <span className="font-display font-semibold text-sm text-slate-800">
+              Derniers remboursements
+            </span>
             <Link href="/admin/remboursements">
-              <Button variant="ghost" size="sm" className="text-xs hover:text-white" rightIcon={<ArrowRight size={12} />}>
+              <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
                 Voir tout
               </Button>
             </Link>
@@ -349,14 +345,13 @@ export default function AdminDashboard() {
               </TableHeader>
               <TableBody>
                 {latestRemboursements.map((r) => {
-                  // Find name of patient from sheet
                   const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
                   const cons = sheet ? consultations.find((c) => c.id === sheet.consultationId) : null;
                   const patientName = cons ? cons.assure.nom : 'Assuré';
-                  
+
                   return (
                     <TableRow key={r.id}>
-                      <TableCell className="font-display font-medium text-white">{patientName}</TableCell>
+                      <TableCell className="font-display font-medium">{patientName}</TableCell>
                       <TableCell className="font-semibold text-success">{formatFCFA(r.montant)}</TableCell>
                       <TableCell className="text-xs">{formatDate(r.dateRemboursement)}</TableCell>
                       <TableCell>

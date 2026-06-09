@@ -25,10 +25,19 @@ export interface Medecin {
   id: number;
   nom: string;
   matricule: string;
+  email: string;
   type: 'GENERALISTE' | 'SPECIALISTE';
   domaineSpecialisation?: string;
   estAssure: boolean;
   numTelephone: string;
+}
+
+export interface CreateMedecinInput {
+  nom: string;
+  email: string;
+  numTelephone: string;
+  type: 'GENERALISTE' | 'SPECIALISTE';
+  domaineSpecialisation?: string;
 }
 
 export interface Consultation {

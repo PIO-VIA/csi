@@ -107,3 +107,65 @@ body {
   animation: slideInLeft 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Dashboard shell background */
+.dashboard-shell {
+  background:
+    radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.06) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(8, 145, 178, 0.05) 0px, transparent 50%),
+    #f1f5f9;
+}
+
+/* Hero banner for dashboard welcome sections */
+.dashboard-hero {
+  background: linear-gradient(135deg, #1d4ed8 0%, #1e3a8a 50%, #0891b2 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px -12px rgba(29, 78, 216, 0.35);
+}
+
+/* Search input for list pages */
+.dashboard-search {
+  width: 100%;
+  padding: 0.625rem 1rem 0.625rem 2.75rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.dashboard-search::placeholder {
+  color: #94a3b8;
+}
+.dashboard-search:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+/* Form controls for dashboard modals and pages */
+.dashboard-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  font-size: 0.875rem;
+  color: #0f172a;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.dashboard-input:focus {
+  outline: none;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
+}
+
+.dashboard-filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.75rem;
+  padding: 0.25rem;
+}
+

@@ -53,14 +53,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       );
 
       if (foundUser) {
+        if (foundUser.role === 'ASSURE') {
+          setLoading(false);
+          return false;
+        }
         setUser(foundUser);
         localStorage.setItem('csi_session', JSON.stringify(foundUser));
         setLoading(false);
         return true;
       }
       
-      // If email doesn't exist, search in doctors / patients and create or map
-      // For quick demo, if we type a known role-specific prefix or default email, we log in as that:
+      // Comptes démo (admin et médecins uniquement — les assurés n'ont pas d'accès)
       let fallbackUser: User | null = null;
       if (email.includes('admin')) {
         fallbackUser = { id: 1, nom: 'M. Administrator', email: 'admin@csi.cm', role: 'ADMIN', avatarInitiales: 'AD' };
@@ -68,8 +71,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         fallbackUser = { id: 3, nom: 'Dr. Célestin Etoa', email: 'etoa@csi.cm', role: 'GENERALISTE', avatarInitiales: 'CE' };
       } else if (email.includes('ngo') || email.includes('spec')) {
         fallbackUser = { id: 4, nom: 'Dr. Thérèse Ngo', email: 'ngo@csi.cm', role: 'SPECIALISTE', avatarInitiales: 'TN' };
-      } else if (email.includes('fosso') || email.includes('assure')) {
-        fallbackUser = { id: 2, nom: 'Jean-Marc Fosso', email: 'jean.fosso@gmail.com', role: 'ASSURE', avatarInitiales: 'JF' };
       }
 
       if (fallbackUser) {
@@ -97,7 +98,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('csi_session');
-    router.push('/login');
+    router.push('/');
   };
 
   const registerUser = async (data: {
@@ -155,6 +156,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       medecins.push({
         id: newId,
         nom: data.nom,
+        email: data.email,
         matricule: `MED-${codeType}-${count.toString().padStart(3, '0')}`,
         type: data.role,
         domaineSpecialisation: data.domaineSpecialisation,

@@ -11,10 +11,11 @@ import {
   Plus,
   Trash2,
   Phone,
-  Bookmark
+  Bookmark,
+  Mail,
 } from 'lucide-react';
 import { getMedecins, getAssures, createMedecin } from '@/lib/api';
-import { Medecin, Assure } from '@/types';
+import { Medecin, Assure, CreateMedecinInput } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
@@ -25,6 +26,7 @@ import Loader from '@/components/ui/Loader';
 
 const medecinFormSchema = z.object({
   nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
+  email: z.string().email({ message: 'Adresse email invalide' }),
   numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
   type: z.enum(['GENERALISTE', 'SPECIALISTE']),
   domaineSpecialisation: z.string().optional(),
@@ -38,6 +40,7 @@ export default function MedecinsAdminPage() {
   const [assures, setAssures] = useState<Assure[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -78,20 +81,29 @@ export default function MedecinsAdminPage() {
 
   const onSubmit = async (data: MedecinFormValues) => {
     setSubmitError(null);
+    setSubmitSuccess(null);
     try {
-      const payload: Partial<Medecin> = {
+      const payload: CreateMedecinInput = {
         nom: data.nom,
+        email: data.email,
         numTelephone: data.numTelephone,
         type: data.type,
         domaineSpecialisation: data.type === 'SPECIALISTE' ? data.domaineSpecialisation : undefined,
       };
 
       await createMedecin(payload);
-      setIsModalOpen(false);
+      setSubmitSuccess(
+        `Médecin enregistré. Un mot de passe provisoire sera envoyé à ${data.email} par le backend.`
+      );
       reset();
       loadData();
+      setTimeout(() => {
+        setIsModalOpen(false);
+        setSubmitSuccess(null);
+      }, 2500);
     } catch (e) {
-      setSubmitError('Une erreur est survenue lors de l\'enregistrement du médecin.');
+      const msg = e instanceof Error ? e.message : 'Une erreur est survenue lors de l\'enregistrement.';
+      setSubmitError(msg);
     }
   };
 
@@ -161,8 +173,8 @@ export default function MedecinsAdminPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Gestion des Médecins</h1>
-          <p className="font-body text-xs text-slate-400 mt-1">
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Gestion des Médecins</h1>
+          <p className="font-body text-sm text-slate-500 mt-1">
             Enregistrez les professionnels de santé habilités à utiliser le système
           </p>
         </div>
@@ -184,12 +196,12 @@ export default function MedecinsAdminPage() {
               placeholder="Rechercher par nom, matricule..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
 
           {/* Toggle Type */}
-          <div className="flex bg-slate-900 p-1 border border-slate-850 rounded-xl w-full md:w-auto">
+          <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
             {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((t) => (
               <button
                 key={t}
@@ -200,7 +212,7 @@ export default function MedecinsAdminPage() {
                 className={`flex-1 md:flex-initial px-4 py-1.5 rounded-lg text-xs font-display font-medium uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
                   filterType === t
                     ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {t === 'ALL' ? 'Tous' : t === 'GENERALISTE' ? 'Généralistes' : 'Spécialistes'}
@@ -210,7 +222,7 @@ export default function MedecinsAdminPage() {
 
           {/* Select Speciality (only if Specialists is active) */}
           {filterType === 'SPECIALISTE' && (
-            <div className="w-full md:w-56 flex items-center gap-2 bg-slate-900 border border-slate-800 rounded-xl px-3 py-1.5 animate-fade-in">
+            <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 animate-fade-in">
               <Bookmark size={16} className="text-slate-400 shrink-0" />
               <select
                 value={filterDomain}
@@ -236,6 +248,7 @@ export default function MedecinsAdminPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nom</TableHead>
+                <TableHead>Email</TableHead>
                 <TableHead>Matricule</TableHead>
                 <TableHead>Type</TableHead>
                 <TableHead>Domaine</TableHead>
@@ -247,15 +260,21 @@ export default function MedecinsAdminPage() {
             <TableBody>
               {filteredMedecins.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
                     Aucun médecin trouvé avec ces critères.
                   </TableCell>
                 </TableRow>
               ) : (
                 filteredMedecins.map((m) => (
                   <TableRow key={m.id}>
-                    <TableCell className="font-display font-bold text-white">
+                    <TableCell className="font-display font-bold text-slate-800">
                       {m.nom}
+                    </TableCell>
+                    <TableCell className="text-xs text-slate-600">
+                      <span className="flex items-center gap-1.5">
+                        <Mail size={12} className="text-slate-400 shrink-0" />
+                        {m.email || '—'}
+                      </span>
                     </TableCell>
                     <TableCell className="font-mono text-xs text-primary-300 font-medium">
                       {m.matricule}
@@ -265,7 +284,7 @@ export default function MedecinsAdminPage() {
                         {m.type === 'GENERALISTE' ? 'Généraliste' : 'Spécialiste'}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-xs text-slate-300">
+                    <TableCell className="text-xs text-slate-600">
                       {m.domaineSpecialisation || <span className="text-slate-500 italic">-</span>}
                     </TableCell>
                     <TableCell className="text-xs text-center font-semibold text-slate-200">
@@ -301,9 +320,11 @@ export default function MedecinsAdminPage() {
         onClose={() => {
           setIsModalOpen(false);
           reset();
+          setSubmitError(null);
+          setSubmitSuccess(null);
         }}
-        title="Enregistrement Professionnel de Santé"
-        description="Créez un profil pour un médecin généraliste ou spécialiste agrée."
+        title="Enregistrement professionnel de santé"
+        description="Le mot de passe généré sera envoyé par email au praticien via le backend."
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <Input
@@ -314,6 +335,15 @@ export default function MedecinsAdminPage() {
           />
 
           <Input
+            label="Adresse email professionnelle"
+            type="email"
+            placeholder="medecin@csi.cm"
+            leftIcon={<Mail size={16} />}
+            error={errors.email?.message}
+            {...register('email')}
+          />
+
+          <Input
             label="Numéro de téléphone"
             placeholder="+237 6xx xx xx xx"
             error={errors.numTelephone?.message}
@@ -321,9 +351,9 @@ export default function MedecinsAdminPage() {
           />
 
           <div className="w-full flex flex-col gap-1.5">
-            <label className="font-display font-medium text-xs text-slate-300">Type de praticien</label>
+            <label className="font-display font-medium text-xs text-slate-600">Type de praticien</label>
             <select
-              className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+              className="dashboard-input"
               {...register('type')}
             >
               <option value="GENERALISTE">Médecin Généraliste</option>
@@ -343,6 +373,12 @@ export default function MedecinsAdminPage() {
                 {...register('domaineSpecialisation')}
               />
             </motion.div>
+          )}
+
+          {submitSuccess && (
+            <div className="p-3 bg-success/10 border border-success/20 text-success rounded-xl text-xs leading-relaxed">
+              {submitSuccess}
+            </div>
           )}
 
           {submitError && (

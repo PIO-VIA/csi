@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { Assure, Medecin, Consultation, Prescription, FeuillemMaladie, Remboursement, User } from '@/types';
+import { Assure, Medecin, Consultation, Prescription, FeuillemMaladie, Remboursement, User, CreateMedecinInput } from '@/types';
 import * as mock from './mockData';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
@@ -194,36 +194,51 @@ export const getSpecialistes = () =>
     () => getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins).filter(m => m.type === 'SPECIALISTE')
   );
 
-export const createMedecin = (data: Partial<Medecin>) =>
+export const createMedecin = (data: CreateMedecinInput) =>
   requestWithFallback(
     () => api.post<Medecin>('/medecins', data),
     () => {
       const list = getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins);
-      const newId = list.length > 0 ? Math.max(...list.map(m => m.id)) + 1 : 3;
+      const userList = getLocalData<User>(KEYS.USERS, mock.mockUsers);
+
+      const emailExists =
+        userList.some((u) => u.email.toLowerCase() === data.email.toLowerCase()) ||
+        list.some((m) => m.email?.toLowerCase() === data.email.toLowerCase());
+      if (emailExists) {
+        throw new Error('Un compte avec cet email existe déjà.');
+      }
+
+      const newId = list.length > 0 ? Math.max(...list.map((m) => m.id)) + 1 : 3;
       const codeType = data.type === 'SPECIALISTE' ? 'SPC' : 'GEN';
-      const count = list.filter(m => m.type === data.type).length + 1;
-      
+      const count = list.filter((m) => m.type === data.type).length + 1;
+
       const newMedecin: Medecin = {
         id: newId,
-        nom: data.nom || '',
+        nom: data.nom,
+        email: data.email,
         matricule: `MED-${codeType}-${count.toString().padStart(3, '0')}`,
-        type: data.type || 'GENERALISTE',
+        type: data.type,
         domaineSpecialisation: data.domaineSpecialisation,
         estAssure: false,
-        numTelephone: data.numTelephone || '',
+        numTelephone: data.numTelephone,
       };
-      
+
       list.push(newMedecin);
       setLocalData(KEYS.MEDECINS, list);
 
-      // Create matching user account
-      const userList = getLocalData<User>(KEYS.USERS, mock.mockUsers);
+      // Compte utilisateur — le mot de passe sera généré et envoyé par le backend
       userList.push({
         id: newId,
         nom: newMedecin.nom,
-        email: `${newMedecin.nom.toLowerCase().replace(/\s+/g, '.')}@csi.cm`,
+        email: data.email,
         role: newMedecin.type,
-        avatarInitiales: newMedecin.nom.split(' ').filter(x => !x.includes('.')).map(n => n[0]).join('').toUpperCase()
+        avatarInitiales: newMedecin.nom
+          .split(' ')
+          .filter((x) => !x.includes('.'))
+          .map((n) => n[0])
+          .join('')
+          .toUpperCase()
+          .substring(0, 3),
       });
       setLocalData(KEYS.USERS, userList);
 

@@ -60,8 +60,8 @@ export default function AssurePrescriptionsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Mes Prescriptions & Ordonnances</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Mes Prescriptions & Ordonnances</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Visualisez les ordonnances actives prescrites par vos praticiens
         </p>
       </div>
@@ -77,7 +77,7 @@ export default function AssurePrescriptionsPage() {
               placeholder="Rechercher par médicament, médecin..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
         </CardBody>
@@ -104,13 +104,13 @@ export default function AssurePrescriptionsPage() {
               ) : (
                 filtered.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-semibold text-white text-xs">
+                    <TableCell className="font-semibold text-xs">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-slate-500" />
                         {formatDate(p.date)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-semibold text-white">
+                    <TableCell className="text-xs font-semibold">
                       Dr. {p.medecin}
                     </TableCell>
                     <TableCell>
@@ -121,12 +121,12 @@ export default function AssurePrescriptionsPage() {
                     <TableCell className="text-xs leading-relaxed">
                       {p.type === 'MEDICAMENT' ? (
                         <div>
-                          <span className="font-semibold text-white text-sm">{p.medicament}</span> <br />
+                          <span className="font-semibold text-sm">{p.medicament}</span> <br />
                           <span className="text-slate-400 italic text-[11px]">Posologie : {p.posologie}</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="font-semibold text-white text-sm">Référence vers Spécialiste</span> <br />
+                          <span className="font-semibold text-sm">Référence vers Spécialiste</span> <br />
                           <span className="text-slate-400 text-[11px]">
                             Médecin matricule : <span className="font-mono text-[10px] text-primary-300 font-medium">{p.matriculeMedecin}</span> <br />
                             Motif : {p.motif}

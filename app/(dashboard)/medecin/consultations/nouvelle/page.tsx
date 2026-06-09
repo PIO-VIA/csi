@@ -96,9 +96,7 @@ export default function NouvelleConsultationPage() {
   const watchCreerFeuille = watch('creerFeuille');
 
   if (!user) return null;
-  const isGeneralist = user.role === 'GENERALISTE';
 
-  // Add prescription to the dynamic sub-list
   const handleAddPrescription = () => {
     setPrescError(null);
     if (prescType === 'MEDICAMENT') {
@@ -108,7 +106,7 @@ export default function NouvelleConsultationPage() {
       }
       setPrescriptions([
         ...prescriptions,
-        { type: 'MEDICAMENT', medicament: medName, posologie: posology }
+        { type: 'MEDICAMENT', medicament: medName, posologie: posology },
       ]);
       setMedName('');
       setPosology('');
@@ -119,7 +117,7 @@ export default function NouvelleConsultationPage() {
       }
       setPrescriptions([
         ...prescriptions,
-        { type: 'SPECIALISTE', matriculeMedecin: specMatricule, motif: specMotif }
+        { type: 'SPECIALISTE', matriculeMedecin: specMatricule, motif: specMotif },
       ]);
       setSpecMatricule('');
       setSpecMotif('');
@@ -139,8 +137,8 @@ export default function NouvelleConsultationPage() {
         generalisteId: user.id,
         motif: data.motif,
         prescriptions: prescriptions,
-        creerFeuille: isGeneralist ? data.creerFeuille : false,
-        montantSoin: isGeneralist && data.creerFeuille ? data.montantSoin : undefined,
+        creerFeuille: data.creerFeuille,
+        montantSoin: data.creerFeuille ? data.montantSoin : undefined,
       };
 
       await createConsultation(payload);
@@ -163,7 +161,7 @@ export default function NouvelleConsultationPage() {
       {/* Back Link */}
       <button
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-xs font-display text-slate-400 hover:text-white transition w-fit group"
+        className="flex items-center gap-2 text-xs font-display text-slate-500 hover:text-slate-800 transition w-fit group"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition" />
         <span>Retour</span>
@@ -171,8 +169,8 @@ export default function NouvelleConsultationPage() {
 
       {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Nouvelle Consultation</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Nouvelle Consultation</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Déclarez un acte de soin et préparez les ordonnances associées
         </p>
       </div>
@@ -184,16 +182,16 @@ export default function NouvelleConsultationPage() {
           <div className="lg:col-span-7 space-y-6">
             <Card>
               <CardBody className="p-5 space-y-5">
-                <h3 className="font-display font-semibold text-xs text-white uppercase tracking-wider">
+                <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   Détails de l&apos;Acte Médical
                 </h3>
                 <div className="h-px bg-slate-800/80" />
 
                 {/* Patient Select */}
                 <div className="w-full flex flex-col gap-1.5">
-                  <label className="font-display font-medium text-xs text-slate-300">Sélectionner l&apos;Assuré</label>
+                  <label className="font-display font-medium text-xs text-slate-600">Sélectionner l&apos;Assuré</label>
                   <select
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40"
+                    className="dashboard-input"
                     {...register('assureId')}
                   >
                     <option value="">-- Choisir un patient --</option>
@@ -208,50 +206,48 @@ export default function NouvelleConsultationPage() {
 
                 {/* Diagnostic motif */}
                 <div className="w-full flex flex-col gap-1.5">
-                  <label className="font-display font-medium text-xs text-slate-300">Motif & Diagnostic</label>
+                  <label className="font-display font-medium text-xs text-slate-600">Motif & Diagnostic</label>
                   <textarea
                     rows={4}
                     placeholder="Saisissez ici les symptômes observés, le diagnostic final posé ou les actes prodigués..."
-                    className="w-full px-4 py-3 bg-slate-900 border border-slate-800 rounded-xl font-body text-sm text-slate-100 focus:outline-none focus:ring-2 focus:ring-primary-500/40 resize-none"
+                    className="dashboard-input resize-none"
                     {...register('motif')}
                   />
                   {errors.motif && <p className="text-xs text-danger font-medium">{errors.motif.message}</p>}
                 </div>
 
-                {/* Generalist Sheet option */}
-                {isGeneralist && (
-                  <div className="pt-4 border-t border-slate-850 space-y-4">
-                    <label className="flex items-center gap-3 cursor-pointer group select-none">
-                      <input
-                        type="checkbox"
-                        className="h-4.5 w-4.5 rounded bg-slate-900 border border-slate-800 text-primary-600 focus:ring-primary-500/30 cursor-pointer"
-                        {...register('creerFeuille')}
-                      />
-                      <span className="font-display font-semibold text-xs text-slate-200 group-hover:text-white transition">
-                        Générer la feuille de maladie numérique
-                      </span>
-                    </label>
+                {/* Feuille de maladie — disponible pour tous les praticiens */}
+                <div className="pt-4 border-t border-slate-200 space-y-4">
+                  <label className="flex items-center gap-3 cursor-pointer group select-none">
+                    <input
+                      type="checkbox"
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500/30 cursor-pointer"
+                      {...register('creerFeuille')}
+                    />
+                    <span className="font-display font-semibold text-xs text-slate-700 group-hover:text-slate-900 transition">
+                      Générer la feuille de maladie numérique
+                    </span>
+                  </label>
 
-                    <AnimatePresence>
-                      {watchCreerFeuille && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="pl-7 overflow-hidden"
-                        >
-                          <Input
-                            label="Montant total des soins (FCFA)"
-                            type="number"
-                            placeholder="Ex: 15000"
-                            error={errors.montantSoin?.message}
-                            {...register('montantSoin')}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                )}
+                  <AnimatePresence>
+                    {watchCreerFeuille && (
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: 'auto' }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="pl-7 overflow-hidden"
+                      >
+                        <Input
+                          label="Montant total des soins (FCFA)"
+                          type="number"
+                          placeholder="Ex: 15000"
+                          error={errors.montantSoin?.message}
+                          {...register('montantSoin')}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               </CardBody>
             </Card>
           </div>
@@ -262,7 +258,7 @@ export default function NouvelleConsultationPage() {
             {/* Dynamic Prescriptions List */}
             <Card>
               <CardBody className="p-5 space-y-5">
-                <h3 className="font-display font-semibold text-xs text-white uppercase tracking-wider">
+                <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   Prescription & Ordonnance
                 </h3>
                 <div className="h-px bg-slate-800/80" />
@@ -280,7 +276,7 @@ export default function NouvelleConsultationPage() {
                   ) : (
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                       {prescriptions.map((p, idx) => (
-                        <div key={idx} className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between gap-3 font-body text-xs text-slate-300">
+                        <div key={idx} className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between gap-3 font-body text-xs text-slate-600">
                           <div className="flex-1 min-w-0">
                             {p.type === 'MEDICAMENT' ? (
                               <div>
@@ -308,14 +304,14 @@ export default function NouvelleConsultationPage() {
                 </div>
 
                 {/* Add Subform Card */}
-                <div className="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-4 space-y-4">
+                <div className="bg-slate-900/60 border border-slate-200 rounded-2xl p-4 space-y-4">
                   {/* Selector type */}
                   <div className="flex bg-slate-950 p-1 border border-slate-850 rounded-xl">
                     <button
                       type="button"
                       onClick={() => { setPrescType('MEDICAMENT'); setPrescError(null); }}
                       className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition ${
-                        prescType === 'MEDICAMENT' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                        prescType === 'MEDICAMENT' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       Médicament
@@ -324,7 +320,7 @@ export default function NouvelleConsultationPage() {
                       type="button"
                       onClick={() => { setPrescType('SPECIALISTE'); setPrescError(null); }}
                       className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition ${
-                        prescType === 'SPECIALISTE' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-400 hover:text-white'
+                        prescType === 'SPECIALISTE' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       Réf. Spécialiste
@@ -403,7 +399,7 @@ export default function NouvelleConsultationPage() {
         )}
 
         {/* Submit controls */}
-        <div className="flex justify-end gap-3 pt-6 border-t border-slate-800">
+        <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">
           <Button
             type="button"
             variant="ghost"

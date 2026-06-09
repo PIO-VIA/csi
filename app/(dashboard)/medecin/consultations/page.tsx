@@ -50,8 +50,8 @@ export default function MedecinConsultationsPage() {
     >
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Historique des Consultations</h1>
-          <p className="font-body text-xs text-slate-400 mt-1">
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Historique des Consultations</h1>
+          <p className="font-body text-sm text-slate-500 mt-1">
             Visualisez et gérez l&apos;ensemble de vos actes médicaux enregistrés
           </p>
         </div>
@@ -73,7 +73,7 @@ export default function MedecinConsultationsPage() {
               placeholder="Rechercher par nom de patient, diagnostic..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
         </CardBody>
@@ -101,7 +101,7 @@ export default function MedecinConsultationsPage() {
               ) : (
                 filtered.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-semibold text-white text-xs">
+                    <TableCell className="font-semibold text-xs">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-slate-500" />
                         {formatDate(c.date)}

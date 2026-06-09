@@ -54,8 +54,8 @@ export default function ConsultationsAdminPage() {
     >
       {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Suivi des Consultations</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Suivi des Consultations</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Historique en temps réel des actes médicaux déclarés sur le réseau national
         </p>
       </div>
@@ -73,12 +73,12 @@ export default function ConsultationsAdminPage() {
               placeholder="Rechercher par assuré, médecin, diagnostic..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
 
           {/* Toggle Type */}
-          <div className="flex bg-slate-900 p-1 border border-slate-850 rounded-xl w-full md:w-auto">
+          <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
             {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((t) => (
               <button
                 key={t}
@@ -86,7 +86,7 @@ export default function ConsultationsAdminPage() {
                 className={`flex-1 md:flex-initial px-4 py-1.5 rounded-lg text-xs font-display font-medium uppercase tracking-wider transition whitespace-nowrap cursor-pointer ${
                   filterCategory === t
                     ? 'bg-primary-600 text-white shadow-sm'
-                    : 'text-slate-400 hover:text-white'
+                    : 'text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {t === 'ALL' ? 'Toutes' : t === 'GENERALISTE' ? 'Générales' : 'Spécialisées'}
@@ -120,13 +120,13 @@ export default function ConsultationsAdminPage() {
               ) : (
                 filteredConsultations.map((c) => (
                   <TableRow key={c.id}>
-                    <TableCell className="font-semibold text-white text-xs">
+                    <TableCell className="font-semibold text-xs">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-slate-500" />
                         {formatDate(c.date)}
                       </span>
                     </TableCell>
-                    <TableCell className="font-display font-semibold text-white text-xs">
+                    <TableCell className="font-display font-semibold text-xs">
                       <div className="flex items-center gap-2">
                         <span className="p-1 bg-slate-800 rounded text-slate-400">
                           <User size={12} />
@@ -134,7 +134,7 @@ export default function ConsultationsAdminPage() {
                         <span>{c.assure.nom}</span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-xs font-medium text-slate-200">
+                    <TableCell className="text-xs font-medium text-slate-600">
                       {c.generaliste.nom}
                     </TableCell>
                     <TableCell>

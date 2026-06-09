@@ -60,8 +60,8 @@ export default function MedecinPrescriptionsPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Prescriptions Émises</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Prescriptions Émises</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Suivi historique des médicaments prescrits et des orientations vers des spécialistes
         </p>
       </div>
@@ -77,7 +77,7 @@ export default function MedecinPrescriptionsPage() {
               placeholder="Rechercher par patient, médicament, motif..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
         </CardBody>
@@ -104,13 +104,13 @@ export default function MedecinPrescriptionsPage() {
               ) : (
                 filtered.map((p) => (
                   <TableRow key={p.id}>
-                    <TableCell className="font-semibold text-white text-xs">
+                    <TableCell className="font-semibold text-xs">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-slate-500" />
                         {formatDate(p.date)}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-semibold text-white">
+                    <TableCell className="text-xs font-semibold">
                       <span className="flex items-center gap-1.5">
                         <span className="p-1 bg-slate-850 rounded text-slate-450">
                           <User size={12} />
@@ -126,12 +126,12 @@ export default function MedecinPrescriptionsPage() {
                     <TableCell className="text-xs leading-relaxed">
                       {p.type === 'MEDICAMENT' ? (
                         <div>
-                          <span className="font-semibold text-white text-sm">{p.medicament}</span> <br />
+                          <span className="font-semibold text-sm">{p.medicament}</span> <br />
                           <span className="text-slate-400 italic text-[11px]">Posologie : {p.posologie}</span>
                         </div>
                       ) : (
                         <div>
-                          <span className="font-semibold text-white text-sm font-display">Orientation Spécialiste</span> <br />
+                          <span className="font-semibold text-sm font-display">Orientation Spécialiste</span> <br />
                           <span className="text-slate-400 text-[11px]">
                             Médecin matricule : <span className="font-mono text-primary-300 font-medium">{p.matriculeMedecin}</span> <br />
                             Motif : {p.motif}

@@ -110,7 +110,7 @@ export default function AssureDetailPage({ params }: PageProps) {
               </div>
 
               <div className="space-y-1">
-                <h2 className="font-display font-bold text-lg text-white">{assure.nom}</h2>
+                <h2 className="font-display font-bold text-lg text-slate-900">{assure.nom}</h2>
                 <span className="font-mono text-xs text-accent-400 font-medium">{assure.idAssure}</span>
                 <div className="pt-2">
                   <Badge variant="success">Assuré Social</Badge>
@@ -118,7 +118,7 @@ export default function AssureDetailPage({ params }: PageProps) {
               </div>
 
               {/* Personal Details */}
-              <div className="w-full border-t border-slate-800/80 pt-5 space-y-4 text-xs font-body text-left">
+              <div className="w-full border-t border-slate-200/80 pt-5 space-y-4 text-xs font-body text-left">
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Calendar size={13} /> Nais.</span>
                   <span className="text-slate-200 font-medium">{formatDate(assure.dateNaissance)}</span>
@@ -142,7 +142,7 @@ export default function AssureDetailPage({ params }: PageProps) {
               </div>
 
               {/* Traitement Physician */}
-              <div className="w-full border-t border-slate-800/80 pt-5 text-left space-y-2">
+              <div className="w-full border-t border-slate-200/80 pt-5 text-left space-y-2">
                 <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">Médecin Traitant</span>
                 {assure.medecinTraitant ? (
                   <div className="flex items-center gap-3 p-3 bg-slate-900 border border-slate-800 rounded-xl">
@@ -167,15 +167,15 @@ export default function AssureDetailPage({ params }: PageProps) {
         {/* Right column (Tabs & Data Tables) */}
         <div className="lg:col-span-8 space-y-6">
           {/* Tabs header */}
-          <div className="flex border-b border-slate-800 overflow-x-auto gap-4">
+          <div className="flex border-b border-slate-200 overflow-x-auto gap-4">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`flex items-center gap-2 pb-4 px-1 border-b-2 font-display font-medium text-xs tracking-wide uppercase transition whitespace-nowrap cursor-pointer ${
                   activeTab === tab.id
-                    ? 'border-primary-500 text-white font-semibold'
-                    : 'border-transparent text-slate-400 hover:text-white'
+                    ? 'border-primary-500 text-primary-600 font-semibold'
+                    : 'border-transparent text-slate-500 hover:text-slate-800'
                 }`}
               >
                 {tab.icon}
@@ -214,7 +214,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                       ) : (
                         consultations.map((c) => (
                           <TableRow key={c.id}>
-                            <TableCell className="font-semibold text-white text-xs">{formatDate(c.date)}</TableCell>
+                            <TableCell className="font-semibold text-xs">{formatDate(c.date)}</TableCell>
                             <TableCell className="text-xs text-slate-200">
                               <span className="font-semibold">{c.generaliste.nom}</span> <br />
                               <span className="text-[10px] text-slate-400 uppercase tracking-wide">{c.generaliste.type}</span>
@@ -273,10 +273,10 @@ export default function AssureDetailPage({ params }: PageProps) {
                       ) : (
                         prescriptions.map((p) => (
                           <TableRow key={p.id}>
-                            <TableCell className="text-xs font-semibold text-white">
+                            <TableCell className="text-xs font-semibold">
                               {formatDate((p as any).date)}
                             </TableCell>
-                            <TableCell className="text-xs text-slate-300">{(p as any).medecin}</TableCell>
+                            <TableCell className="text-xs text-slate-600">{(p as any).medecin}</TableCell>
                             <TableCell>
                               <Badge variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'}>
                                 {p.type === 'MEDICAMENT' ? 'Médicament' : 'Consult. Spécialiste'}
@@ -327,7 +327,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                       ) : (
                         feuilles.map((f) => (
                           <TableRow key={f.id}>
-                            <TableCell className="font-mono text-xs font-semibold text-white">{f.idFeuille}</TableCell>
+                            <TableCell className="font-mono text-xs font-semibold">{f.idFeuille}</TableCell>
                             <TableCell className="font-semibold text-slate-200 text-xs">{formatFCFA(f.montantSoin)}</TableCell>
                             <TableCell className="text-xs text-slate-400">
                               {f.remboursement ? (
@@ -374,9 +374,9 @@ export default function AssureDetailPage({ params }: PageProps) {
                       ) : (
                         remboursements.map((r) => (
                           <TableRow key={r.id}>
-                            <TableCell className="text-xs font-semibold text-white">{formatDate(r.dateRemboursement)}</TableCell>
+                            <TableCell className="text-xs font-semibold">{formatDate(r.dateRemboursement)}</TableCell>
                             <TableCell className="font-mono text-xs text-slate-400">{r.feuilleRef}</TableCell>
-                            <TableCell className="text-xs text-slate-300">{formatFCFA(r.montantSoin)}</TableCell>
+                            <TableCell className="text-xs text-slate-600">{formatFCFA(r.montantSoin)}</TableCell>
                             <TableCell className="font-semibold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                             <TableCell>
                               <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>

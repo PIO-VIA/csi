@@ -119,20 +119,20 @@ export default function RemboursementsAdminPage() {
     >
       {/* Header */}
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Remboursements & Paiements</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Remboursements & Paiements</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Validez les dossiers de prise en charge et effectuez les virements bancaires aux assurés
         </p>
       </div>
 
       {/* PENDING REQUESTS SECTION */}
       <Card>
-        <CardHeader className="flex justify-between items-center border-b border-slate-800 pb-4">
+        <CardHeader className="flex justify-between items-center border-b border-slate-200 pb-4">
           <div className="flex items-center gap-2">
             <span className="p-1.5 bg-warning/10 text-warning rounded-lg">
               <Clock size={16} />
             </span>
-            <span className="font-display font-semibold text-sm text-white">Feuilles de maladie en attente de remboursement</span>
+            <span className="font-display font-semibold text-sm text-slate-800">Feuilles de maladie en attente de remboursement</span>
           </div>
           <Badge variant="warning">{pendingFeuilles.length} dossiers</Badge>
         </CardHeader>
@@ -161,7 +161,7 @@ export default function RemboursementsAdminPage() {
                   const details = getRefundDetails(f);
                   return (
                     <TableRow key={f.id}>
-                      <TableCell className="font-mono text-xs font-semibold text-white">
+                      <TableCell className="font-mono text-xs font-semibold">
                         {f.idFeuille}
                       </TableCell>
                       <TableCell className="font-display font-medium text-slate-200">
@@ -201,12 +201,12 @@ export default function RemboursementsAdminPage() {
 
       {/* HISTORICAL COMPLETED PAYMENTS */}
       <Card>
-        <CardHeader className="flex justify-between items-center border-b border-slate-800 pb-4">
+        <CardHeader className="flex justify-between items-center border-b border-slate-200 pb-4">
           <div className="flex items-center gap-2">
             <span className="p-1.5 bg-success/10 text-success rounded-lg">
               <CheckCircle size={16} />
             </span>
-            <span className="font-display font-semibold text-sm text-white">Historique des remboursements effectués</span>
+            <span className="font-display font-semibold text-sm text-slate-800">Historique des remboursements effectués</span>
           </div>
           <Badge variant="success">Total remboursé: {formatFCFA(remboursements.reduce((sum, r) => sum + r.montant, 0))}</Badge>
         </CardHeader>
@@ -235,8 +235,8 @@ export default function RemboursementsAdminPage() {
                   <TableRow key={r.id}>
                     <TableCell className="text-xs text-slate-350">{formatDate(r.dateRemboursement)}</TableCell>
                     <TableCell className="font-mono text-xs text-slate-400">{r.refFeuille}</TableCell>
-                    <TableCell className="font-display font-medium text-white text-xs">{r.patientName}</TableCell>
-                    <TableCell className="text-xs text-slate-300">{formatFCFA(r.montantSoin)}</TableCell>
+                    <TableCell className="font-display font-medium text-xs">{r.patientName}</TableCell>
+                    <TableCell className="text-xs text-slate-600">{formatFCFA(r.montantSoin)}</TableCell>
                     <TableCell className="font-display font-bold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                     <TableCell>
                       <Badge variant={r.modePaiement === 'VIREMENT' ? 'info' : 'warning'}>
@@ -270,7 +270,7 @@ export default function RemboursementsAdminPage() {
             return (
               <div className="space-y-6">
                 {/* Summary Table */}
-                <div className="bg-slate-950 p-4 border border-slate-800 rounded-2xl space-y-3 font-body text-xs text-slate-300">
+                <div className="bg-slate-950 p-4 border border-slate-800 rounded-2xl space-y-3 font-body text-xs text-slate-600">
                   <div className="flex justify-between">
                     <span>Bénéficiaire :</span>
                     <span className="text-white font-semibold">{details.patientName}</span>
@@ -289,7 +289,7 @@ export default function RemboursementsAdminPage() {
                   </div>
                   <div className="h-px bg-slate-800 my-1" />
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-display font-bold text-white">Montant à rembourser :</span>
+                    <span className="font-display font-bold text-slate-800">Montant à rembourser :</span>
                     <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
                   </div>
                 </div>

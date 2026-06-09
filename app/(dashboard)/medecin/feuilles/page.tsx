@@ -1,7 +1,6 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import { FileText, Search, Calendar, User } from 'lucide-react';
 import { useAuth } from '@/lib/authContext';
@@ -15,19 +14,12 @@ import { formatDate, formatFCFA } from '@/lib/utils';
 
 export default function MedecinFeuillesPage() {
   const { user } = useAuth();
-  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<(FeuillemMaladie & { date: string; patient: string })[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     if (!user) return;
-    
-    // Role Check: only GENERALISTE can access this page
-    if (user.role !== 'GENERALISTE') {
-      router.push('/medecin');
-      return;
-    }
 
     const loadData = async () => {
       try {
@@ -67,8 +59,8 @@ export default function MedecinFeuillesPage() {
       className="space-y-6"
     >
       <div>
-        <h1 className="font-display font-extrabold text-2xl text-white tracking-tight">Feuilles de Maladie Émises</h1>
-        <p className="font-body text-xs text-slate-400 mt-1">
+        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">Feuilles de Maladie Émises</h1>
+        <p className="font-body text-sm text-slate-500 mt-1">
           Suivez l&apos;état de traitement des feuilles de maladie numériques générées lors de vos consultations
         </p>
       </div>
@@ -84,7 +76,7 @@ export default function MedecinFeuillesPage() {
               placeholder="Rechercher par patient, référence..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-11 pr-4 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-sm text-slate-100 placeholder-slate-500 focus:outline-none focus:border-primary-500 transition"
+              className="dashboard-search"
             />
           </div>
         </CardBody>
@@ -112,7 +104,7 @@ export default function MedecinFeuillesPage() {
               ) : (
                 filtered.map((f) => (
                   <TableRow key={f.id}>
-                    <TableCell className="font-semibold text-white text-xs">
+                    <TableCell className="font-semibold text-xs">
                       <span className="flex items-center gap-1.5">
                         <Calendar size={13} className="text-slate-500" />
                         {formatDate(f.date)}
@@ -124,7 +116,7 @@ export default function MedecinFeuillesPage() {
                         {f.idFeuille}
                       </span>
                     </TableCell>
-                    <TableCell className="text-xs font-semibold text-white">
+                    <TableCell className="text-xs font-semibold">
                       <span className="flex items-center gap-1.5">
                         <span className="p-1 bg-slate-850 rounded text-slate-450">
                           <User size={12} />
