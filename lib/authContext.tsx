@@ -3,93 +3,138 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { User, UserRole } from '@/types';
-import { initLocalStorage } from './api';
+import '@/lib/openapi-config';
 import '@/lib/i18n';
+import { AuthentificationService, MDecinsService } from '@/lib2';
+import { getApiErrorMessage } from '@/lib/api';
+import {
+  asArray,
+  initialsFromName,
+  mapBackendRole,
+  mapMedecin,
+} from '@/lib/mappers';
+
+interface SessionUser extends User {
+  token: string;
+  username: string;
+}
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, role?: UserRole) => Promise<boolean>;
+  login: (email: string, password: string, role?: UserRole) => Promise<boolean>;
   logout: () => void;
   registerUser: (data: {
     nom: string;
     email: string;
     role: UserRole;
     phone: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+async function resolveUserFromLogin(
+  email: string,
+  response: Record<string, unknown>,
+): Promise<User> {
+  const role = mapBackendRole(String(response.role ?? ''));
+  const username = String(response.username ?? email);
+
+  if (role === 'GENERALISTE' || role === 'SPECIALISTE') {
+    const medecinsRaw = await MDecinsService.getAll();
+    const medecins = asArray<Record<string, unknown>>(medecinsRaw).map(mapMedecin);
+    const medecin =
+      medecins.find((m) => m.email.toLowerCase() === email.toLowerCase()) ??
+      medecins.find((m) => m.matricule === username);
+
+    if (medecin) {
+      return {
+        id: medecin.id,
+        nom: medecin.nom,
+        email: medecin.email || email,
+        role: medecin.type,
+        avatarInitiales: initialsFromName(medecin.nom),
+      };
+    }
+  }
+
+  return {
+    id: role === 'ADMIN' ? 1 : 0,
+    nom: username,
+    email,
+    role,
+    avatarInitiales: initialsFromName(username),
+  };
+}
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  // Initialize and load session on mount
   useEffect(() => {
-    initLocalStorage();
     const storedUser = localStorage.getItem('csi_session');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
-      } catch (e) {
+        const session = JSON.parse(storedUser) as SessionUser;
+        const { token: _token, username: _username, ...userData } = session;
+        setUser(userData);
+      } catch {
         localStorage.removeItem('csi_session');
       }
     }
     setLoading(false);
   }, []);
 
-  const login = async (email: string, requestedRole?: UserRole): Promise<boolean> => {
+  const login = async (
+    email: string,
+    password: string,
+    requestedRole?: UserRole,
+  ): Promise<boolean> => {
     setLoading(true);
     try {
-      // Find matching user in csi_users
-      const usersStr = localStorage.getItem('csi_users');
-      const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-      
-      const foundUser = users.find(
-        (u) => u.email.toLowerCase() === email.toLowerCase() && (!requestedRole || u.role === requestedRole)
+      const response = (await AuthentificationService.login({
+        username: email,
+        password,
+      })) as Record<string, unknown>;
+
+      const token = String(response.token ?? '');
+      const username = String(response.username ?? email);
+
+      // Stocker le token avant les appels API suivants (profil médecin, etc.)
+      localStorage.setItem(
+        'csi_session',
+        JSON.stringify({ token, username, email, role: mapBackendRole(String(response.role ?? '')) }),
       );
 
-      if (foundUser) {
-        if (foundUser.role === 'ASSURE') {
-          setLoading(false);
-          return false;
-        }
-        setUser(foundUser);
-        localStorage.setItem('csi_session', JSON.stringify(foundUser));
+      const userData = await resolveUserFromLogin(email, response);
+
+      if (userData.role === 'ASSURE') {
+        localStorage.removeItem('csi_session');
         setLoading(false);
-        return true;
-      }
-      
-      // Comptes démo (admin et médecins uniquement — les assurés n'ont pas d'accès)
-      let fallbackUser: User | null = null;
-      if (email.includes('admin')) {
-        fallbackUser = { id: 1, nom: 'M. Administrator', email: 'admin@csi.cm', role: 'ADMIN', avatarInitiales: 'AD' };
-      } else if (email.includes('etoa') || email.includes('gen')) {
-        fallbackUser = { id: 3, nom: 'Dr. Célestin Etoa', email: 'etoa@csi.cm', role: 'GENERALISTE', avatarInitiales: 'CE' };
-      } else if (email.includes('ngo') || email.includes('spec')) {
-        fallbackUser = { id: 4, nom: 'Dr. Thérèse Ngo', email: 'ngo@csi.cm', role: 'SPECIALISTE', avatarInitiales: 'TN' };
+        return false;
       }
 
-      if (fallbackUser) {
-        // save to users
-        const updatedUsers = [...users];
-        if (!updatedUsers.some(u => u.email === fallbackUser?.email)) {
-          updatedUsers.push(fallbackUser);
-          localStorage.setItem('csi_users', JSON.stringify(updatedUsers));
-        }
-        setUser(fallbackUser);
-        localStorage.setItem('csi_session', JSON.stringify(fallbackUser));
+      if (requestedRole && userData.role !== requestedRole) {
+        localStorage.removeItem('csi_session');
         setLoading(false);
-        return true;
+        return false;
       }
 
+      const session: SessionUser = {
+        ...userData,
+        token,
+        username,
+      };
+
+      setUser(userData);
+      localStorage.setItem('csi_session', JSON.stringify(session));
       setLoading(false);
-      return false;
+      return true;
     } catch (error) {
-      console.error(error);
+      console.error(getApiErrorMessage(error));
       setLoading(false);
       return false;
     }
@@ -101,70 +146,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
-  const registerUser = async (data: {
+  const registerUser = async (_data: {
     nom: string;
     email: string;
     role: UserRole;
     phone: string;
-    [key: string]: any;
+    [key: string]: unknown;
   }) => {
-    // Add user to csi_users
-    const usersStr = localStorage.getItem('csi_users');
-    const users: User[] = usersStr ? JSON.parse(usersStr) : [];
-    
-    const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
-    const initiales = data.nom
-      .split(' ')
-      .filter(x => !x.includes('.'))
-      .map((n) => n[0])
-      .join('')
-      .toUpperCase()
-      .substring(0, 3);
-      
-    const newUser: User = {
-      id: newId,
-      nom: data.nom,
-      email: data.email,
-      role: data.role,
-      avatarInitiales: initiales || 'U',
-    };
-    
-    users.push(newUser);
-    localStorage.setItem('csi_users', JSON.stringify(users));
-
-    // Also register in corresponding data table (assurés or médecins)
-    if (data.role === 'ASSURE') {
-      const assuresStr = localStorage.getItem('csi_assures');
-      const assures = assuresStr ? JSON.parse(assuresStr) : [];
-      assures.push({
-        id: newId,
-        idAssure: `ASS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        nom: data.nom,
-        dateNaissance: data.dateNaissance || '1995-01-01',
-        sexe: data.sexe || 'Homme',
-        profession: data.profession || 'Employé',
-        statutMatrimoniale: data.statutMatrimoniale || 'Célibataire',
-        groupeSanguin: data.groupeSanguin || 'O+',
-        numTelephone: data.phone,
-      });
-      localStorage.setItem('csi_assures', JSON.stringify(assures));
-    } else if (data.role === 'GENERALISTE' || data.role === 'SPECIALISTE') {
-      const medecinsStr = localStorage.getItem('csi_medecins');
-      const medecins = medecinsStr ? JSON.parse(medecinsStr) : [];
-      const codeType = data.role === 'SPECIALISTE' ? 'SPC' : 'GEN';
-      const count = medecins.filter((m: any) => m.type === data.role).length + 1;
-      medecins.push({
-        id: newId,
-        nom: data.nom,
-        email: data.email,
-        matricule: `MED-${codeType}-${count.toString().padStart(3, '0')}`,
-        type: data.role,
-        domaineSpecialisation: data.domaineSpecialisation,
-        estAssure: false,
-        numTelephone: data.phone,
-      });
-      localStorage.setItem('csi_medecins', JSON.stringify(medecins));
-    }
+    throw new Error('Inscription locale désactivée — utilisez les endpoints backend.');
   };
 
   return (

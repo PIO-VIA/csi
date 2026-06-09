@@ -1,174 +1,239 @@
-import axios from 'axios';
-import { Assure, Medecin, Consultation, Prescription, FeuillemMaladie, Remboursement, User, CreateMedecinInput } from '@/types';
-import * as mock from './mockData';
+import '@/lib/openapi-config';
+import {
+  ApiError,
+  AssurSService,
+  ConsultationsService,
+  FeuillesMaladieService,
+  GNRalistesService,
+  MDecinsService,
+  PrescriptionsService,
+  RemboursementsService,
+  SpCialistesService,
+} from '@/lib2';
+import type { AssureRequestDTO } from '@/lib2';
+import {
+  asArray,
+  buildConsultation,
+  mapAssure,
+  mapFeuille,
+  mapMedecin,
+  mapPrescription,
+  mapRemboursement,
+} from '@/lib/mappers';
+import type {
+  Assure,
+  Consultation,
+  CreateMedecinInput,
+  FeuillemMaladie,
+  Medecin,
+  Prescription,
+  Remboursement,
+} from '@/types';
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+type ApiPayload<T> = { data: T };
 
-const api = axios.create({
-  baseURL: BASE_URL,
-  headers: { 'Content-Type': 'application/json' },
-});
+const toList = <T>(value: unknown): T[] => asArray<T>(value);
 
-// Helper to check if we are running in the browser
-const isClient = typeof window !== 'undefined';
-
-// Local storage keys
-const KEYS = {
-  USERS: 'csi_users',
-  ASSURES: 'csi_assures',
-  MEDECINS: 'csi_medecins',
-  CONSULTATIONS: 'csi_consultations',
-  PRESCRIPTIONS: 'csi_prescriptions',
-  FEUILLES: 'csi_feuilles',
-  REMBOURSEMENTS: 'csi_remboursements'
-};
-
-// Seed localStorage with mock data if not already present
-function getLocalData<T>(key: string, defaultData: T[]): T[] {
-  if (!isClient) return defaultData;
-  const item = localStorage.getItem(key);
-  if (!item) {
-    localStorage.setItem(key, JSON.stringify(defaultData));
-    return defaultData;
-  }
-  try {
-    return JSON.parse(item);
-  } catch (e) {
-    return defaultData;
-  }
+async function loadMedecins(): Promise<Medecin[]> {
+  const raw = await MDecinsService.getAll();
+  return toList<Record<string, unknown>>(raw).map(mapMedecin);
 }
 
-function setLocalData<T>(key: string, data: T[]): void {
-  if (isClient) {
-    localStorage.setItem(key, JSON.stringify(data));
-  }
+async function loadAssures(medecins?: Medecin[]): Promise<Assure[]> {
+  const doctors = medecins ?? (await loadMedecins());
+  const raw = await AssurSService.getAll2();
+  return toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, doctors));
 }
 
-// Initialize local storage states
-export const initLocalStorage = () => {
-  if (!isClient) return;
-  getLocalData(KEYS.USERS, mock.mockUsers);
-  getLocalData(KEYS.ASSURES, mock.mockAssures);
-  getLocalData(KEYS.MEDECINS, mock.mockMedecins);
-  getLocalData(KEYS.CONSULTATIONS, mock.mockConsultations);
-  getLocalData(KEYS.PRESCRIPTIONS, mock.mockPrescriptions);
-  getLocalData(KEYS.FEUILLES, mock.mockFeuilles);
-  getLocalData(KEYS.REMBOURSEMENTS, mock.mockRemboursements);
-};
+async function loadFeuilles(): Promise<FeuillemMaladie[]> {
+  const raw = await FeuillesMaladieService.getAll1();
+  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
 
-// Fallback logic wrapper
-async function requestWithFallback<T>(
-  apiCall: () => Promise<{ data: T }>,
-  localFallback: () => T
-): Promise<{ data: T }> {
-  try {
-    // Try api call
-    return await apiCall();
-  } catch (error) {
-    // Fall back to local storage
-    console.warn('API Request failed, falling back to LocalStorage:', error);
-    return { data: localFallback() };
-  }
+  return Promise.all(
+    feuilles.map(async (feuille) => {
+      if (!feuille.estRembourse) return feuille;
+      try {
+        const remb = await RemboursementsService.getById2(feuille.id);
+        return mapFeuille(
+          {
+            id: feuille.id,
+            idFeuille: feuille.idFeuille,
+            montantSoin: feuille.montantSoin,
+            estRembourse: feuille.estRembourse,
+            consultationId: feuille.consultationId,
+          },
+          mapRemboursement(remb as Record<string, unknown>),
+        );
+      } catch {
+        return feuille;
+      }
+    }),
+  );
 }
+
+async function enrichConsultations(
+  rawConsultations: Record<string, unknown>[],
+): Promise<Consultation[]> {
+  if (!rawConsultations.length) return [];
+
+  const [assures, medecins, feuilles] = await Promise.all([
+    loadAssures(),
+    loadMedecins(),
+    loadFeuilles(),
+  ]);
+
+  const assureMap = new Map(assures.map((a) => [a.id, a]));
+  const medecinMap = new Map(medecins.map((m) => [m.id, m]));
+  const feuilleMap = new Map(feuilles.map((f) => [f.consultationId, f]));
+
+  return Promise.all(
+    rawConsultations.map(async (raw) => {
+      const id = Number(raw.id);
+      const assureId = Number(raw.assureId);
+      const generalisteId = Number(raw.generalisteId);
+
+      let prescriptions: Prescription[] = [];
+      try {
+        const prescs = await PrescriptionsService.getByConsultation(id);
+        prescriptions = toList<Record<string, unknown>>(prescs).map(mapPrescription);
+      } catch {
+        prescriptions = [];
+      }
+
+      const assure =
+        assureMap.get(assureId) ??
+        mapAssure({ id: assureId, nom: `Assuré #${assureId}` });
+      const generaliste =
+        medecinMap.get(generalisteId) ??
+        mapMedecin({ id: generalisteId, nom: `Médecin #${generalisteId}`, type: 'GENERALISTE' });
+
+      return buildConsultation(
+        raw,
+        assure,
+        generaliste,
+        prescriptions,
+        feuilleMap.get(id),
+      );
+    }),
+  );
+}
+
+async function loadAllConsultations(): Promise<Consultation[]> {
+  const medecins = await loadMedecins();
+  const results = await Promise.all(
+    medecins.map((m) => ConsultationsService.getByGeneraliste(m.id)),
+  );
+
+  const seen = new Set<number>();
+  const raw: Record<string, unknown>[] = [];
+
+  for (const result of results) {
+    for (const item of toList<Record<string, unknown>>(result)) {
+      const id = Number(item.id);
+      if (!seen.has(id)) {
+        seen.add(id);
+        raw.push(item);
+      }
+    }
+  }
+
+  return enrichConsultations(raw);
+}
+
+function randomPassword(length = 12): string {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#';
+  return Array.from({ length }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+}
+
+export function getApiErrorMessage(error: unknown): string {
+  if (error instanceof ApiError) {
+    if (error.body && typeof error.body === 'object' && 'error' in error.body) {
+      return String((error.body as { error: string }).error);
+    }
+    if (typeof error.body === 'string' && error.body.trim()) {
+      return error.body;
+    }
+    return error.message;
+  }
+  if (error instanceof Error) return error.message;
+  return 'Une erreur est survenue';
+}
+
+/** @deprecated Conservé pour compatibilité — les données viennent du backend. */
+export const initLocalStorage = () => {};
 
 // ----------------------------------------------------
 // ASSURÉS
 // ----------------------------------------------------
 
-export const getAssures = () =>
-  requestWithFallback(
-    () => api.get<Assure[]>('/assures'),
-    () => getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures)
-  );
+export const getAssures = async (): Promise<ApiPayload<Assure[]>> => ({
+  data: await loadAssures(),
+});
 
-export const getAssureById = (id: number) =>
-  requestWithFallback(
-    () => api.get<Assure>(`/assures/${id}`),
-    () => {
-      const list = getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures);
-      const res = list.find((a) => a.id === id);
-      if (!res) throw new Error('Assuré non trouvé');
-      return res;
-    }
-  );
+export const getAssureById = async (id: number): Promise<ApiPayload<Assure>> => {
+  const medecins = await loadMedecins();
+  const raw = await AssurSService.getById(id);
+  return { data: mapAssure(raw as Record<string, unknown>, medecins) };
+};
 
-export const createAssure = (data: Partial<Assure>) =>
-  requestWithFallback(
-    () => api.post<Assure>('/assures', data),
-    () => {
-      const list = getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures);
-      const newId = list.length > 0 ? Math.max(...list.map(a => a.id)) + 1 : 1;
-      const newAssure: Assure = {
-        id: newId,
-        idAssure: `ASS-2026-${Math.floor(1000 + Math.random() * 9000)}`,
-        nom: data.nom || '',
-        dateNaissance: data.dateNaissance || '',
-        sexe: data.sexe || '',
-        profession: data.profession || '',
-        statutMatrimoniale: data.statutMatrimoniale || '',
-        groupeSanguin: data.groupeSanguin || '',
-        numTelephone: data.numTelephone || '',
-        medecinTraitant: data.medecinTraitant,
-      };
-      list.push(newAssure);
-      setLocalData(KEYS.ASSURES, list);
+export const createAssure = async (data: Partial<Assure>): Promise<ApiPayload<Assure>> => {
+  const email =
+    (data as { email?: string }).email ??
+    `${String(data.nom ?? 'assure')
+      .toLowerCase()
+      .replace(/\s+/g, '.')}@csi.cm`;
 
-      // Create matching user account
-      const userList = getLocalData<User>(KEYS.USERS, mock.mockUsers);
-      userList.push({
-        id: newId,
-        nom: newAssure.nom,
-        email: `${newAssure.nom.toLowerCase().replace(/\s+/g, '.')}@gmail.com`,
-        role: 'ASSURE',
-        avatarInitiales: newAssure.nom.split(' ').map(n => n[0]).join('').toUpperCase()
-      });
-      setLocalData(KEYS.USERS, userList);
+  const payload: AssureRequestDTO = {
+    nom: data.nom,
+    dateNaissance: data.dateNaissance,
+    sexe: data.sexe,
+    numTelephone: data.numTelephone,
+    profession: data.profession,
+    statutMatrimoniale: data.statutMatrimoniale,
+    groupeSanguin: data.groupeSanguin,
+    email,
+    motDePasse: randomPassword(),
+  };
 
-      return newAssure;
-    }
-  );
+  const raw = await AssurSService.inscrire(payload);
+  const medecins = await loadMedecins();
+  let assure = mapAssure(raw as Record<string, unknown>, medecins);
 
-export const updateAssure = (id: number, data: Partial<Assure>) =>
-  requestWithFallback(
-    () => api.put<Assure>(`/assures/${id}`, data),
-    () => {
-      const list = getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures);
-      const index = list.findIndex(a => a.id === id);
-      if (index === -1) throw new Error('Assuré non trouvé');
-      
-      const updated = { ...list[index], ...data };
-      list[index] = updated;
-      setLocalData(KEYS.ASSURES, list);
-      return updated;
-    }
-  );
+  if (data.medecinTraitant?.id) {
+    const updated = await AssurSService.choisirMedecin(assure.id, data.medecinTraitant.id);
+    assure = mapAssure(updated as Record<string, unknown>, medecins);
+  }
 
-export const choisirMedecin = (assureId: number, genId: number) =>
-  requestWithFallback(
-    () => api.patch<Assure>(`/assures/${assureId}/choisir-medecin/${genId}`),
-    () => {
-      const list = getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures);
-      const medecins = getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins);
-      const medecin = medecins.find(m => m.id === genId);
-      
-      const index = list.findIndex(a => a.id === assureId);
-      if (index === -1) throw new Error('Assuré non trouvé');
-      
-      list[index].medecinTraitant = medecin;
-      setLocalData(KEYS.ASSURES, list);
+  return { data: assure };
+};
 
-      // update consultations too
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      consultations.forEach(c => {
-        if (c.assure.id === assureId) {
-          c.assure.medecinTraitant = medecin;
-        }
-      });
-      setLocalData(KEYS.CONSULTATIONS, consultations);
+export const updateAssure = async (
+  id: number,
+  data: Partial<Assure>,
+): Promise<ApiPayload<Assure>> => {
+  const payload: AssureRequestDTO = {
+    nom: data.nom,
+    dateNaissance: data.dateNaissance,
+    sexe: data.sexe,
+    numTelephone: data.numTelephone,
+    profession: data.profession,
+    statutMatrimoniale: data.statutMatrimoniale,
+    groupeSanguin: data.groupeSanguin,
+  };
 
-      return list[index];
-    }
-  );
+  const raw = await AssurSService.update(id, payload);
+  const medecins = await loadMedecins();
+  return { data: mapAssure(raw as Record<string, unknown>, medecins) };
+};
+
+export const choisirMedecin = async (
+  assureId: number,
+  genId: number,
+): Promise<ApiPayload<Assure>> => {
+  const raw = await AssurSService.choisirMedecin(assureId, genId);
+  const medecins = await loadMedecins();
+  return { data: mapAssure(raw as Record<string, unknown>, medecins) };
+};
 
 export const choisirMedecinTraitant = choisirMedecin;
 
@@ -176,166 +241,118 @@ export const choisirMedecinTraitant = choisirMedecin;
 // MÉDECINS
 // ----------------------------------------------------
 
-export const getMedecins = () =>
-  requestWithFallback(
-    () => api.get<Medecin[]>('/medecins'),
-    () => getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins)
-  );
+export const getMedecins = async (): Promise<ApiPayload<Medecin[]>> => ({
+  data: await loadMedecins(),
+});
 
-export const getGeneralistes = () =>
-  requestWithFallback(
-    () => api.get<Medecin[]>('/generalistes'),
-    () => getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins).filter(m => m.type === 'GENERALISTE')
-  );
+export const getGeneralistes = async (): Promise<ApiPayload<Medecin[]>> => {
+  const raw = await GNRalistesService.getAll4();
+  return { data: toList<Record<string, unknown>>(raw).map(mapMedecin) };
+};
 
-export const getSpecialistes = () =>
-  requestWithFallback(
-    () => api.get<Medecin[]>('/specialistes'),
-    () => getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins).filter(m => m.type === 'SPECIALISTE')
-  );
+export const getSpecialistes = async (): Promise<ApiPayload<Medecin[]>> => {
+  const raw = await SpCialistesService.getAll3();
+  return { data: toList<Record<string, unknown>>(raw).map(mapMedecin) };
+};
 
-export const createMedecin = (data: CreateMedecinInput) =>
-  requestWithFallback(
-    () => api.post<Medecin>('/medecins', data),
-    () => {
-      const list = getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins);
-      const userList = getLocalData<User>(KEYS.USERS, mock.mockUsers);
-
-      const emailExists =
-        userList.some((u) => u.email.toLowerCase() === data.email.toLowerCase()) ||
-        list.some((m) => m.email?.toLowerCase() === data.email.toLowerCase());
-      if (emailExists) {
-        throw new Error('Un compte avec cet email existe déjà.');
-      }
-
-      const newId = list.length > 0 ? Math.max(...list.map((m) => m.id)) + 1 : 3;
-      const codeType = data.type === 'SPECIALISTE' ? 'SPC' : 'GEN';
-      const count = list.filter((m) => m.type === data.type).length + 1;
-
-      const newMedecin: Medecin = {
-        id: newId,
-        nom: data.nom,
-        email: data.email,
-        matricule: `MED-${codeType}-${count.toString().padStart(3, '0')}`,
-        type: data.type,
-        domaineSpecialisation: data.domaineSpecialisation,
-        estAssure: false,
-        numTelephone: data.numTelephone,
-      };
-
-      list.push(newMedecin);
-      setLocalData(KEYS.MEDECINS, list);
-
-      // Compte utilisateur — le mot de passe sera généré et envoyé par le backend
-      userList.push({
-        id: newId,
-        nom: newMedecin.nom,
-        email: data.email,
-        role: newMedecin.type,
-        avatarInitiales: newMedecin.nom
-          .split(' ')
-          .filter((x) => !x.includes('.'))
-          .map((n) => n[0])
-          .join('')
-          .toUpperCase()
-          .substring(0, 3),
-      });
-      setLocalData(KEYS.USERS, userList);
-
-      return newMedecin;
+export const createMedecin = async (
+  data: CreateMedecinInput,
+): Promise<ApiPayload<Medecin>> => {
+  try {
+    const raw = await MDecinsService.enregistrer({
+      nom: data.nom,
+      email: data.email,
+      numTelephone: data.numTelephone,
+      type: data.type,
+      domaineSpecialisation: data.domaineSpecialisation,
+    });
+    return { data: mapMedecin(raw as Record<string, unknown>) };
+  } catch (error) {
+    if (error instanceof ApiError && getApiErrorMessage(error).includes('enregistré')) {
+      const list = await loadMedecins();
+      const created = list.find(
+        (m) => m.email.toLowerCase() === data.email.toLowerCase(),
+      );
+      if (created) return { data: created };
     }
-  );
+    throw error;
+  }
+};
 
 // ----------------------------------------------------
 // CONSULTATIONS
 // ----------------------------------------------------
 
-export const getConsultations = () =>
-  requestWithFallback(
-    () => api.get<Consultation[]>('/consultations'),
-    () => getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations)
-  );
+export const getConsultations = async (): Promise<ApiPayload<Consultation[]>> => ({
+  data: await loadAllConsultations(),
+});
 
-export const createConsultation = (data: any) =>
-  requestWithFallback(
-    () => api.post<Consultation>('/consultations', data),
-    () => {
-      // data contains: assureId, generalisteId (or current medecin), date, prescriptions: Array, registerFeuille, montantSoin, idFeuille
-      const list = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      const assures = getLocalData<Assure>(KEYS.ASSURES, mock.mockAssures);
-      const medecins = getLocalData<Medecin>(KEYS.MEDECINS, mock.mockMedecins);
-      
-      const assureObj = assures.find(a => a.id === Number(data.assureId));
-      const medecinObj = medecins.find(m => m.id === Number(data.generalisteId));
+export const createConsultation = async (data: {
+  assureId: number;
+  generalisteId: number;
+  date?: string;
+  motif?: string;
+  prescriptions?: Array<{
+    type: 'MEDICAMENT' | 'SPECIALISTE';
+    medicament?: string;
+    posologie?: string;
+    matriculeMedecin?: string;
+    motif?: string;
+  }>;
+  creerFeuille?: boolean;
+  registerFeuille?: boolean;
+  montantSoin?: number;
+  idFeuille?: string;
+}): Promise<ApiPayload<Consultation>> => {
+  const raw = await ConsultationsService.creer({
+    date: data.date ?? new Date().toISOString().split('T')[0],
+    assureId: Number(data.assureId),
+    generalisteId: Number(data.generalisteId),
+  });
 
-      if (!assureObj || !medecinObj) throw new Error('Assuré ou médecin non trouvé');
+  const consultationId = Number((raw as Record<string, unknown>).id);
 
-      const newConsId = list.length > 0 ? Math.max(...list.map(c => c.id)) + 1 : 1;
-      
-      // Build prescriptions
-      const newPrescriptions: Prescription[] = [];
-      const localPrescriptions = getLocalData<Prescription>(KEYS.PRESCRIPTIONS, mock.mockPrescriptions);
-      
-      if (data.prescriptions && Array.isArray(data.prescriptions)) {
-        data.prescriptions.forEach((p: any, idx: number) => {
-          const presId = localPrescriptions.length > 0 ? Math.max(...localPrescriptions.map(pr => pr.id)) + 1 + idx : 1 + idx;
-          const newP: Prescription = {
-            id: presId,
-            consultationId: newConsId,
-            type: p.type,
-            medicament: p.medicament,
-            posologie: p.posologie,
-            matriculeMedecin: p.matriculeMedecin,
-            motif: p.motif
-          };
-          newPrescriptions.push(newP);
-          localPrescriptions.push(newP);
-        });
-        setLocalData(KEYS.PRESCRIPTIONS, localPrescriptions);
-      }
-
-      // Build Sheet if active
-      let feuilleObj: FeuillemMaladie | undefined = undefined;
-      if (data.registerFeuille) {
-        const feuilles = getLocalData<FeuillemMaladie>(KEYS.FEUILLES, mock.mockFeuilles);
-        const fId = feuilles.length > 0 ? Math.max(...feuilles.map(f => f.id)) + 1 : 1;
-        feuilleObj = {
-          id: fId,
-          idFeuille: data.idFeuille || `FM-${Math.floor(10000 + Math.random() * 90000)}-26`,
-          montantSoin: Number(data.montantSoin) || 0,
-          estRembourse: false,
-          consultationId: newConsId
-        };
-        feuilles.push(feuilleObj);
-        setLocalData(KEYS.FEUILLES, feuilles);
-      }
-
-      const newConsultation: Consultation = {
-        id: newConsId,
-        date: data.date || new Date().toISOString(),
-        assure: assureObj,
-        generaliste: medecinObj,
-        prescriptions: newPrescriptions,
-        feuilleMaladie: feuilleObj
-      };
-
-      list.push(newConsultation);
-      setLocalData(KEYS.CONSULTATIONS, list);
-      return newConsultation;
+  for (const prescription of data.prescriptions ?? []) {
+    if (prescription.type === 'MEDICAMENT') {
+      await PrescriptionsService.prescrireMedicament({
+        consultationId,
+        medicament: prescription.medicament,
+        posologie: prescription.posologie,
+      });
+    } else {
+      await PrescriptionsService.prescrireConsultation({
+        consultationId,
+        matriculeMedecin: prescription.matriculeMedecin,
+        motif: prescription.motif,
+      });
     }
-  );
+  }
 
-export const getConsultationsByAssure = (id: number) =>
-  requestWithFallback(
-    () => api.get<Consultation[]>(`/consultations/assure/${id}`),
-    () => getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations).filter(c => c.assure.id === id)
-  );
+  if (data.creerFeuille || data.registerFeuille) {
+    await FeuillesMaladieService.enregistrer1({
+      consultationId,
+      montantSoin: data.montantSoin,
+      idFeuille: data.idFeuille,
+    });
+  }
 
-export const getConsultationsByGeneraliste = (id: number) =>
-  requestWithFallback(
-    () => api.get<Consultation[]>(`/consultations/generaliste/${id}`),
-    () => getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations).filter(c => c.generaliste.id === id)
-  );
+  const [enriched] = await enrichConsultations([raw as Record<string, unknown>]);
+  return { data: enriched };
+};
+
+export const getConsultationsByAssure = async (
+  id: number,
+): Promise<ApiPayload<Consultation[]>> => {
+  const raw = await ConsultationsService.getByAssure1(id);
+  return { data: await enrichConsultations(toList<Record<string, unknown>>(raw)) };
+};
+
+export const getConsultationsByGeneraliste = async (
+  id: number,
+): Promise<ApiPayload<Consultation[]>> => {
+  const raw = await ConsultationsService.getByGeneraliste(id);
+  return { data: await enrichConsultations(toList<Record<string, unknown>>(raw)) };
+};
 
 export const getConsultationsByMedecin = getConsultationsByGeneraliste;
 
@@ -343,172 +360,98 @@ export const getConsultationsByMedecin = getConsultationsByGeneraliste;
 // PRESCRIPTIONS
 // ----------------------------------------------------
 
-export const prescrireMedicament = (data: any) =>
-  requestWithFallback(
-    () => api.post<Prescription>('/prescriptions/medicament', data),
-    () => {
-      const list = getLocalData<Prescription>(KEYS.PRESCRIPTIONS, mock.mockPrescriptions);
-      const newId = list.length > 0 ? Math.max(...list.map(p => p.id)) + 1 : 1;
-      const newP: Prescription = {
-        id: newId,
-        consultationId: data.consultationId,
-        type: 'MEDICAMENT',
-        medicament: data.medicament,
-        posologie: data.posologie
-      };
-      list.push(newP);
-      setLocalData(KEYS.PRESCRIPTIONS, list);
-      
-      // Update consultation details
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      const cIdx = consultations.findIndex(c => c.id === data.consultationId);
-      if (cIdx !== -1) {
-        consultations[cIdx].prescriptions = consultations[cIdx].prescriptions || [];
-        consultations[cIdx].prescriptions.push(newP);
-        setLocalData(KEYS.CONSULTATIONS, consultations);
-      }
-      
-      return newP;
-    }
-  );
+export const prescrireMedicament = async (data: {
+  consultationId: number;
+  medicament: string;
+  posologie: string;
+}): Promise<ApiPayload<Prescription>> => {
+  const raw = await PrescriptionsService.prescrireMedicament(data);
+  return { data: mapPrescription(raw as Record<string, unknown>) };
+};
 
-export const prescrireConsultation = (data: any) =>
-  requestWithFallback(
-    () => api.post<Prescription>('/prescriptions/consultation', data),
-    () => {
-      const list = getLocalData<Prescription>(KEYS.PRESCRIPTIONS, mock.mockPrescriptions);
-      const newId = list.length > 0 ? Math.max(...list.map(p => p.id)) + 1 : 1;
-      const newP: Prescription = {
-        id: newId,
-        consultationId: data.consultationId,
-        type: 'CONSULTATION_SPECIALISTE',
-        matriculeMedecin: data.matriculeMedecin,
-        motif: data.motif
-      };
-      list.push(newP);
-      setLocalData(KEYS.PRESCRIPTIONS, list);
-      
-      // Update consultation details
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      const cIdx = consultations.findIndex(c => c.id === data.consultationId);
-      if (cIdx !== -1) {
-        consultations[cIdx].prescriptions = consultations[cIdx].prescriptions || [];
-        consultations[cIdx].prescriptions.push(newP);
-        setLocalData(KEYS.CONSULTATIONS, consultations);
-      }
-
-      return newP;
-    }
-  );
+export const prescrireConsultation = async (data: {
+  consultationId: number;
+  matriculeMedecin: string;
+  motif: string;
+}): Promise<ApiPayload<Prescription>> => {
+  const raw = await PrescriptionsService.prescrireConsultation(data);
+  return { data: mapPrescription(raw as Record<string, unknown>) };
+};
 
 // ----------------------------------------------------
 // FEUILLES MALADIE
 // ----------------------------------------------------
 
-export const createFeuille = (data: any) =>
-  requestWithFallback(
-    () => api.post<FeuillemMaladie>('/feuilles-maladie', data),
-    () => {
-      const list = getLocalData<FeuillemMaladie>(KEYS.FEUILLES, mock.mockFeuilles);
-      const newId = list.length > 0 ? Math.max(...list.map(f => f.id)) + 1 : 1;
-      const newF: FeuillemMaladie = {
-        id: newId,
-        idFeuille: data.idFeuille || `FM-${Math.floor(10000 + Math.random() * 90000)}-26`,
-        montantSoin: Number(data.montantSoin) || 0,
-        estRembourse: false,
-        consultationId: data.consultationId
-      };
-      list.push(newF);
-      setLocalData(KEYS.FEUILLES, list);
+export const createFeuille = async (data: {
+  consultationId: number;
+  montantSoin: number;
+  idFeuille?: string;
+}): Promise<ApiPayload<FeuillemMaladie>> => {
+  const raw = await FeuillesMaladieService.enregistrer1(data);
+  return { data: mapFeuille(raw as Record<string, unknown>) };
+};
 
-      // Link it to the consultation
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      const idx = consultations.findIndex(c => c.id === data.consultationId);
-      if (idx !== -1) {
-        consultations[idx].feuilleMaladie = newF;
-        setLocalData(KEYS.CONSULTATIONS, consultations);
+export const getFeuillesByAssure = async (
+  id: number,
+): Promise<ApiPayload<FeuillemMaladie[]>> => {
+  const raw = await FeuillesMaladieService.getByAssure(id);
+  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
+
+  const enriched = await Promise.all(
+    feuilles.map(async (feuille) => {
+      if (!feuille.estRembourse) return feuille;
+      try {
+        const remb = await RemboursementsService.getById2(feuille.id);
+        return mapFeuille(
+          {
+            id: feuille.id,
+            idFeuille: feuille.idFeuille,
+            montantSoin: feuille.montantSoin,
+            estRembourse: feuille.estRembourse,
+            consultationId: feuille.consultationId,
+          },
+          mapRemboursement(remb as Record<string, unknown>),
+        );
+      } catch {
+        return feuille;
       }
-
-      return newF;
-    }
+    }),
   );
 
-export const getFeuillesByAssure = (id: number) =>
-  requestWithFallback(
-    () => api.get<FeuillemMaladie[]>(`/feuilles-maladie/assure/${id}`),
-    () => {
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations).filter(c => c.assure.id === id);
-      const consIds = consultations.map(c => c.id);
-      return getLocalData<FeuillemMaladie>(KEYS.FEUILLES, mock.mockFeuilles).filter(f => consIds.includes(f.consultationId));
-    }
-  );
+  return { data: enriched };
+};
 
-export const getFeuilles = () =>
-  requestWithFallback(
-    () => api.get<FeuillemMaladie[]>('/feuilles-maladie'),
-    () => getLocalData<FeuillemMaladie>(KEYS.FEUILLES, mock.mockFeuilles)
-  );
+export const getFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => ({
+  data: await loadFeuilles(),
+});
 
 // ----------------------------------------------------
 // REMBOURSEMENTS
 // ----------------------------------------------------
 
-export const getRemboursements = () =>
-  requestWithFallback(
-    () => api.get<Remboursement[]>('/remboursements'),
-    () => getLocalData<Remboursement>(KEYS.REMBOURSEMENTS, mock.mockRemboursements)
+export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> => {
+  const feuilles = await loadFeuilles();
+  const remboursements = await Promise.all(
+    feuilles
+      .filter((f) => f.estRembourse)
+      .map(async (feuille) => {
+        if (feuille.remboursement) return feuille.remboursement;
+        try {
+          const raw = await RemboursementsService.getById2(feuille.id);
+          return mapRemboursement(raw as Record<string, unknown>);
+        } catch {
+          return null;
+        }
+      }),
   );
 
+  return { data: remboursements.filter((r): r is Remboursement => r != null) };
+};
 
-export const effectuerRemboursement = (feuilleId: number, mode: string) =>
-  requestWithFallback(
-    () => api.post<Remboursement>(`/remboursements/${feuilleId}?modePaiement=${mode}`),
-    () => {
-      const list = getLocalData<Remboursement>(KEYS.REMBOURSEMENTS, mock.mockRemboursements);
-      const feuilles = getLocalData<FeuillemMaladie>(KEYS.FEUILLES, mock.mockFeuilles);
-      
-      const fIdx = feuilles.findIndex(f => f.id === feuilleId);
-      if (fIdx === -1) throw new Error('Feuille de maladie non trouvée');
-      
-      if (feuilles[fIdx].estRembourse) throw new Error('Feuille de maladie déjà remboursée');
-
-      const isSpecialistConsultation = false; 
-      // Consultations with specialist: 80% reimbursement, Generalist: 100% reimbursement
-      // Let's inspect the consultation
-      const consultations = getLocalData<Consultation>(KEYS.CONSULTATIONS, mock.mockConsultations);
-      const consultation = consultations.find(c => c.id === feuilles[fIdx].consultationId);
-      
-      let rate = 1.0;
-      if (consultation && consultation.generaliste.type === 'SPECIALISTE') {
-        rate = 0.8;
-      }
-      
-      const rembId = list.length > 0 ? Math.max(...list.map(r => r.id)) + 1 : 1;
-      const refundAmount = Math.round(feuilles[fIdx].montantSoin * rate);
-      
-      const newRemb: Remboursement = {
-        id: rembId,
-        montant: refundAmount,
-        dateRemboursement: new Date().toISOString().split('T')[0],
-        modePaiement: (mode as 'VIREMENT' | 'CASH') || 'VIREMENT',
-        feuilleMaladieId: feuilleId
-      };
-      
-      list.push(newRemb);
-      setLocalData(KEYS.REMBOURSEMENTS, list);
-      
-      // Update feuille
-      feuilles[fIdx].estRembourse = true;
-      feuilles[fIdx].remboursement = newRemb;
-      setLocalData(KEYS.FEUILLES, feuilles);
-
-      // update consultations too
-      const cIdx = consultations.findIndex(c => c.id === feuilles[fIdx].consultationId);
-      if (cIdx !== -1) {
-        consultations[cIdx].feuilleMaladie = feuilles[fIdx];
-        setLocalData(KEYS.CONSULTATIONS, consultations);
-      }
-
-      return newRemb;
-    }
-  );
+export const effectuerRemboursement = async (
+  feuilleId: number,
+  mode: string,
+): Promise<ApiPayload<Remboursement>> => {
+  const raw = await RemboursementsService.effectuer(feuilleId, mode);
+  return { data: mapRemboursement(raw as Record<string, unknown>) };
+};

@@ -29,12 +29,6 @@ const loginSchema = z.object({
 
 type LoginFormValues = z.infer<typeof loginSchema>;
 
-const DEMO_ACCOUNTS = [
-  { role: 'Admin', email: 'admin@csi.cm' },
-  { role: 'Médecin généraliste', email: 'etoa@csi.cm' },
-  { role: 'Médecin spécialiste', email: 'ngo@csi.cm' },
-];
-
 function redirectByRole(router: ReturnType<typeof useRouter>, role: string) {
   if (role === 'ADMIN') router.push('/admin');
   else if (role === 'GENERALISTE' || role === 'SPECIALISTE') router.push('/medecin');
@@ -54,7 +48,6 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -64,7 +57,7 @@ export default function LoginPage() {
     setIsLoading(true);
     setErrorMsg(null);
     try {
-      const success = await login(data.email);
+      const success = await login(data.email, data.password);
       if (success) {
         const storedUser = localStorage.getItem('csi_session');
         if (storedUser) {
@@ -73,7 +66,7 @@ export default function LoginPage() {
         }
       } else {
         setErrorMsg(
-          'Accès refusé. Seuls les administrateurs et les médecins peuvent se connecter. Vérifiez votre email ou utilisez un compte démo.'
+          'Identifiants incorrects ou accès refusé. Seuls les administrateurs et les médecins peuvent se connecter.'
         );
       }
     } catch {
@@ -232,32 +225,9 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          {/* Comptes démo */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="text-[11px] font-display font-semibold text-slate-500 uppercase tracking-wider mb-3">
-              Comptes de démonstration
-            </p>
-            <div className="grid grid-cols-2 gap-2">
-              {DEMO_ACCOUNTS.map(({ role, email }) => (
-                <button
-                  key={email}
-                  type="button"
-                  onClick={() => {
-                    setValue('email', email);
-                    setValue('password', 'demo');
-                  }}
-                  className="text-left rounded-xl border border-slate-100 bg-slate-50 hover:bg-primary-50 hover:border-primary-200 px-3 py-2.5 transition group"
-                >
-                  <span className="block text-[10px] font-display font-bold text-primary-600 uppercase tracking-wide">
-                    {role}
-                  </span>
-                  <span className="block text-[11px] text-slate-500 truncate group-hover:text-slate-700">
-                    {email}
-                  </span>
-                </button>
-              ))}
-            </div>
-          </div>
+          <p className="text-center text-[11px] text-slate-400 leading-relaxed">
+            Connectez-vous avec vos identifiants CSI (email ou matricule médecin + mot de passe).
+          </p>
         </motion.div>
       </div>
     </div>

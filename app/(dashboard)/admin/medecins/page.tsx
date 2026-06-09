@@ -14,7 +14,7 @@ import {
   Bookmark,
   Mail,
 } from 'lucide-react';
-import { getMedecins, getAssures, createMedecin } from '@/lib/api';
+import { getMedecins, getAssures, createMedecin, getApiErrorMessage } from '@/lib/api';
 import { Medecin, Assure, CreateMedecinInput } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -102,8 +102,7 @@ export default function MedecinsAdminPage() {
         setSubmitSuccess(null);
       }, 2500);
     } catch (e) {
-      const msg = e instanceof Error ? e.message : 'Une erreur est survenue lors de l\'enregistrement.';
-      setSubmitError(msg);
+      setSubmitError(getApiErrorMessage(e));
     }
   };
 
