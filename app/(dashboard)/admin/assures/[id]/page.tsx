@@ -129,7 +129,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Smartphone size={13} /> {t('admin.assures.form_phone')}</span>
-                  <span className="text-slate-700 font-medium">{assure.numTelephone}</span>
+                  <span className="text-slate-700 font-medium">{assure.indicatifPays ? `${assure.indicatifPays} ` : ''}{assure.numTelephone}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Briefcase size={13} /> {t('admin.assures.form_profession')}</span>

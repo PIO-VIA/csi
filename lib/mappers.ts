@@ -46,6 +46,7 @@ export function mapMedecin(raw: RawRecord): Medecin {
       ? String(raw.domaineSpecialisation)
       : undefined,
     estAssure: Boolean(raw.estAssure),
+    indicatifPays: raw.indicatifPays ? String(raw.indicatifPays) : undefined,
     numTelephone: String(raw.numTelephone ?? ''),
   };
 }
@@ -67,6 +68,7 @@ export function mapAssure(raw: RawRecord, medecins: Medecin[] = []): Assure {
     profession: String(raw.profession ?? ''),
     statutMatrimoniale: String(raw.statutMatrimoniale ?? ''),
     groupeSanguin: String(raw.groupeSanguin ?? ''),
+    indicatifPays: raw.indicatifPays ? String(raw.indicatifPays) : undefined,
     numTelephone: String(raw.numTelephone ?? ''),
     medecinTraitant,
   };

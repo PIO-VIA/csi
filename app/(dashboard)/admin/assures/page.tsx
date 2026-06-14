@@ -38,6 +38,7 @@ const assureFormSchema = z.object({
   profession: z.string().min(1, { message: 'La profession est requise' }),
   statutMatrimoniale: z.string().min(1, { message: 'Le statut est requis' }),
   groupeSanguin: z.string().min(1, { message: 'Le groupe sanguin est requis' }),
+  indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
   numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
   medecinTraitantId: z.string().optional(),
 });
@@ -91,12 +92,24 @@ function AssureForm({
       </div>
 
       <div className="grid grid-cols-2 gap-4">
-        <Input
-          label={t('admin.assures.form_phone') || 'Phone'}
-          placeholder="+237 6xx xx xx xx"
-          error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
-          {...register('numTelephone')}
-        />
+        <div className="grid grid-cols-3 gap-2">
+          <div className="col-span-1">
+            <Input
+              label={t('admin.assures.form_country_code') || 'Indicatif'}
+              placeholder="+237"
+              error={errors.indicatifPays?.message ? String(errors.indicatifPays.message) : undefined}
+              {...register('indicatifPays')}
+            />
+          </div>
+          <div className="col-span-2">
+            <Input
+              label={t('admin.assures.form_phone') || 'Téléphone'}
+              placeholder="6xx xx xx xx"
+              error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
+              {...register('numTelephone')}
+            />
+          </div>
+        </div>
 
         <Input
           label={t('admin.assures.form_profession') || 'Profession'}
@@ -207,7 +220,7 @@ export default function AssuresAdminPage() {
     formState: { errors },
   } = useForm<AssureFormValues>({
     resolver: zodResolver(assureFormSchema),
-    defaultValues: { sexe: 'Homme', statutMatrimoniale: 'Célibataire', groupeSanguin: 'O+' },
+    defaultValues: { sexe: 'Homme', statutMatrimoniale: 'Célibataire', groupeSanguin: 'O+', indicatifPays: '+237' },
   });
 
   // Edit form
@@ -231,6 +244,7 @@ export default function AssuresAdminPage() {
         profession: data.profession,
         statutMatrimoniale: data.statutMatrimoniale,
         groupeSanguin: data.groupeSanguin,
+        indicatifPays: data.indicatifPays,
         numTelephone: data.numTelephone,
         medecinTraitant: doc,
       };
@@ -258,6 +272,7 @@ export default function AssuresAdminPage() {
         profession: data.profession,
         statutMatrimoniale: data.statutMatrimoniale,
         groupeSanguin: data.groupeSanguin,
+        indicatifPays: data.indicatifPays,
         numTelephone: data.numTelephone,
         medecinTraitant: doc,
       });
@@ -296,6 +311,7 @@ export default function AssuresAdminPage() {
       profession: a.profession || '',
       statutMatrimoniale: a.statutMatrimoniale || 'Célibataire',
       groupeSanguin: a.groupeSanguin || 'O+',
+      indicatifPays: a.indicatifPays || '+237',
       numTelephone: a.numTelephone || '',
       medecinTraitantId: a.medecinTraitant ? String(a.medecinTraitant.id) : '',
     });
@@ -472,7 +488,7 @@ export default function AssuresAdminPage() {
                     <TableCell className="text-xs text-slate-600">
                       <span className="flex items-center gap-1">
                         <Smartphone size={13} className="text-slate-500" />
-                        {a.numTelephone}
+                        {a.indicatifPays ? `${a.indicatifPays} ` : ''}{a.numTelephone}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs text-slate-400">{a.profession}</TableCell>

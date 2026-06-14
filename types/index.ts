@@ -17,6 +17,7 @@ export interface Assure {
   profession: string;
   statutMatrimoniale: string;
   groupeSanguin: string;
+  indicatifPays?: string;
   numTelephone: string;
   medecinTraitant?: Medecin;
 }
@@ -29,12 +30,14 @@ export interface Medecin {
   type: 'GENERALISTE' | 'SPECIALISTE';
   domaineSpecialisation?: string;
   estAssure: boolean;
+  indicatifPays?: string;
   numTelephone: string;
 }
 
 export interface CreateMedecinInput {
   nom: string;
   email: string;
+  indicatifPays?: string;
   numTelephone: string;
   type: 'GENERALISTE' | 'SPECIALISTE';
   domaineSpecialisation?: string;

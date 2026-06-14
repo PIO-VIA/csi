@@ -32,6 +32,7 @@ import { useToast } from '@/components/ui/Toast';
 const medecinFormSchema = z.object({
   nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
   email: z.string().email({ message: 'Adresse email invalide' }),
+  indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
   numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
   type: z.enum(['GENERALISTE', 'SPECIALISTE']),
   domaineSpecialisation: z.string().optional(),
@@ -81,6 +82,7 @@ export default function MedecinsAdminPage() {
     resolver: zodResolver(medecinFormSchema),
     defaultValues: {
       type: 'GENERALISTE',
+      indicatifPays: '+237',
     }
   });
 
@@ -92,6 +94,7 @@ export default function MedecinsAdminPage() {
       const payload: CreateMedecinInput = {
         nom: data.nom,
         email: data.email,
+        indicatifPays: data.indicatifPays,
         numTelephone: data.numTelephone,
         type: data.type,
         domaineSpecialisation: data.type === 'SPECIALISTE' ? data.domaineSpecialisation : undefined,
@@ -316,7 +319,7 @@ export default function MedecinsAdminPage() {
                     <TableCell className="text-xs text-slate-350">
                       <span className="flex items-center gap-1">
                         <Phone size={12} className="text-slate-500" />
-                        {m.numTelephone}
+                        {m.indicatifPays ? `${m.indicatifPays} ` : ''}{m.numTelephone}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
@@ -376,12 +379,24 @@ export default function MedecinsAdminPage() {
             {...register('email')}
           />
 
-          <Input
-            label={t('admin.medecins.form_phone') || 'Phone'}
-            placeholder="+237 6xx xx xx xx"
-            error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
-            {...register('numTelephone')}
-          />
+          <div className="grid grid-cols-3 gap-2">
+            <div className="col-span-1">
+              <Input
+                label={t('admin.medecins.form_country_code') || 'Indicatif'}
+                placeholder="+237"
+                error={errors.indicatifPays?.message ? String(errors.indicatifPays.message) : undefined}
+                {...register('indicatifPays')}
+              />
+            </div>
+            <div className="col-span-2">
+              <Input
+                label={t('admin.medecins.form_phone') || 'Téléphone'}
+                placeholder="6xx xx xx xx"
+                error={errors.numTelephone?.message ? String(errors.numTelephone.message) : undefined}
+                {...register('numTelephone')}
+              />
+            </div>
+          </div>
 
           <div className="form-group">
             <label className="form-label-inline">{t('admin.medecins.form_type')}</label>

@@ -198,6 +198,7 @@ export const createAssure = async (data: Partial<Assure>): Promise<ApiPayload<As
     nom: data.nom,
     dateNaissance: data.dateNaissance,
     sexe: data.sexe,
+    indicatifPays: data.indicatifPays,
     numTelephone: data.numTelephone,
     profession: data.profession,
     statutMatrimoniale: data.statutMatrimoniale,
@@ -226,6 +227,7 @@ export const updateAssure = async (
     nom: data.nom,
     dateNaissance: data.dateNaissance,
     sexe: data.sexe,
+    indicatifPays: data.indicatifPays,
     numTelephone: data.numTelephone,
     profession: data.profession,
     statutMatrimoniale: data.statutMatrimoniale,
@@ -303,6 +305,7 @@ export const createMedecin = async (
     const payload: MedecinRequestDTO = {
       nom: data.nom,
       email: data.email,
+      indicatifPays: data.indicatifPays,
       numTelephone: data.numTelephone,
       type: data.type,
       domaineSpecialisation: data.domaineSpecialisation,
