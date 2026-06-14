@@ -12,16 +12,17 @@ import Card, { CardBody } from '@/components/ui/Card';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
+import { useToast } from '@/components/ui/Toast';
 
 export default function AssureMedecinPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [assureInfo, setAssureInfo] = useState<Assure | null>(null);
   const [generalistes, setGeneralistes] = useState<Medecin[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
 
   const loadData = async () => {
     if (!user) return;
@@ -46,16 +47,14 @@ export default function AssureMedecinPage() {
   const handleSelectMedecin = async (medecinId: number) => {
     if (!user) return;
     setIsUpdating(true);
-    setSuccessMsg(null);
     try {
       await choisirMedecinTraitant(user.id, medecinId);
-      setSuccessMsg(t('common.success'));
+      success(t('common.success') || 'Opération réussie');
       await loadData();
     } catch (e) {
-      console.error(e);
+      error(t('common.error') || 'Une erreur est survenue');
     } finally {
       setIsUpdating(false);
-      setTimeout(() => setSuccessMsg(null), 4000);
     }
   };
 
@@ -84,17 +83,10 @@ export default function AssureMedecinPage() {
         </p>
       </div>
 
-      {successMsg && (
-        <div className="p-4 bg-success/10 border border-success/20 text-success rounded-xl text-xs font-body font-medium animate-fade-in flex items-center gap-2">
-          <Check size={16} className="shrink-0 stroke-[3]" />
-          <span>{successMsg}</span>
-        </div>
-      )}
-
       {/* CURRENT DOCTOR CARD */}
       <div className="max-w-2xl">
         {currentDoctor ? (
-          <Card className="border-l-4 border-success bg-gradient-to-r from-slate-900 to-slate-950">
+          <Card className="border-l-4 border-success bg-slate-50">
             <CardBody className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="h-14 w-14 rounded-2xl bg-success/10 border border-success/20 text-success flex items-center justify-center shadow-lg shadow-success/5 shrink-0">
@@ -107,10 +99,10 @@ export default function AssureMedecinPage() {
                     </span>
                     <Badge variant="success">{t('common.active')}</Badge>
                   </div>
-                  <h3 className="font-display font-bold text-base text-white">
+                  <h3 className="font-display font-bold text-base text-slate-800">
                     Dr. {currentDoctor.nom}
                   </h3>
-                  <div className="flex items-center gap-3 text-xs text-slate-400">
+                  <div className="flex items-center gap-3 text-xs text-slate-500">
                     <span className="font-mono">Matricule: {currentDoctor.matricule}</span>
                     <span>•</span>
                     <span className="flex items-center gap-1">
@@ -123,7 +115,7 @@ export default function AssureMedecinPage() {
             </CardBody>
           </Card>
         ) : (
-          <Card className="border-l-4 border-warning bg-slate-950/20">
+          <Card className="border-l-4 border-warning bg-slate-50">
             <CardBody className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-6">
               <div className="flex items-center gap-4">
                 <div className="h-14 w-14 rounded-2xl bg-warning/10 border border-warning/20 text-warning flex items-center justify-center shrink-0">
@@ -136,7 +128,7 @@ export default function AssureMedecinPage() {
                   <h3 className="font-display font-bold text-sm text-slate-800">
                     {t('assure.medecin.no_doctor')}
                   </h3>
-                  <p className="font-body text-xs text-slate-400 leading-relaxed max-w-md">
+                  <p className="font-body text-xs text-slate-500 leading-relaxed max-w-md">
                     {t('assure.medecin.no_doctor_desc')}
                   </p>
                 </div>
@@ -188,17 +180,17 @@ export default function AssureMedecinPage() {
                 <Card
                   key={g.id}
                   className={`duration-300 ${
-                    isSelected ? 'border-primary-500/60 bg-primary-950/10' : 'hover:border-slate-800'
+                    isSelected ? 'border-primary-500/60 bg-primary-50/30' : 'hover:border-slate-350'
                   }`}
                 >
                   <CardBody className="p-5 flex flex-col justify-between h-full gap-5">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-lg bg-slate-800 text-slate-400 flex items-center justify-center">
+                        <div className="h-10 w-10 rounded-lg bg-slate-100 text-slate-500 flex items-center justify-center">
                           <Stethoscope size={20} />
                         </div>
                         <div>
-                          <h4 className="font-display font-bold text-xs text-slate-800">Dr. {g.nom}</h4>
+                          <h4 className="font-display font-bold text-xs text-slate-850">Dr. {g.nom}</h4>
                           <span className="font-mono text-[9px] text-slate-500">{g.matricule}</span>
                         </div>
                       </div>
@@ -209,9 +201,9 @@ export default function AssureMedecinPage() {
                       )}
                     </div>
 
-                    <div className="text-[10px] text-slate-400 space-y-1">
+                    <div className="text-[10px] text-slate-500 space-y-1">
                       <div className="flex items-center gap-1.5">
-                        <Phone size={12} className="text-slate-600" />
+                        <Phone size={12} className="text-slate-400" />
                         <span>{g.numTelephone}</span>
                       </div>
                       <div>Type: {t('admin.medecins.generaliste')}</div>

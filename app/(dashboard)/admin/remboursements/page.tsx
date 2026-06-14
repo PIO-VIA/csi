@@ -21,9 +21,11 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Loader from '@/components/ui/Loader';
 import { formatFCFA, formatDate } from '@/lib/utils';
+import { useToast } from '@/components/ui/Toast';
 
 export default function RemboursementsAdminPage() {
   const { t } = useTranslation();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -66,11 +68,12 @@ export default function RemboursementsAdminPage() {
     setIsPaying(true);
     try {
       await effectuerRemboursement(selectedFeuille.id, paymentMode);
+      success(t('admin.remboursements.payment_success') || 'Remboursement effectué avec succès.');
       setIsModalOpen(false);
       setSelectedFeuille(null);
       await loadData(); // Reload all data
     } catch (e) {
-      alert(t('common.error'));
+      error(t('common.error'));
     } finally {
       setIsPaying(false);
     }
@@ -195,21 +198,21 @@ export default function RemboursementsAdminPage() {
                 pendingFeuilles.map((f) => {
                   const details = getRefundDetails(f);
                   return (
-                    <TableRow key={f.id}>
-                      <TableCell className="font-mono text-xs font-semibold">
+                     <TableRow key={f.id}>
+                      <TableCell className="font-mono text-xs font-semibold text-slate-800">
                         {f.idFeuille}
                       </TableCell>
-                      <TableCell className="font-display font-medium text-slate-800">
+                      <TableCell className="font-display font-medium text-slate-850">
                         {details.patientName}
                       </TableCell>
-                      <TableCell className="text-xs text-slate-350">
+                      <TableCell className="text-xs text-slate-600">
                         {details.doctorName} <br />
-                        <span className="text-[10px] text-slate-500 uppercase tracking-wider">{details.type.toLowerCase()}</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider">{details.type.toLowerCase()}</span>
                       </TableCell>
-                      <TableCell className="text-xs font-semibold text-slate-300">
+                      <TableCell className="text-xs font-semibold text-slate-600">
                         {formatFCFA(f.montantSoin)}
                       </TableCell>
-                      <TableCell className="text-xs font-medium text-slate-400">
+                      <TableCell className="text-xs font-medium text-slate-500">
                         {details.rateLabel}
                       </TableCell>
                       <TableCell className="font-display font-bold text-success text-sm">
@@ -273,9 +276,9 @@ export default function RemboursementsAdminPage() {
               ) : (
                 historicalPayments.map((r) => (
                   <TableRow key={r.id}>
-                    <TableCell className="text-xs text-slate-350">{formatDate(r.dateRemboursement)}</TableCell>
-                    <TableCell className="font-mono text-xs text-slate-400">{r.refFeuille}</TableCell>
-                    <TableCell className="font-display font-medium text-xs">{r.patientName}</TableCell>
+                    <TableCell className="text-xs text-slate-500">{formatDate(r.dateRemboursement)}</TableCell>
+                    <TableCell className="font-mono text-xs text-slate-500">{r.refFeuille}</TableCell>
+                    <TableCell className="font-display font-medium text-xs text-slate-800">{r.patientName}</TableCell>
                     <TableCell className="text-xs text-slate-600">{formatFCFA(r.montantSoin)}</TableCell>
                     <TableCell className="font-display font-bold text-success text-xs">+{formatFCFA(r.montant)}</TableCell>
                     <TableCell>
@@ -316,31 +319,31 @@ export default function RemboursementsAdminPage() {
             return (
               <div className="space-y-6">
                 {/* Summary Table */}
-                <div className="bg-slate-950 p-4 border border-slate-800 rounded-2xl space-y-3 font-body text-xs text-slate-600">
+                <div className="bg-slate-50 p-4 border border-slate-200 rounded-2xl space-y-3 font-body text-xs text-slate-500">
                   <div className="flex justify-between">
                     <span>{t('admin.remboursements.col_assure')} :</span>
-                    <span className="text-white font-semibold">{details.patientName}</span>
+                    <span className="text-slate-850 font-semibold">{details.patientName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.remboursements.modal_acted_by')} :</span>
-                    <span className="text-white">{details.doctorName}</span>
+                    <span className="text-slate-700">{details.doctorName}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.remboursements.col_soin_amount')} :</span>
-                    <span className="text-white">{formatFCFA(selectedFeuille.montantSoin)}</span>
+                    <span className="text-slate-700">{formatFCFA(selectedFeuille.montantSoin)}</span>
                   </div>
                   <div className="flex justify-between">
                     <span>{t('admin.remboursements.modal_rate')} :</span>
-                    <span className="text-white font-semibold">{details.rateLabel}</span>
+                    <span className="text-slate-850 font-semibold">{details.rateLabel}</span>
                   </div>
-                  <div className="h-px bg-slate-800 my-1" />
+                  <div className="h-px bg-slate-200 my-1" />
                   <div className="flex justify-between items-center text-sm">
-                    <span className="font-display font-bold text-slate-800">{t('admin.remboursements.col_reimb_amount')} :</span>
+                    <span className="font-display font-bold text-slate-700">{t('admin.remboursements.col_reimb_amount')} :</span>
                     <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
                   </div>
                 </div>
 
-                <p className="text-xs text-slate-400 leading-relaxed">
+                <p className="text-xs text-slate-500 leading-relaxed">
                   {details.type === 'SPECIALISTE'
                     ? 'Consultation chez un spécialiste — prise en charge à 80%'
                     : 'Consultation chez un généraliste — prise en charge à 100%'}
@@ -348,7 +351,7 @@ export default function RemboursementsAdminPage() {
 
                 {/* Mode Selector */}
                 <div className="space-y-2">
-                  <label className="font-display font-semibold text-xs text-slate-350 tracking-wide">
+                  <label className="font-display font-semibold text-xs text-slate-600 tracking-wide">
                     {t('admin.remboursements.modal_method')}
                   </label>
                   <div className="grid grid-cols-2 gap-4">
@@ -356,13 +359,13 @@ export default function RemboursementsAdminPage() {
                       onClick={() => setPaymentMode('VIREMENT')}
                       className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer select-none transition ${
                         paymentMode === 'VIREMENT'
-                          ? 'border-primary-500 bg-primary-950/25 text-white'
-                          : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700/60'
+                          ? 'border-primary-600 bg-primary-50/50 text-primary-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_virement')}</span>
                       <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
-                        paymentMode === 'VIREMENT' ? 'border-primary-500 bg-primary-600' : 'border-slate-700'
+                        paymentMode === 'VIREMENT' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                       }`}>
                         {paymentMode === 'VIREMENT' && <div className="h-2 w-2 rounded-full bg-white" />}
                       </div>
@@ -372,13 +375,13 @@ export default function RemboursementsAdminPage() {
                       onClick={() => setPaymentMode('CASH')}
                       className={`p-3.5 rounded-xl border flex items-center justify-between cursor-pointer select-none transition ${
                         paymentMode === 'CASH'
-                          ? 'border-primary-500 bg-primary-950/25 text-white'
-                          : 'border-slate-800 bg-slate-900/40 text-slate-400 hover:border-slate-700/60'
+                          ? 'border-primary-600 bg-primary-50/50 text-primary-700'
+                          : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                       }`}
                     >
                       <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_cash')}</span>
                       <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
-                        paymentMode === 'CASH' ? 'border-primary-500 bg-primary-600' : 'border-slate-700'
+                        paymentMode === 'CASH' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                       }`}>
                         {paymentMode === 'CASH' && <div className="h-2 w-2 rounded-full bg-white" />}
                       </div>
@@ -387,7 +390,7 @@ export default function RemboursementsAdminPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-slate-850">
+                <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
                   <Button
                     type="button"
                     variant="ghost"

@@ -14,9 +14,11 @@ import Button from '@/components/ui/Button';
 import Modal from '@/components/ui/Modal';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
+import { useToast } from '@/components/ui/Toast';
 
 export default function ConsultationsAdminPage() {
   const { t } = useTranslation();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
@@ -63,13 +65,14 @@ export default function ConsultationsAdminPage() {
     setIsCreatingFeuille(true);
     try {
       await createFeuille({ consultationId: selectedConsultForFeuille.id, montantSoin });
+      success(t('admin.consultations.create_sheet_success') || 'La feuille de maladie a été créée avec succès.');
       setIsFeuilleModalOpen(false);
       setSelectedConsultForFeuille(null);
       setMontantSoin(0);
       loadData();
     } catch (e) {
       console.error(e);
-      alert('Erreur lors de la création de la feuille.');
+      error(t('admin.consultations.create_sheet_error') || 'Erreur lors de la création de la feuille.');
     } finally {
       setIsCreatingFeuille(false);
     }
@@ -145,7 +148,7 @@ export default function ConsultationsAdminPage() {
 
       {/* Result counter */}
       <p className="text-xs text-slate-500 font-body">
-        {filteredConsultations.length} consultation(s) trouvée(s)
+        {filteredConsultations.length} {t('admin.consultations.results_count') || 'consultation(s) trouvée(s)'}
       </p>
 
       <Card>
@@ -213,7 +216,7 @@ export default function ConsultationsAdminPage() {
                             setIsFeuilleModalOpen(true);
                           }}
                         >
-                          + Créer feuille
+                          {t('admin.consultations.create_sheet_btn') || '+ Créer feuille'}
                         </Button>
                       )}
                     </TableCell>
@@ -234,12 +237,12 @@ export default function ConsultationsAdminPage() {
             setSelectedConsultForFeuille(null);
             setMontantSoin(0);
           }}
-          title="Créer une feuille de maladie"
+          title={t('admin.consultations.create_sheet_title') || 'Créer une feuille de maladie'}
           description={`Patient: ${selectedConsultForFeuille.assure.nom}`}
         >
           <div className="space-y-4">
             <div className="form-group">
-              <label className="form-label">Montant des soins (FCFA)</label>
+              <label className="form-label">{t('admin.consultations.montant_soin_label') || 'Montant des soins (FCFA)'}</label>
               <input
                 type="number"
                 min={0}
@@ -259,7 +262,7 @@ export default function ConsultationsAdminPage() {
                   setMontantSoin(0);
                 }}
               >
-                Annuler
+                {t('common.cancel')}
               </Button>
               <Button
                 type="button"
@@ -267,7 +270,7 @@ export default function ConsultationsAdminPage() {
                 isLoading={isCreatingFeuille}
                 onClick={handleCreateFeuille}
               >
-                Créer la feuille
+                {t('admin.consultations.create_sheet_submit') || 'Créer la feuille'}
               </Button>
             </div>
           </div>

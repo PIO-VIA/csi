@@ -16,7 +16,7 @@ export function Badge({ className, variant = 'neutral', children, ...props }: Ba
           'bg-danger/10 text-danger border border-danger/20': variant === 'danger',
           'bg-warning/10 text-warning border border-warning/20': variant === 'warning',
           'bg-info/10 text-info border border-info/20': variant === 'info',
-          'bg-slate-800 text-slate-300 border border-slate-700': variant === 'neutral',
+          'bg-slate-100 text-slate-600 border border-slate-200': variant === 'neutral',
         },
         className
       )}

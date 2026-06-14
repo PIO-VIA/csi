@@ -235,9 +235,16 @@
       "not_set": "Not specified",
       "pending_fm": "Pending FM",
       "generaliste": "GP",
-      "specialiste": "Specialist"
+      "specialiste": "Specialist",
+      "create_sheet_success": "The health sheet has been created successfully.",
+      "create_sheet_error": "Error creating the health sheet.",
+      "create_sheet_btn": "+ Create sheet",
+      "create_sheet_title": "Create a health sheet",
+      "montant_soin_label": "Care amount (FCFA)",
+      "create_sheet_submit": "Create sheet"
     },
     "remboursements": {
+      "payment_success": "Reimbursement completed successfully.",
       "title": "Reimbursement Management",
       "subtitle": "Process health sheets and perform reimbursement transfers",
       "pending_title": "Health sheets pending reimbursement",
@@ -500,6 +507,8 @@
     "error": "An error occurred",
     "success": "Success",
     "confirm": "Confirm",
+    "today": "Today",
+    "yesterday": "Yesterday",
     "back": "Back",
     "next": "Next",
     "yes": "Yes",

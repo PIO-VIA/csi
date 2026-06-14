@@ -27,6 +27,7 @@ import Modal from '@/components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
+import { useToast } from '@/components/ui/Toast';
 
 const medecinFormSchema = z.object({
   nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
@@ -40,12 +41,13 @@ type MedecinFormValues = z.infer<typeof medecinFormSchema>;
 
 export default function MedecinsAdminPage() {
   const { t } = useTranslation();
+  const { success, error, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [medecins, setMedecins] = useState<Medecin[]>([]);
   const [assures, setAssures] = useState<Assure[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [resettingId, setResettingId] = useState<number | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -85,8 +87,7 @@ export default function MedecinsAdminPage() {
   const watchType = watch('type');
 
   const onSubmit = async (data: MedecinFormValues) => {
-    setSubmitError(null);
-    setSubmitSuccess(null);
+    setIsSubmitting(true);
     try {
       const payload: CreateMedecinInput = {
         nom: data.nom,
@@ -97,33 +98,33 @@ export default function MedecinsAdminPage() {
       };
 
       await createMedecin(payload);
-      setSubmitSuccess(
-        t('admin.medecins.form_success', { email: data.email }) || `Enregistré.`
-      );
+      success(t('admin.medecins.form_success', { email: data.email }) || `Enregistré.`);
       reset();
       loadData();
-      setTimeout(() => {
-        setIsModalOpen(false);
-        setSubmitSuccess(null);
-      }, 2500);
+      setIsModalOpen(false);
     } catch (e) {
-      setSubmitError(getApiErrorMessage(e));
+      error(getApiErrorMessage(e));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = (_id: number) => {
-    alert(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
+    warning(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
   };
 
   const handleResetPassword = async (id: number) => {
     if (!confirm('Envoyer un nouveau mot de passe par email ?')) return;
+    setResettingId(id);
     try {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { MDecinsService } = await import('@/lib2') as any;
       await MDecinsService.resetPassword(id);
-      alert('Nouveau mot de passe envoyé par email.');
+      success('Nouveau mot de passe envoyé par email.');
     } catch (e) {
-      alert(getApiErrorMessage(e));
+      error(getApiErrorMessage(e));
+    } finally {
+      setResettingId(null);
     }
   };
 
@@ -326,6 +327,7 @@ export default function MedecinsAdminPage() {
                           className="p-1.5 h-8 w-8 text-success hover:bg-success/10"
                           title="Réinitialiser le mot de passe"
                           onClick={() => handleResetPassword(m.id)}
+                          isLoading={resettingId === m.id}
                         >
                           <KeyRound size={15} />
                         </Button>
@@ -353,8 +355,6 @@ export default function MedecinsAdminPage() {
         onClose={() => {
           setIsModalOpen(false);
           reset();
-          setSubmitError(null);
-          setSubmitSuccess(null);
         }}
         title={t('admin.medecins.new_doctor') || 'Nouveau'}
         description={t('admin.medecins.form_desc') || ''}
@@ -408,18 +408,6 @@ export default function MedecinsAdminPage() {
             </motion.div>
           )}
 
-          {submitSuccess && (
-            <div className="p-3 bg-success/10 border border-success/20 text-success rounded-xl text-xs leading-relaxed">
-              {submitSuccess}
-            </div>
-          )}
-
-          {submitError && (
-            <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs">
-              {submitError}
-            </div>
-          )}
-
           <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
             <Button
               type="button"
@@ -431,7 +419,7 @@ export default function MedecinsAdminPage() {
             >
               {t('common.cancel')}
             </Button>
-            <Button type="submit" variant="primary">
+            <Button type="submit" variant="primary" isLoading={isSubmitting}>
               {t('admin.medecins.form_submit')}
             </Button>
           </div>

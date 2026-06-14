@@ -235,9 +235,16 @@
       "not_set": "Non renseigné",
       "pending_fm": "En attente FM",
       "generaliste": "Généraliste",
-      "specialiste": "Spécialiste"
+      "specialiste": "Spécialiste",
+      "create_sheet_success": "La feuille de maladie a été créée avec succès.",
+      "create_sheet_error": "Erreur lors de la création de la feuille.",
+      "create_sheet_btn": "+ Créer feuille",
+      "create_sheet_title": "Créer une feuille de maladie",
+      "montant_soin_label": "Montant des soins (FCFA)",
+      "create_sheet_submit": "Créer la feuille"
     },
     "remboursements": {
+      "payment_success": "Remboursement effectué avec succès.",
       "title": "Gestion des Remboursements",
       "subtitle": "Traitez les feuilles de maladie et effectuez les virements de remboursement",
       "pending_title": "Feuilles en attente de remboursement",
@@ -500,6 +507,8 @@
     "error": "Une erreur est survenue",
     "success": "Succès",
     "confirm": "Confirmer",
+    "today": "Aujourd'hui",
+    "yesterday": "Hier",
     "back": "Retour",
     "next": "Suivant",
     "yes": "Oui",

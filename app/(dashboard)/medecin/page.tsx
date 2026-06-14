@@ -101,13 +101,24 @@ export default function MedecinDashboardPage() {
   const barData = Array.from({ length: 4 }).map((_, idx) => {
     const weekStart = new Date();
     weekStart.setDate(weekStart.getDate() - (3 - idx) * 7);
-    const weekEnd = new Date(weekStart);
-    weekEnd.setDate(weekEnd.getDate() + 6);
+    // Find the Monday of that week
+    const day = weekStart.getDay();
+    const diff = weekStart.getDate() - day + (day === 0 ? -6 : 1);
+    const monday = new Date(weekStart.setDate(diff));
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+
     const count = consultations.filter((c) => {
       const d = new Date(c.date);
-      return d >= weekStart && d <= weekEnd;
+      // set times to midnight for accurate day comparison
+      const checkD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const monD = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+      const sunD = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+      return checkD >= monD && checkD <= sunD;
     }).length;
-    return { name: 'S' + (idx + 1), Consultations: count };
+
+    const label = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
+    return { name: `${label}`, Consultations: count };
   });
 
   return (
@@ -143,7 +154,7 @@ export default function MedecinDashboardPage() {
             <Button
               variant="primary"
               size="sm"
-              className="bg-white text-primary-700 hover:bg-primary-50 border-none"
+              className="bg-white text-primary-700 hover:bg-primary-50 border-none animate-pulse-slow"
               leftIcon={<Plus size={16} />}
             >
               {t('medecin.dashboard.new_consultation')}
@@ -175,7 +186,7 @@ export default function MedecinDashboardPage() {
 
       {declaredPatientsCount > 0 && (
         <Card variant="solid">
-          <CardBody className="p-4 flex items-center gap-3 text-sm text-slate-600">
+          <CardBody className="p-4 flex items-center gap-3 text-sm text-slate-650">
             <Stethoscope size={18} className="text-primary-600 shrink-0" />
             <span>
               <strong className="text-slate-800">{declaredPatientsCount}</strong> assuré(s) vous ont
@@ -188,11 +199,16 @@ export default function MedecinDashboardPage() {
       {/* Agenda du jour */}
       <Card variant="solid">
         <CardHeader className="flex justify-between items-center">
-          <span className="font-display font-semibold text-sm text-slate-800">
-            Consultations d&apos;aujourd&apos;hui — {dateLabel}
-          </span>
+          <div>
+            <span className="font-display font-bold text-sm text-slate-800 block">
+              Consultations d&apos;aujourd&apos;hui
+            </span>
+            <span className="text-[10px] text-slate-450 font-body block mt-0.5">
+              {dateLabel}
+            </span>
+          </div>
           <Badge variant={todayConsultations.length > 0 ? 'info' : 'neutral'}>
-            {todayConsultations.length}
+            {todayConsultations.length} {todayConsultations.length > 1 ? 'consultations' : 'consultation'}
           </Badge>
         </CardHeader>
         <CardBody>
@@ -204,19 +220,56 @@ export default function MedecinDashboardPage() {
               onAction={() => router.push('/medecin/consultations/nouvelle')}
             />
           ) : (
-            <div className="space-y-3">
-              {todayConsultations.map((c) => (
-                <div
-                  key={c.id}
-                  className="flex items-center justify-between p-3 bg-slate-50 rounded-xl text-xs"
-                >
-                  <div>
-                    <span className="font-semibold">{c.assure.nom}</span>
-                    <span className="text-slate-400 ml-2">{c.motif}</span>
+            <div className="relative border-l-2 border-slate-100 pl-4 ml-3 space-y-6 my-2">
+              {todayConsultations.map((c) => {
+                const initials = c.assure.nom
+                  .split(' ')
+                  .map((n) => n[0])
+                  .join('')
+                  .substring(0, 2)
+                  .toUpperCase();
+                
+                const timeStr = new Date(c.date).toLocaleTimeString('fr-FR', {
+                  hour: '2-digit',
+                  minute: '2-digit',
+                });
+
+                return (
+                  <div key={c.id} className="relative group">
+                    {/* Timeline Dot */}
+                    <div className="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-primary-500 shadow-sm group-hover:scale-110 duration-250" />
+                    
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-150/50 rounded-2xl duration-250">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-xl bg-primary-50 border border-primary-100 text-primary-700 flex items-center justify-center font-display font-bold text-xs shrink-0">
+                          {initials}
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="font-display font-bold text-xs text-slate-850">
+                              {c.assure.nom}
+                            </span>
+                            <span className="text-[10px] font-mono text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded">
+                              {c.assure.idAssure}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 font-body">
+                            Motif : {c.motif || 'Aucun motif renseigné'}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-3 justify-between sm:justify-end">
+                        <span className="text-[10px] text-slate-450 font-mono">
+                          {c.assure.numTelephone}
+                        </span>
+                        <Badge variant="info" className="font-mono text-[10px] px-2 py-0.5">
+                          {timeStr}
+                        </Badge>
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant="neutral">{formatDate(c.date)}</Badge>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </CardBody>

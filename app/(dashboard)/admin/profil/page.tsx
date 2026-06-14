@@ -20,6 +20,7 @@ import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
 import { getApiErrorMessage } from '@/lib/api';
+import { useToast } from '@/components/ui/Toast';
 
 const changePasswordSchema = z.object({
   ancienMotDePasse: z.string().min(1, { message: 'L\'ancien mot de passe est requis' }),
@@ -35,10 +36,9 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 export default function AdminProfilePage() {
   const { t, i18n } = useTranslation();
   const { user, changePassword } = useAuth();
+  const { success, error } = useToast();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const {
     register,
@@ -51,14 +51,12 @@ export default function AdminProfilePage() {
 
   const onSubmit = async (data: ChangePasswordFormValues) => {
     setIsSubmitting(true);
-    setSuccessMsg(null);
-    setErrorMsg(null);
     try {
       await changePassword(data.ancienMotDePasse, data.nouveauMotDePasse);
-      setSuccessMsg(t('profile.password_success') || 'Mot de passe changé avec succès !');
+      success(t('profile.password_success') || 'Mot de passe changé avec succès !');
       reset();
     } catch (e) {
-      setErrorMsg(getApiErrorMessage(e));
+      error(getApiErrorMessage(e));
     } finally {
       setIsSubmitting(false);
     }
@@ -181,19 +179,6 @@ export default function AdminProfilePage() {
                   error={errors.confirmerMotDePasse?.message ? String(errors.confirmerMotDePasse.message) : undefined}
                   {...register('confirmerMotDePasse')}
                 />
-
-                {successMsg && (
-                  <div className="p-3 bg-success/10 border border-success/20 text-success rounded-xl text-xs flex items-center gap-2">
-                    <CheckCircle size={14} className="shrink-0" />
-                    <span>{successMsg}</span>
-                  </div>
-                )}
-
-                {errorMsg && (
-                  <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs">
-                    {errorMsg}
-                  </div>
-                )}
 
                 <div className="flex justify-end pt-2">
                   <Button

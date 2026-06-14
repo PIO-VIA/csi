@@ -21,6 +21,7 @@ import Button from '@/components/ui/Button';
 import Card, { CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Loader from '@/components/ui/Loader';
+import { useToast } from '@/components/ui/Toast';
 
 const consultationFormSchema = z.object({
   assureId: z.string().min(1, { message: 'Veuillez sélectionner un patient' }),
@@ -41,6 +42,7 @@ interface TempPrescription {
 
 export default function NouvelleConsultationPage() {
   const { t } = useTranslation();
+  const { success, error, warning } = useToast();
   const router = useRouter();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -56,9 +58,7 @@ export default function NouvelleConsultationPage() {
   const [posology, setPosology] = useState('');
   const [specMatricule, setSpecMatricule] = useState('');
   const [specMotif, setSpecMotif] = useState('');
-  const [prescError, setPrescError] = useState<string | null>(null);
 
-  const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
@@ -96,10 +96,9 @@ export default function NouvelleConsultationPage() {
   if (!user) return null;
 
   const handleAddPrescription = () => {
-    setPrescError(null);
     if (prescType === 'MEDICAMENT') {
       if (!medName.trim() || !posology.trim()) {
-        setPrescError(t('medecin.prescriptions.form_error_med') || 'Veuillez renseigner le nom du médicament et sa posologie.');
+        warning(t('medecin.prescriptions.form_error_med') || 'Veuillez renseigner le nom du médicament et sa posologie.');
         return;
       }
       setPrescriptions([
@@ -110,7 +109,7 @@ export default function NouvelleConsultationPage() {
       setPosology('');
     } else {
       if (!specMatricule || !specMotif.trim()) {
-        setPrescError(t('medecin.prescriptions.form_error_spec') || 'Veuillez sélectionner le spécialiste ciblé et renseigner le motif.');
+        warning(t('medecin.prescriptions.form_error_spec') || 'Veuillez sélectionner le spécialiste ciblé et renseigner le motif.');
         return;
       }
       setPrescriptions([
@@ -128,7 +127,6 @@ export default function NouvelleConsultationPage() {
 
   const onSubmit = async (data: ConsultationFormValues) => {
     setIsSubmitting(true);
-    setSubmitError(null);
     try {
       const payload = {
         assureId: Number(data.assureId),
@@ -140,9 +138,10 @@ export default function NouvelleConsultationPage() {
       };
 
       await createConsultation(payload);
+      success(t('medecin.consultations.create_success') || 'Consultation enregistrée avec succès.');
       router.push('/medecin/consultations');
     } catch (e) {
-      setSubmitError(t('common.error'));
+      error(t('common.error'));
     } finally {
       setIsSubmitting(false);
     }
@@ -158,8 +157,9 @@ export default function NouvelleConsultationPage() {
     >
       {/* Back Link */}
       <button
+        type="button"
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-xs font-display text-slate-500 hover:text-slate-800 transition w-fit group"
+        className="flex items-center gap-2 text-xs font-display text-slate-500 hover:text-slate-800 transition w-fit group cursor-pointer"
       >
         <ArrowLeft size={14} className="group-hover:-translate-x-0.5 transition" />
         <span>{t('common.back')}</span>
@@ -185,7 +185,7 @@ export default function NouvelleConsultationPage() {
                 <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   {t('medecin.consultations.form_title') || 'Détails de l\'Acte Médical'}
                 </h3>
-                <div className="h-px bg-slate-800/80" />
+                <div className="h-px bg-slate-200" />
 
                 {/* Patient Select */}
                 <div className="form-group">
@@ -261,31 +261,31 @@ export default function NouvelleConsultationPage() {
                 <h3 className="font-display font-semibold text-xs text-slate-700 uppercase tracking-wider">
                   {t('dashboard.stats.prescriptions')}
                 </h3>
-                <div className="h-px bg-slate-800/80" />
+                <div className="h-px bg-slate-200" />
 
                 {/* Current order list */}
                 <div className="space-y-3">
-                  <span className="text-[10px] font-display font-bold text-slate-500 tracking-wider uppercase block">
+                  <span className="text-[10px] font-display font-bold text-slate-550 tracking-wider uppercase block">
                     {t('medecin.prescriptions.written_presc') || 'Médicaments & Références écrits'} ({prescriptions.length})
                   </span>
                   
                   {prescriptions.length === 0 ? (
-                    <div className="p-4 border border-dashed border-slate-800 rounded-2xl text-center text-xs text-slate-500 font-body">
+                    <div className="p-4 border border-dashed border-slate-200 rounded-2xl text-center text-xs text-slate-400 font-body">
                       {t('medecin.prescriptions.none_added') || 'Aucun produit prescrit.'}
                     </div>
                   ) : (
                     <div className="space-y-2 max-h-56 overflow-y-auto pr-1">
                       {prescriptions.map((p, idx) => (
-                        <div key={idx} className="p-3 bg-slate-950 border border-slate-850 rounded-xl flex items-center justify-between gap-3 font-body text-xs text-slate-600">
+                        <div key={idx} className="p-3 bg-slate-50 border border-slate-200 rounded-xl flex items-center justify-between gap-3 font-body text-xs text-slate-650">
                           <div className="flex-1 min-w-0">
                             {p.type === 'MEDICAMENT' ? (
                               <div>
-                                <span className="font-semibold text-white">{p.medicament}</span> <br />
+                                <span className="font-semibold text-slate-800">{p.medicament}</span> <br />
                                 <span className="text-slate-500 text-[10px] italic">{t('medecin.prescriptions.posologie')}: {p.posologie}</span>
                               </div>
                             ) : (
                               <div>
-                                <span className="font-semibold text-white">{t('medecin.prescriptions.type_spec')} ({p.matriculeMedecin})</span> <br />
+                                <span className="font-semibold text-slate-800">{t('medecin.prescriptions.type_spec')} ({p.matriculeMedecin})</span> <br />
                                 <span className="text-slate-500 text-[10px] truncate block">{p.motif}</span>
                               </div>
                             )}
@@ -293,7 +293,7 @@ export default function NouvelleConsultationPage() {
                           <button
                             type="button"
                             onClick={() => handleRemovePrescription(idx)}
-                            className="p-1 text-slate-500 hover:text-danger rounded-lg transition"
+                            className="p-1 text-slate-400 hover:text-danger rounded-lg transition cursor-pointer"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -304,23 +304,23 @@ export default function NouvelleConsultationPage() {
                 </div>
 
                 {/* Add Subform Card */}
-                <div className="bg-slate-900/60 border border-slate-200 rounded-2xl p-4 space-y-4">
+                <div className="bg-slate-50/50 border border-slate-200 rounded-2xl p-4 space-y-4">
                   {/* Selector type */}
-                  <div className="flex bg-slate-950 p-1 border border-slate-850 rounded-xl">
+                  <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl">
                     <button
                       type="button"
-                      onClick={() => { setPrescType('MEDICAMENT'); setPrescError(null); }}
-                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition ${
-                        prescType === 'MEDICAMENT' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      onClick={() => { setPrescType('MEDICAMENT'); }}
+                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                        prescType === 'MEDICAMENT' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       {t('medecin.prescriptions.type_med')}
                     </button>
                     <button
                       type="button"
-                      onClick={() => { setPrescType('SPECIALISTE'); setPrescError(null); }}
-                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition ${
-                        prescType === 'SPECIALISTE' ? 'bg-primary-600 text-white shadow-sm' : 'text-slate-500 hover:text-slate-800'
+                      onClick={() => { setPrescType('SPECIALISTE'); }}
+                      className={`flex-1 py-1.5 rounded-lg text-[10px] font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                        prescType === 'SPECIALISTE' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
                       }`}
                     >
                       {t('medecin.prescriptions.type_spec')}
@@ -334,24 +334,24 @@ export default function NouvelleConsultationPage() {
                         placeholder="Ex: Paracétamol 500mg"
                         value={medName}
                         onChange={(e) => setMedName(e.target.value)}
-                        className="py-2.5 text-xs"
+                        className="py-2.5 text-xs bg-white"
                       />
                       <Input
                         label={t('medecin.prescriptions.posologie') || 'Posologie'}
                         placeholder="Ex: 1 cp matin et soir pendant 5 jours"
                         value={posology}
                         onChange={(e) => setPosology(e.target.value)}
-                        className="py-2.5 text-xs"
+                        className="py-2.5 text-xs bg-white"
                       />
                     </div>
                   ) : (
                     <div className="space-y-3">
                       <div className="form-group">
-                        <label className="font-display font-medium text-[11px] text-slate-350">{t('medecin.prescriptions.target_spec')}</label>
+                        <label className="font-display font-medium text-[11px] text-slate-600 mb-1 block">{t('medecin.prescriptions.target_spec')}</label>
                         <select
                           value={specMatricule}
                           onChange={(e) => setSpecMatricule(e.target.value)}
-                          className="w-full px-3 py-2 bg-slate-950 border border-slate-850 rounded-xl font-body text-xs text-slate-100 focus:outline-none focus:ring-1 focus:ring-primary-500/40"
+                          className="dashboard-input"
                         >
                           <option value="">-- {t('medecin.prescriptions.choose_spec') || 'Choisir un spécialiste'} --</option>
                           {specialists.map((s) => (
@@ -366,15 +366,8 @@ export default function NouvelleConsultationPage() {
                         placeholder="Ex: Évaluation cardiaque complémentaire"
                         value={specMotif}
                         onChange={(e) => setSpecMotif(e.target.value)}
-                        className="py-2.5 text-xs"
+                        className="py-2.5 text-xs bg-white"
                       />
-                    </div>
-                  )}
-
-                  {prescError && (
-                    <div className="flex items-center gap-1.5 text-[10px] text-danger font-medium leading-relaxed bg-danger/5 p-2 rounded-lg border border-danger/10">
-                      <AlertCircle size={12} className="shrink-0" />
-                      <span>{prescError}</span>
                     </div>
                   )}
 
@@ -382,7 +375,7 @@ export default function NouvelleConsultationPage() {
                     type="button"
                     variant="outline"
                     onClick={handleAddPrescription}
-                    className="w-full text-xs py-2"
+                    className="w-full text-xs py-2 bg-white"
                   >
                     {t('medecin.prescriptions.add_btn')}
                   </Button>
@@ -391,12 +384,6 @@ export default function NouvelleConsultationPage() {
             </Card>
           </div>
         </div>
-
-        {submitError && (
-          <div className="p-4 bg-danger/10 border border-danger/20 text-danger rounded-2xl text-xs">
-            {submitError}
-          </div>
-        )}
 
         {/* Submit controls */}
         <div className="flex justify-end gap-3 pt-6 border-t border-slate-200">

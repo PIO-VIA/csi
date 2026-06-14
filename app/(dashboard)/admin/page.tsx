@@ -119,7 +119,8 @@ export default function AdminDashboard() {
     }
   });
 
-  if (generalistRefund === 0 && specialistRefund === 0) {
+  const isDemoData = generalistRefund === 0 && specialistRefund === 0;
+  if (isDemoData) {
     generalistRefund = 120000;
     specialistRefund = 85000;
   }
@@ -247,10 +248,15 @@ export default function AdminDashboard() {
 
           <div className="lg:col-span-5">
             <Card variant="solid" className="h-full">
-              <CardHeader>
+              <CardHeader className="flex justify-between items-center">
                 <span className="font-display font-semibold text-sm text-slate-800">
                   {t('dashboard.stats.remb_by_category')}
                 </span>
+                {isDemoData && (
+                  <Badge variant="warning" className="text-[10px]">
+                    {t('common.demo') || 'Démo'}
+                  </Badge>
+                )}
               </CardHeader>
               <CardBody className="h-80 flex flex-col justify-center items-center">
                 <div className="h-56 w-full relative">
@@ -274,6 +280,7 @@ export default function AdminDashboard() {
                           backgroundColor: '#fff',
                           borderColor: '#e2e8f0',
                           borderRadius: '12px',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                         }}
                         formatter={(value) => formatFCFA(Number(value))}
                       />
@@ -281,9 +288,9 @@ export default function AdminDashboard() {
                   </ResponsiveContainer>
                   <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
                     <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">
-                      {t('dashboard.stats.total')}
+                      {isDemoData ? t('common.demo') || 'Démo' : t('dashboard.stats.total')}
                     </span>
-                    <span className="text-sm font-display font-bold text-slate-800">
+                    <span className="text-sm font-display font-bold text-slate-850">
                       {formatFCFA(generalistRefund + specialistRefund)}
                     </span>
                   </div>
@@ -292,7 +299,7 @@ export default function AdminDashboard() {
                   {pieData.map((d, index) => (
                     <div key={d.name} className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded" style={{ backgroundColor: PIE_COLORS[index] }} />
-                      <span className="text-slate-600">{d.name}</span>
+                      <span className="text-slate-650">{d.name}</span>
                     </div>
                   ))}
                 </div>

@@ -12,6 +12,7 @@ import {
   CreditCard,
   Pill,
   Activity,
+  Phone,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
@@ -53,6 +54,22 @@ export default function AssureDashboardPage() {
     };
     fetchData();
   }, [user]);
+
+  const getRelativeDate = (dateStr: string) => {
+    const now = new Date();
+    const d = new Date(dateStr);
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thatDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const diffTime = today.getTime() - thatDay.getTime();
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+    if (diffDays === 0) return t('common.today') || "Aujourd'hui";
+    if (diffDays === 1) return t('common.yesterday') || 'Hier';
+    if (diffDays > 1 && diffDays < 7) {
+      return `Il y a ${diffDays} jours`;
+    }
+    return formatDate(dateStr);
+  };
 
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
   if (!assureInfo)
@@ -187,16 +204,20 @@ export default function AssureDashboardPage() {
                     <div className="h-14 w-14 rounded-2xl bg-primary-50 border border-primary-100 text-primary-600 flex items-center justify-center">
                       <Stethoscope size={26} />
                     </div>
-                    <div>
-                      <p className="font-display font-bold text-slate-900">
+                    <div className="space-y-0.5">
+                      <p className="font-display font-bold text-slate-900 text-sm">
                         Dr. {assureInfo.medecinTraitant.nom}
                       </p>
-                      <p className="text-xs text-slate-500 font-mono">
-                        {assureInfo.medecinTraitant.matricule}
+                      <p className="text-[10px] text-slate-450 font-mono">
+                        Matricule: {assureInfo.medecinTraitant.matricule}
+                      </p>
+                      <p className="text-[10px] text-slate-500 font-body flex items-center gap-1">
+                        <Phone size={10} className="text-slate-400" />
+                        {assureInfo.medecinTraitant.numTelephone}
                       </p>
                     </div>
                   </div>
-                  <div className="bg-success/5 border border-success/20 p-3.5 rounded-xl text-xs text-slate-600 leading-relaxed">
+                  <div className="bg-success/5 border border-success/20 p-3.5 rounded-xl text-xs text-slate-650 leading-relaxed">
                     <span className="text-success font-semibold">{t('admin.remboursements.coverage_100')}</span> pour les
                     consultations chez votre médecin traitant.
                   </div>
@@ -263,8 +284,8 @@ export default function AssureDashboardPage() {
                           <h4 className="font-display font-semibold text-sm text-slate-800">
                             {evt.title}
                           </h4>
-                          <span className="text-[10px] text-slate-400 shrink-0">
-                            {formatDate(evt.date)}
+                          <span className="text-[10px] text-slate-450 shrink-0 font-mono">
+                            {getRelativeDate(evt.date)}
                           </span>
                         </div>
                         <p className="text-xs text-slate-500 leading-relaxed">{evt.description}</p>

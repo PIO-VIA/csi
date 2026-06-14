@@ -29,6 +29,7 @@ import Modal from '@/components/ui/Modal';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TablePagination } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
+import { useToast } from '@/components/ui/Toast';
 
 const assureFormSchema = z.object({
   nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
@@ -48,18 +49,18 @@ function AssureForm({
   register,
   errors,
   generalistes,
-  submitError,
   onCancel,
   submitLabel,
+  isLoading,
   t,
 }: {
   onSubmit: (e: React.FormEvent) => void;
   register: ReturnType<typeof useForm<AssureFormValues>>['register'];
   errors: ReturnType<typeof useForm<AssureFormValues>>['formState']['errors'];
   generalistes: Medecin[];
-  submitError: string | null;
   onCancel: () => void;
   submitLabel: string;
+  isLoading?: boolean;
   t: (key: string) => string;
 }) {
   return (
@@ -143,17 +144,11 @@ function AssureForm({
         </select>
       </div>
 
-      {submitError && (
-        <div className="p-3 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs">
-          {submitError}
-        </div>
-      )}
-
       <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-4">
         <Button type="button" variant="ghost" onClick={onCancel}>
           {t('common.cancel')}
         </Button>
-        <Button type="submit" variant="primary">
+        <Button type="submit" variant="primary" isLoading={isLoading}>
           {submitLabel}
         </Button>
       </div>
@@ -163,18 +158,20 @@ function AssureForm({
 
 export default function AssuresAdminPage() {
   const { t } = useTranslation();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
   const [generalistes, setGeneralistes] = useState<Medecin[]>([]);
 
   // Create modal
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Edit modal
   const [editingAssure, setEditingAssure] = useState<Assure | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editSubmitError, setEditSubmitError] = useState<string | null>(null);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -224,7 +221,7 @@ export default function AssuresAdminPage() {
   });
 
   const onSubmit = async (data: AssureFormValues) => {
-    setSubmitError(null);
+    setIsSubmitting(true);
     try {
       const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
       const payload: Partial<Assure> = {
@@ -238,17 +235,20 @@ export default function AssuresAdminPage() {
         medecinTraitant: doc,
       };
       await createAssure(payload);
+      success(t('admin.assures.create_success') || 'Assuré créé avec succès.');
       setIsModalOpen(false);
       reset();
       loadData();
     } catch (e) {
-      setSubmitError(t('common.error'));
+      error(getApiErrorMessage(e));
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const onEditSubmit = async (data: AssureFormValues) => {
     if (!editingAssure) return;
-    setEditSubmitError(null);
+    setIsEditSubmitting(true);
     try {
       const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
       await updateAssure(editingAssure.id, {
@@ -261,22 +261,29 @@ export default function AssuresAdminPage() {
         numTelephone: data.numTelephone,
         medecinTraitant: doc,
       });
+      success(t('admin.assures.update_success') || 'Modifications enregistrées.');
       setIsEditModalOpen(false);
       setEditingAssure(null);
       resetEdit();
       loadData();
     } catch (e) {
-      setEditSubmitError(getApiErrorMessage(e));
+      error(getApiErrorMessage(e));
+    } finally {
+      setIsEditSubmitting(false);
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm(t('admin.assures.delete_confirm') || 'Supprimer ?')) return;
+    setDeletingId(id);
     try {
       await deleteAssure(id);
+      success(t('admin.assures.delete_success') || 'Assuré supprimé.');
       loadData();
     } catch (e) {
-      alert(getApiErrorMessage(e));
+      error(getApiErrorMessage(e));
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -491,11 +498,12 @@ export default function AssuresAdminPage() {
                         >
                           <Pencil size={15} />
                         </Button>
-                        <Button
+                         <Button
                           onClick={() => handleDelete(a.id)}
                           variant="ghost"
                           size="sm"
                           className="p-1.5 h-8 w-8 text-danger hover:bg-danger/10"
+                          isLoading={deletingId === a.id}
                         >
                           <Trash2 size={15} />
                         </Button>
@@ -542,9 +550,9 @@ export default function AssuresAdminPage() {
           register={register}
           errors={errors}
           generalistes={generalistes}
-          submitError={submitError}
           onCancel={() => { setIsModalOpen(false); reset(); }}
           submitLabel={t('admin.assures.form_submit')}
+          isLoading={isSubmitting}
           t={t}
         />
       </Modal>
@@ -562,9 +570,9 @@ export default function AssuresAdminPage() {
           register={registerEdit}
           errors={errorsEdit}
           generalistes={generalistes}
-          submitError={editSubmitError}
           onCancel={() => { setIsEditModalOpen(false); setEditingAssure(null); resetEdit(); }}
           submitLabel="Enregistrer les modifications"
+          isLoading={isEditSubmitting}
           t={t}
         />
       </Modal>
