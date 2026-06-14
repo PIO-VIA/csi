@@ -368,6 +368,7 @@
       "date_label": "Date",
       "motif_label": "Reason",
       "prescriptions_label": "Prescriptions",
+      "prescriptions_title": "Prescriptions & Referrals",
       "feuille_label": "Health sheet",
       "none": "None",
       "will_create": "Will be created",
