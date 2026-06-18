@@ -11,7 +11,7 @@ export class SpCialistesService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getAll3(): CancelablePromise<Record<string, any>> {
+    public static getAll4(): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/specialistes',
@@ -23,7 +23,7 @@ export class SpCialistesService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById2(
+    public static getById4(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

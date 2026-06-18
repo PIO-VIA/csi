@@ -29,7 +29,7 @@ export class ConsultationsService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById6(
+    public static getById7(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

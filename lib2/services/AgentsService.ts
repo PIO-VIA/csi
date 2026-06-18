@@ -2,42 +2,42 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-import type { AssureRequestDTO } from '../models/AssureRequestDTO';
+import type { AgentRequestDTO } from '../models/AgentRequestDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
 import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
-export class AssurSService {
+export class AgentsService {
     /**
-     * Récupérer un assuré par ID
+     * Récupérer un agent par ID
      * @param id
      * @returns any OK
      * @throws ApiError
      */
-    public static getById2(
+    public static getById3(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/assures/{id}',
+            url: '/api/agents/{id}',
             path: {
                 'id': id,
             },
         });
     }
     /**
-     * Modifier un assuré
+     * Modifier un agent
      * @param id
      * @param requestBody
      * @returns any OK
      * @throws ApiError
      */
-    public static update1(
+    public static update2(
         id: number,
-        requestBody: AssureRequestDTO,
+        requestBody: AgentRequestDTO,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'PUT',
-            url: '/api/assures/{id}',
+            url: '/api/agents/{id}',
             path: {
                 'id': id,
             },
@@ -46,57 +46,57 @@ export class AssurSService {
         });
     }
     /**
-     * Supprimer un assuré
+     * Supprimer un agent
      * @param id
      * @returns any OK
      * @throws ApiError
      */
-    public static delete1(
+    public static delete2(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'DELETE',
-            url: '/api/assures/{id}',
+            url: '/api/agents/{id}',
             path: {
                 'id': id,
             },
         });
     }
     /**
-     * Lister tous les assurés
+     * Lister tous les agents
      * @returns any OK
      * @throws ApiError
      */
-    public static getAll2(): CancelablePromise<Record<string, any>> {
+    public static getAll3(): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'GET',
-            url: '/api/assures',
+            url: '/api/agents',
         });
     }
     /**
-     * Inscrire un nouvel assuré
+     * Créer un nouvel agent de l'organisme
      * @param requestBody
      * @returns any OK
      * @throws ApiError
      */
-    public static inscrire(
-        requestBody: AssureRequestDTO,
+    public static creer1(
+        requestBody: AgentRequestDTO,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/assures',
+            url: '/api/agents',
             body: requestBody,
             mediaType: 'application/json',
         });
     }
     /**
-     * Téléverser/mettre à jour la photo de profil d'un assuré (optionnel)
+     * Téléverser/mettre à jour la photo de profil d'un agent (optionnel)
      * @param id
      * @param formData
      * @returns any OK
      * @throws ApiError
      */
-    public static uploadPhoto1(
+    public static uploadPhoto2(
         id: number,
         formData?: {
             photo: Blob;
@@ -104,49 +104,12 @@ export class AssurSService {
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'POST',
-            url: '/api/assures/{id}/photo',
+            url: '/api/agents/{id}/photo',
             path: {
                 'id': id,
             },
             formData: formData,
             mediaType: 'multipart/form-data',
-        });
-    }
-    /**
-     * Choisir son médecin traitant
-     * @param assureId
-     * @param generalisteId
-     * @returns any OK
-     * @throws ApiError
-     */
-    public static choisirMedecin(
-        assureId: number,
-        generalisteId: number,
-    ): CancelablePromise<Record<string, any>> {
-        return __request(OpenAPI, {
-            method: 'PATCH',
-            url: '/api/assures/{assureId}/choisir-medecin/{generalisteId}',
-            path: {
-                'assureId': assureId,
-                'generalisteId': generalisteId,
-            },
-        });
-    }
-    /**
-     * Récupérer un assuré par son identifiant (ex: ASS-XXXXXXXX)
-     * @param idAssure
-     * @returns any OK
-     * @throws ApiError
-     */
-    public static getByIdAssure(
-        idAssure: string,
-    ): CancelablePromise<Record<string, any>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/assures/by-identifiant/{idAssure}',
-            path: {
-                'idAssure': idAssure,
-            },
         });
     }
 }

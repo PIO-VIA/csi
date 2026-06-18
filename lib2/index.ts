@@ -7,6 +7,7 @@ export { CancelablePromise, CancelError } from './core/CancelablePromise';
 export { OpenAPI } from './core/OpenAPI';
 export type { OpenAPIConfig } from './core/OpenAPI';
 
+export type { AgentRequestDTO } from './models/AgentRequestDTO';
 export type { AssureRequestDTO } from './models/AssureRequestDTO';
 export type { ChangePasswordRequestDTO } from './models/ChangePasswordRequestDTO';
 export type { ConsultationRequestDTO } from './models/ConsultationRequestDTO';
@@ -15,6 +16,7 @@ export type { LoginRequestDTO } from './models/LoginRequestDTO';
 export type { MedecinRequestDTO } from './models/MedecinRequestDTO';
 export type { PrescriptionRequestDTO } from './models/PrescriptionRequestDTO';
 
+export { AgentsService } from './services/AgentsService';
 export { AssurSService } from './services/AssurSService';
 export { AuthentificationService } from './services/AuthentificationService';
 export { ConsultationsService } from './services/ConsultationsService';

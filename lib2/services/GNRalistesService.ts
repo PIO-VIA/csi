@@ -11,7 +11,7 @@ export class GNRalistesService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getAll4(): CancelablePromise<Record<string, any>> {
+    public static getAll5(): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/generalistes',
@@ -23,7 +23,7 @@ export class GNRalistesService {
      * @returns any OK
      * @throws ApiError
      */
-    public static getById4(
+    public static getById6(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

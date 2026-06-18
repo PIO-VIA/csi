@@ -2,6 +2,7 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
+import type { AgentRequestDTO } from '../models/AgentRequestDTO';
 import type { ChangePasswordRequestDTO } from '../models/ChangePasswordRequestDTO';
 import type { LoginRequestDTO } from '../models/LoginRequestDTO';
 import type { CancelablePromise } from '../core/CancelablePromise';
@@ -15,7 +16,7 @@ export class AuthentificationService {
      * @throws ApiError
      */
     public static registerOrganisme(
-        requestBody: LoginRequestDTO,
+        requestBody: AgentRequestDTO,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
             method: 'POST',
@@ -54,6 +55,17 @@ export class AuthentificationService {
             url: '/api/auth/change-password',
             body: requestBody,
             mediaType: 'application/json',
+        });
+    }
+    /**
+     * Récupérer le profil de l'utilisateur connecté
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static me(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/auth/me',
         });
     }
 }

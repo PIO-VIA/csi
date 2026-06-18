@@ -90,6 +90,29 @@ export class MDecinsService {
         });
     }
     /**
+     * Téléverser/mettre à jour la photo de profil d'un médecin (optionnel)
+     * @param id
+     * @param formData
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static uploadPhoto(
+        id: number,
+        formData?: {
+            photo: Blob;
+        },
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/medecins/{id}/photo',
+            path: {
+                'id': id,
+            },
+            formData: formData,
+            mediaType: 'multipart/form-data',
+        });
+    }
+    /**
      * Réinitialiser le mot de passe d'un médecin (envoie un nouveau par email)
      * @param id
      * @returns any OK

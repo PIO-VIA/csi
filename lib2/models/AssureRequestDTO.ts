@@ -13,5 +13,6 @@ export type AssureRequestDTO = {
     groupeSanguin?: string;
     email?: string;
     motDePasse?: string;
+    photoUrl?: string;
 };
 

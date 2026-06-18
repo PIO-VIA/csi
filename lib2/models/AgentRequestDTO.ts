@@ -2,16 +2,14 @@
 /* istanbul ignore file */
 /* tslint:disable */
 /* eslint-disable */
-export type MedecinRequestDTO = {
+export type AgentRequestDTO = {
     nom?: string;
     dateNaissance?: string;
     sexe?: string;
     indicatifPays?: string;
     numTelephone?: string;
     matricule?: string;
-    estAssure?: boolean;
-    domaineSpecialisation?: string;
-    type?: string;
+    fonction?: string;
     email?: string;
     motDePasse?: string;
     photoUrl?: string;

@@ -8,6 +8,61 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class FeuillesMaladieService {
     /**
+     * Récupérer une feuille de maladie par ID
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getById1(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/feuilles-maladie/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Modifier une feuille de maladie
+     * @param id
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static update(
+        id: number,
+        requestBody: FeuillemMaladieRequestDTO,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/feuilles-maladie/{id}',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Supprimer une feuille de maladie
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static delete(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/feuilles-maladie/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Lister toutes les feuilles de maladie
      * @returns any OK
      * @throws ApiError
@@ -32,23 +87,6 @@ export class FeuillesMaladieService {
             url: '/api/feuilles-maladie',
             body: requestBody,
             mediaType: 'application/json',
-        });
-    }
-    /**
-     * Récupérer une feuille de maladie par ID
-     * @param id
-     * @returns any OK
-     * @throws ApiError
-     */
-    public static getById5(
-        id: number,
-    ): CancelablePromise<Record<string, any>> {
-        return __request(OpenAPI, {
-            method: 'GET',
-            url: '/api/feuilles-maladie/{id}',
-            path: {
-                'id': id,
-            },
         });
     }
     /**
