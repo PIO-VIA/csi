@@ -232,7 +232,14 @@ export const updateAssure = async (
 
   const raw = await AssurSService.update(id, payload);
   const medecins = await loadMedecins();
-  return { data: mapAssure(raw as Record<string, unknown>, medecins) };
+  let assure = mapAssure(raw as Record<string, unknown>, medecins);
+
+  if (data.medecinTraitant?.id) {
+    const updated = await AssurSService.choisirMedecin(assure.id, data.medecinTraitant.id);
+    assure = mapAssure(updated as Record<string, unknown>, medecins);
+  }
+
+  return { data: assure };
 };
 
 /**
