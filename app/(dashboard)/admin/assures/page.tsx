@@ -40,10 +40,24 @@ const assureFormSchema = z.object({
   groupeSanguin: z.string().min(1, { message: 'Le groupe sanguin est requis' }),
   indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
   numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
+  email: z.string().email({ message: 'Adresse email invalide' }),
+  medecinTraitantId: z.string().optional(),
+});
+
+const assureEditSchema = z.object({
+  nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
+  dateNaissance: z.string().min(1, { message: 'La date de naissance est requise' }),
+  sexe: z.string().min(1, { message: 'Veuillez choisir le sexe' }),
+  profession: z.string().min(1, { message: 'La profession est requise' }),
+  statutMatrimoniale: z.string().min(1, { message: 'Le statut est requis' }),
+  groupeSanguin: z.string().min(1, { message: 'Le groupe sanguin est requis' }),
+  indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
+  numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
   medecinTraitantId: z.string().optional(),
 });
 
 type AssureFormValues = z.infer<typeof assureFormSchema>;
+type AssureEditValues = z.infer<typeof assureEditSchema>;
 
 function AssureForm({
   onSubmit,
@@ -53,15 +67,19 @@ function AssureForm({
   onCancel,
   submitLabel,
   isLoading,
+  showCredentials = false,
   t,
 }: {
   onSubmit: (e: React.FormEvent) => void;
-  register: ReturnType<typeof useForm<AssureFormValues>>['register'];
-  errors: ReturnType<typeof useForm<AssureFormValues>>['formState']['errors'];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  register: any;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  errors: any;
   generalistes: Medecin[];
   onCancel: () => void;
   submitLabel: string;
   isLoading?: boolean;
+  showCredentials?: boolean;
   t: (key: string) => string;
 }) {
   return (
@@ -144,6 +162,22 @@ function AssureForm({
           </select>
         </div>
       </div>
+
+      {showCredentials && (
+        <>
+          <div className="pt-2 pb-1">
+            <p className="text-xs font-display font-semibold text-slate-500 uppercase tracking-wider">Identifiants de connexion</p>
+            <div className="h-px bg-slate-100 mt-1" />
+          </div>
+          <Input
+            label="Adresse email"
+            type="email"
+            placeholder="Ex: jean.fosso@email.com"
+            error={errors.email?.message ? String(errors.email.message) : undefined}
+            {...register('email')}
+          />
+        </>
+      )}
 
       <div className="form-group">
         <label className="form-label">{t('admin.assures.form_doctor')}</label>
@@ -229,15 +263,15 @@ export default function AssuresAdminPage() {
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
     formState: { errors: errorsEdit },
-  } = useForm<AssureFormValues>({
-    resolver: zodResolver(assureFormSchema),
+  } = useForm<AssureEditValues>({
+    resolver: zodResolver(assureEditSchema),
   });
 
   const onSubmit = async (data: AssureFormValues) => {
     setIsSubmitting(true);
     try {
       const doc = generalistes.find((m) => m.id === Number(data.medecinTraitantId));
-      const payload: Partial<Assure> = {
+      const payload: Partial<Assure> & { email: string } = {
         nom: data.nom,
         dateNaissance: data.dateNaissance,
         sexe: data.sexe,
@@ -246,6 +280,7 @@ export default function AssuresAdminPage() {
         groupeSanguin: data.groupeSanguin,
         indicatifPays: data.indicatifPays,
         numTelephone: data.numTelephone,
+        email: data.email,
         medecinTraitant: doc,
       };
       await createAssure(payload);
@@ -562,13 +597,14 @@ export default function AssuresAdminPage() {
         size="lg"
       >
         <AssureForm
-          onSubmit={handleSubmit(onSubmit)}
+          onSubmit={(e) => void handleSubmit(onSubmit)(e)}
           register={register}
           errors={errors}
           generalistes={generalistes}
           onCancel={() => { setIsModalOpen(false); reset(); }}
           submitLabel={t('admin.assures.form_submit')}
           isLoading={isSubmitting}
+          showCredentials={true}
           t={t}
         />
       </Modal>
@@ -582,7 +618,7 @@ export default function AssuresAdminPage() {
         size="lg"
       >
         <AssureForm
-          onSubmit={handleSubmitEdit(onEditSubmit)}
+          onSubmit={(e) => void handleSubmitEdit(onEditSubmit)(e)}
           register={registerEdit}
           errors={errorsEdit}
           generalistes={generalistes}

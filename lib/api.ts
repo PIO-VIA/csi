@@ -187,13 +187,9 @@ export const getAssureById = async (id: number): Promise<ApiPayload<Assure>> => 
   return { data: mapAssure(raw as Record<string, unknown>, medecins) };
 };
 
-export const createAssure = async (data: Partial<Assure>): Promise<ApiPayload<Assure>> => {
-  const email =
-    (data as { email?: string }).email ??
-    `${String(data.nom ?? 'assure')
-      .toLowerCase()
-      .replace(/\s+/g, '.')}@csi.cm`;
-
+export const createAssure = async (
+  data: Partial<Assure> & { email?: string },
+): Promise<ApiPayload<Assure>> => {
   const payload: AssureRequestDTO = {
     nom: data.nom,
     dateNaissance: data.dateNaissance,
@@ -203,7 +199,7 @@ export const createAssure = async (data: Partial<Assure>): Promise<ApiPayload<As
     profession: data.profession,
     statutMatrimoniale: data.statutMatrimoniale,
     groupeSanguin: data.groupeSanguin,
-    email,
+    email: data.email,
     motDePasse: randomPassword(),
   };
 
