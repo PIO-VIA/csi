@@ -295,7 +295,7 @@ export default function AssuresAdminPage() {
     }
   };
 
-  const onEditSubmit = async (data: AssureFormValues) => {
+  const onEditSubmit = async (data: AssureEditValues) => {
     if (!editingAssure) return;
     setIsEditSubmitting(true);
     try {
