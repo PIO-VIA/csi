@@ -142,7 +142,7 @@ export function Sidebar() {
         ? { label: t('medecin.dashboard.new_consultation'), href: '/medecin/consultations/nouvelle', icon: PenLine }
         : null;
 
-  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
+  const renderSidebarContent = (isMobile = false) => (
     <div
       className={cn(
         'flex flex-col h-full bg-white border-r border-slate-200/80 relative transition-all duration-300 ease-in-out',
@@ -321,7 +321,7 @@ export function Sidebar() {
         className="hidden lg:block fixed top-0 left-0 bottom-0 z-30 transition-all duration-300 ease-in-out"
         style={{ width: collapsed ? SIDEBAR_COLLAPSED_W : SIDEBAR_EXPANDED_W }}
       >
-        <SidebarContent />
+        {renderSidebarContent()}
       </aside>
 
       {/* Mobile drawer */}
@@ -336,7 +336,7 @@ export function Sidebar() {
             className="relative z-50 h-full animate-slide-in-left shadow-2xl"
             style={{ width: SIDEBAR_EXPANDED_W }}
           >
-            <SidebarContent isMobile />
+            {renderSidebarContent(true)}
           </div>
         </div>
       )}

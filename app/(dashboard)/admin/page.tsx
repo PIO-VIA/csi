@@ -48,6 +48,7 @@ export default function AdminDashboard() {
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const fetchData = async () => {
       try {

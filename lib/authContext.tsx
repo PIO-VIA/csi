@@ -82,11 +82,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const session = JSON.parse(storedUser) as SessionUser;
         const { token: _token, username: _username, ...userData } = session;
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setUser(userData);
       } catch {
         localStorage.removeItem('csi_session');
       }
     }
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setLoading(false);
   }, []);
 

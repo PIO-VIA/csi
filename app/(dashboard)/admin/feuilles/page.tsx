@@ -9,6 +9,7 @@ import {
   Clock,
   Filter,
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { getFeuilles, getConsultations } from '@/lib/api';
@@ -23,6 +24,7 @@ import { formatFCFA, formatDate } from '@/lib/utils';
 
 export default function AdminFeuillesPage() {
   const { t } = useTranslation();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
@@ -226,7 +228,7 @@ export default function AdminFeuillesPage() {
                             variant="primary"
                             size="sm"
                             className="text-xs px-3"
-                            onClick={() => window.location.href = '/admin/remboursements'}
+                            onClick={() => router.push('/admin/remboursements')}
                           >
                             Rembourser
                           </Button>

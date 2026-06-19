@@ -219,6 +219,17 @@ export default function AssuresAdminPage() {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isEditSubmitting, setIsEditSubmitting] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -243,6 +254,7 @@ export default function AssuresAdminPage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     loadData();
   }, []);
 
@@ -323,18 +335,25 @@ export default function AssuresAdminPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm(t('admin.assures.delete_confirm') || 'Supprimer ?')) return;
-    setDeletingId(id);
-    try {
-      await deleteAssure(id);
-      success(t('admin.assures.delete_success') || 'Assuré supprimé.');
-      loadData();
-    } catch (e) {
-      error(getApiErrorMessage(e));
-    } finally {
-      setDeletingId(null);
-    }
+  const handleDelete = (id: number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: t('admin.assures.delete_confirm') || 'Supprimer cet assuré ?',
+      description: 'Êtes-vous sûr de vouloir supprimer définitivement le dossier de cet assuré ? Cette action est irréversible.',
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        setDeletingId(id);
+        try {
+          await deleteAssure(id);
+          success(t('admin.assures.delete_success') || 'Assuré supprimé.');
+          loadData();
+        } catch (e) {
+          error(getApiErrorMessage(e));
+        } finally {
+          setDeletingId(null);
+        }
+      }
+    });
   };
 
   const openEditModal = (a: Assure) => {
@@ -627,6 +646,34 @@ export default function AssuresAdminPage() {
           isLoading={isEditSubmitting}
           t={t}
         />
+      </Modal>
+
+      {/* CONFIRM MODAL */}
+      <Modal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        size="sm"
+      >
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => {
+              confirmModal.onConfirm();
+            }}
+          >
+            {t('common.confirm')}
+          </Button>
+        </div>
       </Modal>
     </motion.div>
   );

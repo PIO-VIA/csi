@@ -274,9 +274,9 @@ export default function AssureDetailPage({ params }: PageProps) {
                         prescriptions.map((p) => (
                           <TableRow key={p.id}>
                             <TableCell className="text-xs font-semibold">
-                              {formatDate((p as any).date)}
+                              {formatDate((p as { date: string; medecin: string } & Prescription).date)}
                             </TableCell>
-                            <TableCell className="text-xs text-slate-600">{(p as any).medecin}</TableCell>
+                            <TableCell className="text-xs text-slate-600">{(p as { date: string; medecin: string } & Prescription).medecin}</TableCell>
                             <TableCell>
                               <Badge variant={p.type === 'MEDICAMENT' ? 'info' : 'warning'}>
                                 {p.type === 'MEDICAMENT' ? t('medecin.prescriptions.type_med') : t('medecin.prescriptions.type_spec')}

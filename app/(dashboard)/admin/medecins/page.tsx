@@ -49,6 +49,17 @@ export default function MedecinsAdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resettingId, setResettingId] = useState<number | null>(null);
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void | Promise<void>;
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+  });
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,19 +127,26 @@ export default function MedecinsAdminPage() {
     warning(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
   };
 
-  const handleResetPassword = async (id: number) => {
-    if (!confirm('Envoyer un nouveau mot de passe par email ?')) return;
-    setResettingId(id);
-    try {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const { MDecinsService } = await import('@/lib2') as any;
-      await MDecinsService.resetPassword(id);
-      success('Nouveau mot de passe envoyé par email.');
-    } catch (e) {
-      error(getApiErrorMessage(e));
-    } finally {
-      setResettingId(null);
-    }
+  const handleResetPassword = (id: number) => {
+    setConfirmModal({
+      isOpen: true,
+      title: 'Réinitialiser le mot de passe',
+      description: 'Êtes-vous sûr de vouloir générer un nouveau mot de passe et l\'envoyer par e-mail à ce médecin ?',
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        setResettingId(id);
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const { MDecinsService } = await import('@/lib2') as any;
+          await MDecinsService.resetPassword(id);
+          success('Nouveau mot de passe envoyé par email.');
+        } catch (e) {
+          error(getApiErrorMessage(e));
+        } finally {
+          setResettingId(null);
+        }
+      }
+    });
   };
 
   const exportCSV = () => {
@@ -439,6 +457,34 @@ export default function MedecinsAdminPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* CONFIRM MODAL */}
+      <Modal
+        isOpen={confirmModal.isOpen}
+        onClose={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+        title={confirmModal.title}
+        description={confirmModal.description}
+        size="sm"
+      >
+        <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setConfirmModal((prev) => ({ ...prev, isOpen: false }))}
+          >
+            {t('common.cancel')}
+          </Button>
+          <Button
+            type="button"
+            variant="primary"
+            onClick={() => {
+              confirmModal.onConfirm();
+            }}
+          >
+            {t('common.confirm')}
+          </Button>
+        </div>
       </Modal>
     </motion.div>
   );
