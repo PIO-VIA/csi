@@ -90,6 +90,17 @@ export class FeuillesMaladieService {
         });
     }
     /**
+     * Lister les feuilles de maladie créées par le médecin connecté
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getMesFeuilles(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/feuilles-maladie/medecin/me',
+        });
+    }
+    /**
      * Récupérer les feuilles de maladie d'un assuré
      * @param assureId
      * @returns any OK

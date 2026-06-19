@@ -113,7 +113,7 @@ export class AssurSService {
         });
     }
     /**
-     * Choisir son médecin traitant
+     * Affecter un médecin traitant à un assuré
      * @param assureId
      * @param generalisteId
      * @returns any OK

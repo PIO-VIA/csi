@@ -129,4 +129,15 @@ export class MDecinsService {
             },
         });
     }
+    /**
+     * Lister les assurés affectés au médecin connecté
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getMesAssures(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/medecins/me/assures',
+        });
+    }
 }
