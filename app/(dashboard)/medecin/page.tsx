@@ -229,12 +229,12 @@ export default function MedecinDashboardPage() {
           ) : (
             <div className="relative border-l-2 border-slate-100 pl-4 ml-3 space-y-6 my-2">
               {todayConsultations.map((c) => {
-                const initials = c.assure.nom
+                const initials = (c.assure.nom || '')
                   .split(' ')
                   .map((n) => n[0])
                   .join('')
                   .substring(0, 2)
-                  .toUpperCase();
+                  .toUpperCase() || '?';
                 
                 const timeStr = new Date(c.date).toLocaleTimeString('fr-FR', {
                   hour: '2-digit',

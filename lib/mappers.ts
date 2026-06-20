@@ -5,6 +5,7 @@ import type {
   Medecin,
   Prescription,
   Remboursement,
+  User,
   UserRole,
 } from '@/types';
 
@@ -138,7 +139,35 @@ export function buildConsultation(
   };
 }
 
-export function initialsFromName(nom: string): string {
+/**
+ * Construit l'utilisateur connecté à partir de la réponse de GET /api/auth/me.
+ * Le backend peut renvoyer le rôle sous différentes formes (ROLE_GENERALISTE,
+ * ROLE_ORGANISME, ...) et préciser le type pour les médecins (GENERALISTE /
+ * SPECIALISTE). On combine les deux pour obtenir le rôle frontend exact.
+ */
+export function mapAuthMe(raw: RawRecord, fallbackEmail = ''): User {
+  let role = mapBackendRole(String(raw.role ?? raw.authority ?? ''));
+  const typeField = raw.type ? String(raw.type).toUpperCase() : '';
+
+  if (role !== 'ADMIN' && role !== 'ASSURE') {
+    if (typeField === 'SPECIALISTE') role = 'SPECIALISTE';
+    else if (typeField === 'GENERALISTE') role = 'GENERALISTE';
+  }
+
+  const nom = String(raw.nom ?? raw.username ?? raw.name ?? fallbackEmail);
+  const email = String(raw.email ?? fallbackEmail);
+
+  return {
+    id: Number(raw.id ?? 0),
+    nom,
+    email,
+    role,
+    avatarInitiales: initialsFromName(nom),
+  };
+}
+
+export function initialsFromName(nom?: string): string {
+  if (!nom) return 'U';
   return nom
     .split(' ')
     .filter((x) => !x.includes('.'))

@@ -26,7 +26,7 @@ import {
 } from 'recharts';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getAssures, getMedecins, getConsultations, getRemboursements, getFeuilles } from '@/lib/api';
+import { getAssures, getMedecins, getConsultations, getRemboursements, getFeuilles, getTotalRemboursements } from '@/lib/api';
 import { Assure, Medecin, Consultation, Remboursement, FeuillemMaladie } from '@/types';
 import StatCard from '@/components/ui/StatCard';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -46,25 +46,28 @@ export default function AdminDashboard() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [remboursements, setRemboursements] = useState<Remboursement[]>([]);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
+  const [totalRemb, setTotalRemb] = useState(0);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
     const fetchData = async () => {
       try {
-        const [resAssures, resMedecins, resConsultations, resRemboursements, resFeuilles] =
+        const [resAssures, resMedecins, resConsultations, resRemboursements, resFeuilles, resTotal] =
           await Promise.all([
             getAssures(),
             getMedecins(),
             getConsultations(),
             getRemboursements(),
             getFeuilles(),
+            getTotalRemboursements().catch(() => 0),
           ]);
         setAssures(resAssures.data);
         setMedecins(resMedecins.data);
         setConsultations(resConsultations.data);
         setRemboursements(resRemboursements.data);
         setFeuilles(resFeuilles.data);
+        setTotalRemb(resTotal);
       } catch (e) {
         console.error('Failed to load admin stats:', e);
       } finally {
@@ -87,7 +90,8 @@ export default function AdminDashboard() {
     return d.getMonth() === currentMonth && d.getFullYear() === currentYear;
   }).length;
 
-  const remboursementsTotaux = remboursements.reduce((acc, r) => acc + r.montant, 0);
+  const remboursementsTotaux =
+    totalRemb || remboursements.reduce((acc, r) => acc + r.montant, 0);
 
   const monthsList = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
   const chartLineData = Array.from({ length: 6 }).map((_, idx) => {
@@ -120,11 +124,7 @@ export default function AdminDashboard() {
     }
   });
 
-  const isDemoData = generalistRefund === 0 && specialistRefund === 0;
-  if (isDemoData) {
-    generalistRefund = 120000;
-    specialistRefund = 85000;
-  }
+  const hasRefundBreakdown = generalistRefund > 0 || specialistRefund > 0;
 
   const pieData = [
     { name: t('dashboard.stats.generaliste_label'), value: generalistRefund },
@@ -174,8 +174,6 @@ export default function AdminDashboard() {
           value={totalAssures}
           icon={<Users size={20} />}
           color="primary"
-          variation={`+4.2% ${t('dashboard.stats.variation_up')}`}
-          variationUp
           href="/admin/assures"
         />
         <StatCard
@@ -183,8 +181,6 @@ export default function AdminDashboard() {
           value={totalMedecins}
           icon={<Stethoscope size={20} />}
           color="accent"
-          variation={`+1.8% ${t('dashboard.stats.variation_up')}`}
-          variationUp
           href="/admin/medecins"
         />
         <StatCard
@@ -192,8 +188,6 @@ export default function AdminDashboard() {
           value={consultsCeMois}
           icon={<Calendar size={20} />}
           color="info"
-          variation={`-2.4% ${t('dashboard.stats.variation_up')}`}
-          variationUp={false}
           href="/admin/consultations"
         />
         <StatCard
@@ -201,8 +195,6 @@ export default function AdminDashboard() {
           value={formatFCFA(remboursementsTotaux)}
           icon={<DollarSign size={20} />}
           color="success"
-          variation={`+8.3% ${t('dashboard.stats.variation_up')}`}
-          variationUp
           href="/admin/remboursements"
         />
       </div>
@@ -253,57 +245,63 @@ export default function AdminDashboard() {
                 <span className="font-display font-semibold text-sm text-slate-800">
                   {t('dashboard.stats.remb_by_category')}
                 </span>
-                {isDemoData && (
-                  <Badge variant="warning" className="text-[10px]">
-                    {t('common.demo') || 'Démo'}
-                  </Badge>
-                )}
               </CardHeader>
               <CardBody className="h-80 flex flex-col justify-center items-center">
-                <div className="h-56 w-full relative">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={pieData}
-                        cx="50%"
-                        cy="50%"
-                        innerRadius={60}
-                        outerRadius={80}
-                        paddingAngle={5}
-                        dataKey="value"
-                      >
-                        {pieData.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: '#fff',
-                          borderColor: '#e2e8f0',
-                          borderRadius: '12px',
-                          boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                        }}
-                        formatter={(value) => formatFCFA(Number(value))}
-                      />
-                    </PieChart>
-                  </ResponsiveContainer>
-                  <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                    <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">
-                      {isDemoData ? t('common.demo') || 'Démo' : t('dashboard.stats.total')}
-                    </span>
-                    <span className="text-sm font-display font-bold text-slate-850">
-                      {formatFCFA(generalistRefund + specialistRefund)}
+                {!hasRefundBreakdown ? (
+                  <div className="flex flex-col items-center justify-center text-center gap-2 text-slate-400">
+                    <DollarSign size={28} className="opacity-40" />
+                    <span className="text-xs font-body">
+                      {t('dashboard.stats.no_refunds')}
                     </span>
                   </div>
-                </div>
-                <div className="flex gap-6 mt-2 text-xs font-body">
-                  {pieData.map((d, index) => (
-                    <div key={d.name} className="flex items-center gap-2">
-                      <div className="h-3 w-3 rounded" style={{ backgroundColor: PIE_COLORS[index] }} />
-                      <span className="text-slate-650">{d.name}</span>
+                ) : (
+                  <>
+                    <div className="h-56 w-full relative">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <PieChart>
+                          <Pie
+                            data={pieData}
+                            cx="50%"
+                            cy="50%"
+                            innerRadius={60}
+                            outerRadius={80}
+                            paddingAngle={5}
+                            dataKey="value"
+                          >
+                            {pieData.map((_, index) => (
+                              <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                            ))}
+                          </Pie>
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: '#fff',
+                              borderColor: '#e2e8f0',
+                              borderRadius: '12px',
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                            }}
+                            formatter={(value) => formatFCFA(Number(value))}
+                          />
+                        </PieChart>
+                      </ResponsiveContainer>
+                      <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                        <span className="text-[10px] font-display uppercase tracking-wider text-slate-400">
+                          {t('dashboard.stats.total')}
+                        </span>
+                        <span className="text-sm font-display font-bold text-slate-850">
+                          {formatFCFA(generalistRefund + specialistRefund)}
+                        </span>
+                      </div>
                     </div>
-                  ))}
-                </div>
+                    <div className="flex gap-6 mt-2 text-xs font-body">
+                      {pieData.map((d, index) => (
+                        <div key={d.name} className="flex items-center gap-2">
+                          <div className="h-3 w-3 rounded" style={{ backgroundColor: PIE_COLORS[index] }} />
+                          <span className="text-slate-650">{d.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
               </CardBody>
             </Card>
           </div>
@@ -328,7 +326,6 @@ export default function AdminDashboard() {
                 <TableRow>
                   <TableHead>{t('admin.assures.col_nom')}</TableHead>
                   <TableHead>{t('admin.assures.col_id')}</TableHead>
-                  <TableHead>{t('common.date')}</TableHead>
                   <TableHead>{t('admin.assures.col_doctor')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -339,7 +336,6 @@ export default function AdminDashboard() {
                   <TableRow key={a.id}>
                     <TableCell className="font-display font-medium">{a.nom}</TableCell>
                     <TableCell className="font-mono text-xs text-slate-500">{a.idAssure}</TableCell>
-                    <TableCell className="text-xs">{formatDate('2026-06-01')}</TableCell>
                     <TableCell className="text-xs">
                       {a.medecinTraitant ? a.medecinTraitant.nom : t('admin.assures.no_doctor')}
                     </TableCell>

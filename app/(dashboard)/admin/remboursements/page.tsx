@@ -11,7 +11,14 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getFeuilles, getConsultations, effectuerRemboursement, getRemboursements } from '@/lib/api';
+import {
+  getFeuilles,
+  getConsultations,
+  effectuerRemboursement,
+  getRemboursements,
+  getNonRembourses,
+  getTotalRemboursements,
+} from '@/lib/api';
 import { FeuillemMaladie, Consultation, Remboursement } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
@@ -28,8 +35,10 @@ export default function RemboursementsAdminPage() {
   const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
+  const [pendingFeuilles, setPendingFeuilles] = useState<FeuillemMaladie[]>([]);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [remboursements, setRemboursements] = useState<Remboursement[]>([]);
+  const [totalRemb, setTotalRemb] = useState(0);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -39,14 +48,19 @@ export default function RemboursementsAdminPage() {
 
   const loadData = async () => {
     try {
-      const [resFeuilles, resConsultations, resRemboursements] = await Promise.all([
-        getFeuilles(),
-        getConsultations(),
-        getRemboursements()
-      ]);
+      const [resFeuilles, resPending, resConsultations, resRemboursements, resTotal] =
+        await Promise.all([
+          getFeuilles(),
+          getNonRembourses(),
+          getConsultations(),
+          getRemboursements(),
+          getTotalRemboursements().catch(() => 0),
+        ]);
       setFeuilles(resFeuilles.data);
+      setPendingFeuilles(resPending.data);
       setConsultations(resConsultations.data);
       setRemboursements(resRemboursements.data);
+      setTotalRemb(resTotal);
     } catch (e) {
       console.error('Failed to load reimbursement data:', e);
     } finally {
@@ -100,9 +114,6 @@ export default function RemboursementsAdminPage() {
     };
   };
 
-  // Pending sheets (not reimbursed)
-  const pendingFeuilles = feuilles.filter((f) => !f.estRembourse);
-
   // Reimbursed sheets with historical records
   const historicalPayments = remboursements.map((r) => {
     const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
@@ -118,7 +129,7 @@ export default function RemboursementsAdminPage() {
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
 
   const now = new Date();
-  const totalRembourse = remboursements.reduce((s, r) => s + r.montant, 0);
+  const totalRembourse = totalRemb || remboursements.reduce((s, r) => s + r.montant, 0);
   const thisMonth = remboursements.filter((r) => {
     const d = new Date(r.dateRemboursement);
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();

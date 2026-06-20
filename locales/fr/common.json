@@ -103,7 +103,8 @@
       "remb_by_category": "Remboursements par catégorie",
       "total": "Total",
       "generaliste_label": "Généralistes (100%)",
-      "specialiste_label": "Spécialistes (80%)"
+      "specialiste_label": "Spécialistes (80%)",
+      "no_refunds": "Aucun remboursement effectué pour le moment"
     },
     "recent": {
       "latest_assures": "Derniers assurés inscrits",

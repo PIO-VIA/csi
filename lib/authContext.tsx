@@ -6,10 +6,11 @@ import { User, UserRole } from '@/types';
 import '@/lib/openapi-config';
 import '@/lib/i18n';
 import { AuthentificationService, MDecinsService } from '@/lib2';
-import { getApiErrorMessage } from '@/lib/api';
+import { getApiErrorMessage, getMe } from '@/lib/api';
 import {
   asArray,
   initialsFromName,
+  mapAuthMe,
   mapBackendRole,
   mapMedecin,
 } from '@/lib/mappers';
@@ -40,6 +41,16 @@ async function resolveUserFromLogin(
   email: string,
   response: Record<string, unknown>,
 ): Promise<User> {
+  // Source d'autorité : GET /api/auth/me renvoie l'identité exacte (id, rôle, type).
+  // C'est essentiel car les pages médecin dépendent de l'id backend du connecté.
+  try {
+    const me = await getMe();
+    const user = mapAuthMe(me, email);
+    if (user.id) return user;
+  } catch {
+    // Fallback ci-dessous si /api/auth/me n'est pas disponible.
+  }
+
   const role = mapBackendRole(String(response.role ?? ''));
   // Le backend peut renvoyer username ou email selon la réponse
   const username = String(response.username ?? response.email ?? email);

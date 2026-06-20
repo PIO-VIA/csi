@@ -103,7 +103,8 @@
       "remb_by_category": "Reimbursements by category",
       "total": "Total",
       "generaliste_label": "GPs (100%)",
-      "specialiste_label": "Specialists (80%)"
+      "specialiste_label": "Specialists (80%)",
+      "no_refunds": "No reimbursement has been made yet"
     },
     "recent": {
       "latest_assures": "Latest registered insureds",

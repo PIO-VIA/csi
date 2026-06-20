@@ -2,14 +2,15 @@ import React from 'react';
 import { cn } from '@/lib/utils';
 
 interface AvatarProps extends React.HTMLAttributes<HTMLDivElement> {
-  nom: string;
+  nom?: string;
   initials?: string;
   src?: string;
   size?: 'sm' | 'md' | 'lg';
 }
 
-export function Avatar({ className, nom, initials, src, size = 'md', ...props }: AvatarProps) {
-  const getInitials = (name: string) => {
+export function Avatar({ className, nom = '', initials, src, size = 'md', ...props }: AvatarProps) {
+  const getInitials = (name?: string) => {
+    if (!name) return '';
     return name
       .split(' ')
       .filter((n) => !n.includes('.'))

@@ -114,7 +114,7 @@ export default function AssureDetailPage({ params }: PageProps) {
                 />
               ) : (
                 <div className="h-20 w-20 rounded-full flex items-center justify-center font-display font-extrabold text-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-xl">
-                  {assure.nom.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
+                  {(assure.nom || '').split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() || '?'}
                 </div>
               )}
 

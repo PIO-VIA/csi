@@ -1,6 +1,7 @@
 import '@/lib/openapi-config';
 import {
   ApiError,
+  AuthentificationService,
   AssurSService,
   ConsultationsService,
   FeuillesMaladieService,
@@ -179,6 +180,19 @@ export function getApiErrorMessage(error: unknown): string {
 
 /** @deprecated Conservé pour compatibilité — les données viennent du backend. */
 export const initLocalStorage = () => {};
+
+// ============================================================
+// AUTHENTIFICATION / PROFIL
+// ============================================================
+
+/**
+ * Récupère le profil de l'utilisateur connecté (GET /api/auth/me).
+ * Retourne la réponse brute du backend, à interpréter via mapAuthMe.
+ */
+export const getMe = async (): Promise<Record<string, unknown>> => {
+  const raw = await AuthentificationService.me();
+  return (raw ?? {}) as Record<string, unknown>;
+};
 
 // ============================================================
 // ASSURÉS
@@ -581,6 +595,6 @@ export const effectuerRemboursement = async (
   feuilleId: number,
   mode: string,
 ): Promise<ApiPayload<Remboursement>> => {
-  const raw = await RemboursementsService.effectuer(feuilleId, mode);
+  const raw = await RemboursementsService.confirmer(feuilleId, mode);
   return { data: mapRemboursement(raw as Record<string, unknown>) };
 };
