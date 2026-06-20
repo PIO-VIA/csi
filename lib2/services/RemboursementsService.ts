@@ -7,19 +7,19 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class RemboursementsService {
     /**
-     * Effectuer un remboursement
+     * Confirmer le remboursement d'une feuille (agent) : définit le mode de paiement et passe le statut à EFFECTUE
      * @param feuilleMaladieId
      * @param modePaiement
      * @returns any OK
      * @throws ApiError
      */
-    public static effectuer(
+    public static confirmer(
         feuilleMaladieId: number,
         modePaiement: string,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {
-            method: 'POST',
-            url: '/api/remboursements/{feuilleMaladieId}',
+            method: 'PATCH',
+            url: '/api/remboursements/{feuilleMaladieId}/confirmer',
             path: {
                 'feuilleMaladieId': feuilleMaladieId,
             },
@@ -65,6 +65,17 @@ export class RemboursementsService {
         return __request(OpenAPI, {
             method: 'GET',
             url: '/api/remboursements/non-rembourses',
+        });
+    }
+    /**
+     * Lister les remboursements en attente de confirmation
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getEnAttente(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/remboursements/en-attente',
         });
     }
 }
