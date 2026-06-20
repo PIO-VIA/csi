@@ -27,12 +27,18 @@ export default function MedecinFeuillesPage() {
     const loadData = async () => {
       try {
         const [resFeuilles, resConsults] = await Promise.all([
-          getMesFeuilles(),
-          getConsultationsByMedecin(user.id),
+          getMesFeuilles().catch((err) => {
+            console.error('Failed to load sheets:', err);
+            return { data: [] };
+          }),
+          getConsultationsByMedecin(user.id).catch((err) => {
+            console.error('Failed to load consultations:', err);
+            return { data: [] };
+          }),
         ]);
         
-        const consultMap = new Map(resConsults.data.map((c) => [c.id, c]));
-        const list = resFeuilles.data.map((f) => {
+        const consultMap = new Map((resConsults?.data || []).map((c) => [c.id, c]));
+        const list = (resFeuilles?.data || []).map((f) => {
           const c = consultMap.get(f.consultationId);
           return {
             ...f,

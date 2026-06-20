@@ -51,9 +51,18 @@ export default function MedecinDashboardPage() {
     const loadData = async () => {
       try {
         const [resConsults, resAssures, resMedecin] = await Promise.all([
-          getConsultationsByMedecin(user.id),
-          getMesAssures(),
-          getMedecinById(user.id),
+          getConsultationsByMedecin(user.id).catch((err) => {
+            console.error('Failed to load consultations:', err);
+            return { data: [] };
+          }),
+          getMesAssures().catch((err) => {
+            console.error('Failed to load assured patients:', err);
+            return { data: [] };
+          }),
+          getMedecinById(user.id).catch((err) => {
+            console.error('Failed to load doctor profile:', err);
+            return { data: null };
+          }),
         ]);
         setConsultations(resConsults.data);
         setAllAssures(resAssures.data);

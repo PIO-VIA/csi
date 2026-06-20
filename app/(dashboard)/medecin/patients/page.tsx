@@ -33,8 +33,14 @@ export default function MedecinPatientsPage() {
     const loadData = async () => {
       try {
         const [resAssures, resConsults] = await Promise.all([
-          getMesAssures(),
-          getConsultationsByMedecin(user.id),
+          getMesAssures().catch((err) => {
+            console.error('Failed to load assured patients:', err);
+            return { data: [] };
+          }),
+          getConsultationsByMedecin(user.id).catch((err) => {
+            console.error('Failed to load consultations:', err);
+            return { data: [] };
+          }),
         ]);
         setAllAssures(resAssures.data);
         setConsultations(resConsults.data);
