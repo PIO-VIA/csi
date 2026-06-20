@@ -25,8 +25,11 @@ export default function MedecinPrescriptionsPage() {
     if (!user) return;
     const loadData = async () => {
       try {
-        const res = await getConsultationsByMedecin(user.id);
-        const consults: Consultation[] = res.data;
+        const res = await getConsultationsByMedecin(user.id).catch((err) => {
+          console.error('Failed to load consultations for prescriptions:', err);
+          return { data: [] };
+        });
+        const consults: Consultation[] = res.data || [];
         
         // Extract all prescriptions
         const list = consults.flatMap((c) =>

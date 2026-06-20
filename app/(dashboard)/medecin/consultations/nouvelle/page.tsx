@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getAssures, getMedecins, createConsultation } from '@/lib/api';
+import { getMesAssures, getMedecins, createConsultation } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardBody } from '@/components/ui/Card';
@@ -90,7 +90,16 @@ export default function NouvelleConsultationPage() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [resAssures, resMedecins] = await Promise.all([getAssures(), getMedecins()]);
+        const [resAssures, resMedecins] = await Promise.all([
+          getMesAssures().catch((err) => {
+            console.error('Failed to load assured patients:', err);
+            return { data: [] };
+          }),
+          getMedecins().catch((err) => {
+            console.error('Failed to load specialists:', err);
+            return { data: [] };
+          }),
+        ]);
         setAssures(resAssures.data);
         
         // Filter specialists

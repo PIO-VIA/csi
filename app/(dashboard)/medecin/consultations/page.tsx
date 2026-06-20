@@ -28,7 +28,10 @@ export default function MedecinConsultationsPage() {
     if (!user) return;
     const loadData = async () => {
       try {
-        const res = await getConsultationsByMedecin(user.id);
+        const res = await getConsultationsByMedecin(user.id).catch((err) => {
+          console.error('Failed to load consultations:', err);
+          return { data: [] };
+        });
         setConsultations(res.data);
       } catch (e) {
         console.error(e);
