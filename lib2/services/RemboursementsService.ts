@@ -78,4 +78,21 @@ export class RemboursementsService {
             url: '/api/remboursements/en-attente',
         });
     }
+    /**
+     * Récupérer le remboursement associé à une feuille de maladie via l'ID de la feuille
+     * @param feuilleMaladieId
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getByFeuille(
+        feuilleMaladieId: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/remboursements/by-feuille/{feuilleMaladieId}',
+            path: {
+                'feuilleMaladieId': feuilleMaladieId,
+            },
+        });
+    }
 }

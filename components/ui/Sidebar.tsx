@@ -138,7 +138,8 @@ export function Sidebar() {
   const compose =
     role === 'ADMIN'
       ? { label: t('admin.assures.new'), href: '/admin/assures', icon: UserPlus }
-      : role === 'GENERALISTE' || role === 'SPECIALISTE'
+      : role === 'GENERALISTE'
+        // Seuls les généralistes peuvent créer une consultation (BUG FRONT #1)
         ? { label: t('medecin.dashboard.new_consultation'), href: '/medecin/consultations/nouvelle', icon: PenLine }
         : null;
 

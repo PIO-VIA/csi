@@ -41,7 +41,7 @@ export class ConsultationsService {
         });
     }
     /**
-     * Lister les consultations par généraliste
+     * Lister les consultations par généraliste — Réservé aux médecins généralistes (médecin traitant). Renvoie 400 si l'ID fourni correspond à un spécialiste.
      * @param id
      * @returns any OK
      * @throws ApiError

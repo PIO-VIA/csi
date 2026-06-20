@@ -20,7 +20,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesAssures, getMedecins, createConsultation } from '@/lib/api';
+import { getMesAssures, getMedecins, createConsultation, getApiErrorMessage } from '@/lib/api';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardBody } from '@/components/ui/Card';
@@ -115,6 +115,34 @@ export default function NouvelleConsultationPage() {
 
   if (!user) return null;
 
+  // Seuls les médecins généralistes peuvent créer une consultation (BUG FRONT #1)
+  // Un spécialiste n'a pas de médecin traitant en base -> 400 backend
+  if (user.role === 'SPECIALISTE') {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
+        <div className="p-4 bg-warning/10 rounded-2xl">
+          <AlertCircle size={32} className="text-warning" />
+        </div>
+        <div>
+          <h2 className="font-display font-bold text-lg text-slate-800">
+            Accès restreint
+          </h2>
+          <p className="font-body text-sm text-slate-500 mt-1 max-w-sm">
+            Seul le médecin traitant (généraliste) peut créer une consultation.<br />
+            Un spécialiste intervient uniquement via une prescription d&apos;orientation.
+          </p>
+        </div>
+        <button
+          onClick={() => router.push('/medecin')}
+          className="flex items-center gap-2 text-xs font-display text-primary-600 hover:underline transition"
+        >
+          <ArrowLeft size={14} />
+          Retour au tableau de bord
+        </button>
+      </div>
+    );
+  }
+
   const handleAddPrescription = () => {
     if (prescType === 'MEDICAMENT') {
       if (!medName.trim() || !posology.trim()) {
@@ -161,7 +189,8 @@ export default function NouvelleConsultationPage() {
       success(t('medecin.nouvelle_consultation.create_success') || 'Consultation enregistrée avec succès.');
       router.push('/medecin/consultations');
     } catch (e) {
-      error(t('common.error'));
+      // BUG FRONT #4 : afficher le vrai message d'erreur backend
+      error(getApiErrorMessage(e));
     } finally {
       setIsSubmitting(false);
     }

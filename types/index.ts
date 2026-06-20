@@ -74,6 +74,7 @@ export interface FeuillemMaladie {
   montantSoin: number;
   estRembourse: boolean;
   consultationId: number;
+  montantRembourse?: number;  // Rempli par le backend dans FeuillemMaladieResponseDTO
   remboursement?: Remboursement;
 }
 

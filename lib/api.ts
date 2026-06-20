@@ -46,34 +46,32 @@ async function loadMedecins(): Promise<Medecin[]> {
 
 async function loadAssures(medecins?: Medecin[]): Promise<Assure[]> {
   const doctors = medecins ?? (await loadMedecins());
-  const raw = await AssurSService.getAll2();
-  return toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, doctors));
+
+  // Essai 1 : endpoint médecin /api/medecins/me/assures (autorisé pour GENERALISTE et SPECIALISTE)
+  // Cela évite le 403 que renvoie /api/assures pour les non-admins
+  try {
+    const raw = await MDecinsService.getMesAssures();
+    const list = toList<Record<string, unknown>>(raw);
+    if (list.length >= 0) {
+      return list.map((item) => mapAssure(item, doctors));
+    }
+  } catch {
+    // Non-médecin (ex: admin) → fallback sur l'endpoint admin
+  }
+
+  // Essai 2 : endpoint admin /api/assures (ADMIN uniquement)
+  try {
+    const raw = await AssurSService.getAll2();
+    return toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, doctors));
+  } catch {
+    return [];
+  }
 }
 
 async function loadFeuilles(): Promise<FeuillemMaladie[]> {
   const raw = await FeuillesMaladieService.getAll1();
-  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
-
-  return Promise.all(
-    feuilles.map(async (feuille) => {
-      if (!feuille.estRembourse) return feuille;
-      try {
-        const remb = await RemboursementsService.getById5(feuille.id);
-        return mapFeuille(
-          {
-            id: feuille.id,
-            idFeuille: feuille.idFeuille,
-            montantSoin: feuille.montantSoin,
-            estRembourse: feuille.estRembourse,
-            consultationId: feuille.consultationId,
-          },
-          mapRemboursement(remb as Record<string, unknown>),
-        );
-      } catch {
-        return feuille;
-      }
-    }),
-  );
+  // montantRembourse est déjà inclus dans FeuillemMaladieResponseDTO — pas besoin d'appel supplémentaire
+  return toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
 }
 
 async function enrichConsultations(
@@ -125,8 +123,11 @@ async function enrichConsultations(
 
 async function loadAllConsultations(): Promise<Consultation[]> {
   const medecins = await loadMedecins();
+  // On ne boucle que sur les généralistes : l'endpoint /generaliste/{id} renvoie
+  // 400 Bad Request pour un spécialiste (BUG FRONT #3)
+  const generalistes = medecins.filter((m) => m.type === 'GENERALISTE');
   const results = await Promise.all(
-    medecins.map(async (m) => {
+    generalistes.map(async (m) => {
       try {
         return await ConsultationsService.getByGeneraliste(m.id);
       } catch (err) {
@@ -486,30 +487,8 @@ export const getFeuillesByAssure = async (
   id: number,
 ): Promise<ApiPayload<FeuillemMaladie[]>> => {
   const raw = await FeuillesMaladieService.getByAssure(id);
-  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
-
-  const enriched = await Promise.all(
-    feuilles.map(async (feuille) => {
-      if (!feuille.estRembourse) return feuille;
-      try {
-        const remb = await RemboursementsService.getById5(feuille.id);
-        return mapFeuille(
-          {
-            id: feuille.id,
-            idFeuille: feuille.idFeuille,
-            montantSoin: feuille.montantSoin,
-            estRembourse: feuille.estRembourse,
-            consultationId: feuille.consultationId,
-          },
-          mapRemboursement(remb as Record<string, unknown>),
-        );
-      } catch {
-        return feuille;
-      }
-    }),
-  );
-
-  return { data: enriched };
+  // montantRembourse déjà renvoyé par le DTO backend — pas de second appel nécessaire
+  return { data: toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item)) };
 };
 
 export const getFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => ({
@@ -521,30 +500,8 @@ export const getFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => (
  */
 export const getMesFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => {
   const raw = await FeuillesMaladieService.getMesFeuilles();
-  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
-
-  const enriched = await Promise.all(
-    feuilles.map(async (feuille) => {
-      if (!feuille.estRembourse) return feuille;
-      try {
-        const remb = await RemboursementsService.getById5(feuille.id);
-        return mapFeuille(
-          {
-            id: feuille.id,
-            idFeuille: feuille.idFeuille,
-            montantSoin: feuille.montantSoin,
-            estRembourse: feuille.estRembourse,
-            consultationId: feuille.consultationId,
-          },
-          mapRemboursement(remb as Record<string, unknown>),
-        );
-      } catch {
-        return feuille;
-      }
-    }),
-  );
-
-  return { data: enriched };
+  // montantRembourse déjà renvoyé par le DTO backend — pas de second appel nécessaire
+  return { data: toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item)) };
 };
 
 // ============================================================
@@ -553,22 +510,34 @@ export const getMesFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> =
 
 export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> => {
   const feuilles = await loadFeuilles();
-  const remboursements = await Promise.all(
+  // Utilise le nouvel endpoint /by-feuille/{id} pour obtenir les vrais remboursements
+  // (date, mode de paiement, montant exact) avec le bon ID feuille — plus de 404
+  const results = await Promise.all(
     feuilles
       .filter((f) => f.estRembourse)
       .map(async (feuille) => {
-        if (feuille.remboursement) return feuille.remboursement;
         try {
-          const raw = await RemboursementsService.getById5(feuille.id);
+          const raw = await RemboursementsService.getByFeuille(feuille.id);
           return mapRemboursement(raw as Record<string, unknown>);
         } catch {
+          // Fallback si l'endpoint échoue : construire à partir de montantRembourse du DTO
+          if (feuille.montantRembourse != null) {
+            return {
+              id: feuille.id,
+              montant: feuille.montantRembourse,
+              dateRemboursement: '',
+              modePaiement: 'VIREMENT' as const,
+              feuilleMaladieId: feuille.id,
+            } satisfies Remboursement;
+          }
           return null;
         }
       }),
   );
 
-  return { data: remboursements.filter((r): r is Remboursement => r != null) };
+  return { data: results.filter((r): r is Remboursement => r != null) };
 };
+
 
 /**
  * Liste les feuilles de maladie non encore remboursées

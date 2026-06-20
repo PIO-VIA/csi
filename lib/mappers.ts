@@ -117,6 +117,8 @@ export function mapFeuille(raw: RawRecord, remboursement?: Remboursement): Feuil
     montantSoin: Number(raw.montantSoin ?? 0),
     estRembourse: Boolean(raw.estRembourse),
     consultationId: Number(raw.consultationId),
+    // Le backend renvoie déjà ce montant dans FeuillemMaladieResponseDTO.montantRembourse
+    montantRembourse: raw.montantRembourse != null ? Number(raw.montantRembourse) : undefined,
     remboursement,
   };
 }
