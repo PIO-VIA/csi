@@ -15,10 +15,11 @@ import {
   Smartphone,
   Briefcase,
   Mail,
+  Camera,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getAssureById, getConsultationsByAssure, getFeuillesByAssure } from '@/lib/api';
+import { getAssureById, getConsultationsByAssure, getFeuillesByAssure, uploadAssurePhoto, getApiErrorMessage } from '@/lib/api';
 import { Assure, Consultation, FeuillemMaladie, Prescription } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import Badge from '@/components/ui/Badge';
@@ -26,6 +27,7 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
 import { formatFCFA, formatDate } from '@/lib/utils';
+import { useToast } from '@/components/ui/Toast';
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -37,10 +39,32 @@ export default function AssureDetailPage({ params }: PageProps) {
   const assureId = Number(unwrappedParams.id);
 
   const [loading, setLoading] = useState(true);
+  const [isUploading, setIsUploading] = useState(false);
   const [assure, setAssure] = useState<Assure | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [activeTab, setActiveTab] = useState<'consultations' | 'prescriptions' | 'feuilles' | 'remboursements'>('consultations');
+  const { success, error } = useToast();
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const res = await uploadAssurePhoto(assureId, file);
+      if (res.photoUrl) {
+        setAssure((prev) => (prev ? { ...prev, photoUrl: res.photoUrl } : null));
+        success('Photo de profil de l\'assuré mise à jour avec succès.');
+      } else {
+        error('La mise à jour de la photo a échoué.');
+      }
+    } catch (err) {
+      error(getApiErrorMessage(err));
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -106,17 +130,35 @@ export default function AssureDetailPage({ params }: PageProps) {
           <Card>
             <CardBody className="flex flex-col items-center text-center p-6 space-y-6">
               {/* Profile Avatar */}
-              {assure.photoUrl ? (
-                <img
-                  src={assure.photoUrl}
-                  alt={assure.nom}
-                  className="h-20 w-20 rounded-full object-cover shadow-xl"
-                />
-              ) : (
-                <div className="h-20 w-20 rounded-full flex items-center justify-center font-display font-extrabold text-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-xl">
-                  {(assure.nom || '').split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() || '?'}
-                </div>
-              )}
+              <div className="relative group">
+                {assure.photoUrl ? (
+                  <img
+                    src={assure.photoUrl}
+                    alt={assure.nom}
+                    className="h-20 w-20 rounded-full object-cover shadow-xl border border-slate-200"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-full flex items-center justify-center font-display font-extrabold text-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-xl">
+                    {(assure.nom || '').split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase() || '?'}
+                  </div>
+                )}
+                <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-full cursor-pointer duration-200">
+                  <Camera size={18} className="mb-0.5" />
+                  <span className="text-[9px] font-semibold font-display">Modifier</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={isUploading}
+                  />
+                </label>
+                {isUploading && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-full">
+                    <Loader size="sm" />
+                  </div>
+                )}
+              </div>
 
               <div className="space-y-1">
                 <h2 className="font-display font-bold text-lg text-slate-900">{assure.nom}</h2>

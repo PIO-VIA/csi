@@ -3,6 +3,7 @@ import {
   ApiError,
   AuthentificationService,
   AssurSService,
+  AgentsService,
   ConsultationsService,
   FeuillesMaladieService,
   GNRalistesService,
@@ -358,6 +359,48 @@ export const createMedecin = async (
     }
     throw error;
   }
+};
+
+export const updateMedecin = async (
+  id: number,
+  data: Partial<Medecin>,
+): Promise<ApiPayload<Medecin>> => {
+  const payload = {
+    nom: data.nom,
+    email: data.email,
+    indicatifPays: data.indicatifPays,
+    numTelephone: data.numTelephone,
+    dateNaissance: data.dateNaissance,
+    sexe: data.sexe,
+    type: data.type,
+    domaineSpecialisation: data.domaineSpecialisation,
+  };
+  const raw = await MDecinsService.modifier(id, payload as Parameters<typeof MDecinsService.modifier>[1]);
+  return { data: mapMedecin(raw as Record<string, unknown>) };
+};
+
+export const uploadMedecinPhoto = async (
+  id: number,
+  file: File,
+): Promise<{ photoUrl: string }> => {
+  const raw = await MDecinsService.uploadPhoto(id, { photo: file });
+  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
+};
+
+export const uploadAgentPhoto = async (
+  id: number,
+  file: File,
+): Promise<{ photoUrl: string }> => {
+  const raw = await AgentsService.uploadPhoto2(id, { photo: file });
+  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
+};
+
+export const uploadAssurePhoto = async (
+  id: number,
+  file: File,
+): Promise<{ photoUrl: string }> => {
+  const raw = await AssurSService.uploadPhoto1(id, { photo: file });
+  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
 };
 
 // ============================================================

@@ -6,6 +6,7 @@ export interface User {
   email: string;
   role: UserRole;
   avatarInitiales: string; // e.g. "PIO"
+  photoUrl?: string;
 }
 
 export interface Assure {

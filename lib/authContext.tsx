@@ -33,6 +33,7 @@ interface AuthContextType {
     phone: string;
     [key: string]: unknown;
   }) => Promise<void>;
+  updateUserPhotoUrl: (photoUrl: string) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -69,6 +70,7 @@ async function resolveUserFromLogin(
         email: medecin.email || email,
         role: medecin.type,
         avatarInitiales: initialsFromName(medecin.nom),
+        photoUrl: medecin.photoUrl,
       };
     }
   }
@@ -186,8 +188,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     throw new Error('Inscription locale désactivée — utilisez les endpoints backend.');
   };
 
+  const updateUserPhotoUrl = (photoUrl: string) => {
+    if (!user) return;
+    const updatedUser = { ...user, photoUrl };
+    setUser(updatedUser);
+    
+    const storedUser = localStorage.getItem('csi_session');
+    if (storedUser) {
+      try {
+        const session = JSON.parse(storedUser) as SessionUser;
+        const updatedSession = { ...session, photoUrl };
+        localStorage.setItem('csi_session', JSON.stringify(updatedSession));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, registerUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, registerUser, updateUserPhotoUrl }}>
       {children}
     </AuthContext.Provider>
   );

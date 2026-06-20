@@ -165,6 +165,7 @@ export function mapAuthMe(raw: RawRecord, fallbackEmail = ''): User {
     email,
     role,
     avatarInitiales: initialsFromName(nom),
+    photoUrl: raw.photoUrl ? String(raw.photoUrl) : undefined,
   };
 }
 

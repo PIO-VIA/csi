@@ -274,9 +274,17 @@ export function Sidebar() {
       <div className={cn('shrink-0 border-t border-slate-100 py-3', collapsed && !isMobile ? 'px-2' : 'px-3')}>
         {(!collapsed || isMobile) && (
           <div className="px-2 py-2 mb-1 flex items-center gap-3 rounded-xl bg-slate-50">
-            <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center shrink-0 text-white text-xs font-bold font-display">
-              {user.avatarInitiales || user.nom?.charAt(0) || '?'}
-            </div>
+            {user.photoUrl ? (
+              <img
+                src={user.photoUrl}
+                alt={user.nom}
+                className="h-8 w-8 rounded-xl object-cover shrink-0"
+              />
+            ) : (
+              <div className="h-8 w-8 rounded-xl bg-gradient-to-br from-slate-600 to-slate-800 flex items-center justify-center shrink-0 text-white text-xs font-bold font-display">
+                {user.avatarInitiales || user.nom?.charAt(0) || '?'}
+              </div>
+            )}
             <div className="min-w-0 flex-1">
               <p className="font-display font-semibold text-xs text-slate-800 truncate">{user.nom}</p>
               <p className="font-body text-[10px] text-slate-400 truncate">{user.email}</p>

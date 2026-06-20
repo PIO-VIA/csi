@@ -153,6 +153,7 @@ export function TopBar() {
               <Avatar
                 nom={user.nom}
                 initials={user.avatarInitiales}
+                src={user.photoUrl}
                 size="sm"
                 className="ring-2 ring-transparent group-hover:ring-primary-200 transition"
               />

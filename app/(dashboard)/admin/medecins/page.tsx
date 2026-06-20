@@ -15,10 +15,11 @@ import {
   Mail,
   Download,
   KeyRound,
+  Pencil,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getMedecins, getAssures, createMedecin, getApiErrorMessage } from '@/lib/api';
+import { getMedecins, getAssures, createMedecin, updateMedecin, getApiErrorMessage } from '@/lib/api';
 import { Medecin, Assure, CreateMedecinInput } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -29,6 +30,7 @@ import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
 import { useToast } from '@/components/ui/Toast';
 
+// ─── Schemas ────────────────────────────────────────────────
 const medecinFormSchema = z.object({
   nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
   email: z.string().email({ message: 'Adresse email invalide' }),
@@ -38,8 +40,20 @@ const medecinFormSchema = z.object({
   domaineSpecialisation: z.string().optional(),
 });
 
-type MedecinFormValues = z.infer<typeof medecinFormSchema>;
+const editMedecinSchema = z.object({
+  nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
+  email: z.string().email({ message: 'Adresse email invalide' }),
+  indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
+  numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
+  sexe: z.string().optional(),
+  dateNaissance: z.string().optional(),
+  domaineSpecialisation: z.string().optional(),
+});
 
+type MedecinFormValues = z.infer<typeof medecinFormSchema>;
+type EditMedecinFormValues = z.infer<typeof editMedecinSchema>;
+
+// ─── Component ──────────────────────────────────────────────
 export default function MedecinsAdminPage() {
   const { t } = useTranslation();
   const { success, error, warning } = useToast();
@@ -49,6 +63,12 @@ export default function MedecinsAdminPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [resettingId, setResettingId] = useState<number | null>(null);
+
+  // Edit state
+  const [editingMedecin, setEditingMedecin] = useState<Medecin | null>(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isEditSubmitting, setIsEditSubmitting] = useState(false);
+
   const [confirmModal, setConfirmModal] = useState<{
     isOpen: boolean;
     title: string;
@@ -83,6 +103,7 @@ export default function MedecinsAdminPage() {
     loadData();
   }, []);
 
+  // ─── Create Form ───────────────────────────────────────────
   const {
     register,
     handleSubmit,
@@ -94,7 +115,7 @@ export default function MedecinsAdminPage() {
     defaultValues: {
       type: 'GENERALISTE',
       indicatifPays: '+237',
-    }
+    },
   });
 
   const watchType = watch('type');
@@ -123,21 +144,72 @@ export default function MedecinsAdminPage() {
     }
   };
 
+  // ─── Edit Form ─────────────────────────────────────────────
+  const {
+    register: registerEdit,
+    handleSubmit: handleSubmitEdit,
+    reset: resetEdit,
+    formState: { errors: editErrors },
+  } = useForm<EditMedecinFormValues>({
+    resolver: zodResolver(editMedecinSchema),
+  });
+
+  const openEditModal = (m: Medecin) => {
+    setEditingMedecin(m);
+    resetEdit({
+      nom: m.nom,
+      email: m.email,
+      indicatifPays: m.indicatifPays ?? '+237',
+      numTelephone: m.numTelephone,
+      sexe: m.sexe ?? '',
+      dateNaissance: m.dateNaissance ?? '',
+      domaineSpecialisation: m.domaineSpecialisation ?? '',
+    });
+    setIsEditModalOpen(true);
+  };
+
+  const onEditSubmit = async (data: EditMedecinFormValues) => {
+    if (!editingMedecin) return;
+    setIsEditSubmitting(true);
+    try {
+      await updateMedecin(editingMedecin.id, {
+        nom: data.nom,
+        email: data.email,
+        indicatifPays: data.indicatifPays,
+        numTelephone: data.numTelephone,
+        sexe: data.sexe || undefined,
+        dateNaissance: data.dateNaissance || undefined,
+        domaineSpecialisation:
+          editingMedecin.type === 'SPECIALISTE' ? (data.domaineSpecialisation || undefined) : undefined,
+        type: editingMedecin.type,
+      });
+      success('Informations du médecin mises à jour avec succès.');
+      setIsEditModalOpen(false);
+      setEditingMedecin(null);
+      loadData();
+    } catch (e) {
+      error(getApiErrorMessage(e));
+    } finally {
+      setIsEditSubmitting(false);
+    }
+  };
+
+  // ─── Actions ───────────────────────────────────────────────
   const handleDelete = (_id: number) => {
-    warning(t('admin.medecins.delete_not_supported') || 'La suppression n’est pas disponible.');
+    warning(t('admin.medecins.delete_not_supported') || 'La suppression n est pas disponible.');
   };
 
   const handleResetPassword = (id: number) => {
     setConfirmModal({
       isOpen: true,
       title: 'Réinitialiser le mot de passe',
-      description: 'Êtes-vous sûr de vouloir générer un nouveau mot de passe et l\'envoyer par e-mail à ce médecin ?',
+      description: "Êtes-vous sûr de vouloir générer un nouveau mot de passe et l'envoyer par e-mail à ce médecin ?",
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         setResettingId(id);
         try {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const { MDecinsService } = await import('@/lib2') as any;
+          const { MDecinsService } = (await import('@/lib2')) as any;
           await MDecinsService.resetPassword(id);
           success('Nouveau mot de passe envoyé par email.');
         } catch (e) {
@@ -145,49 +217,49 @@ export default function MedecinsAdminPage() {
         } finally {
           setResettingId(null);
         }
-      }
+      },
     });
   };
 
   const exportCSV = () => {
     const headers = ['Matricule', 'Nom', 'Email', 'Type', 'Specialisation', 'Telephone'];
     const rows = filteredMedecins.map((m) => [
-      m.matricule, m.nom, m.email || '', m.type,
-      m.domaineSpecialisation || '', m.numTelephone,
+      m.matricule,
+      m.nom,
+      m.email || '',
+      m.type,
+      m.domaineSpecialisation || '',
+      m.numTelephone,
     ]);
     const csv = [headers, ...rows].map((r) => r.join(',')).join('\n');
     const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
-    link.href = url; link.download = 'medecins_csi.csv'; link.click();
+    link.href = url;
+    link.download = 'medecins_csi.csv';
+    link.click();
     URL.revokeObjectURL(url);
   };
 
-  // Unique list of specialities
+  // ─── Derived state ─────────────────────────────────────────
   const specialities = Array.from(
     new Set(
       medecins
         .filter((m) => m.type === 'SPECIALISTE' && m.domaineSpecialisation)
-        .map((m) => m.domaineSpecialisation!)
-    )
+        .map((m) => m.domaineSpecialisation!),
+    ),
   );
 
-  // Filter doctors list
   const filteredMedecins = medecins.filter((m) => {
     const matchesSearch =
       m.nom.toLowerCase().includes(searchTerm.toLowerCase()) ||
       m.matricule.toLowerCase().includes(searchTerm.toLowerCase());
-
     const matchesType = filterType === 'ALL' || m.type === filterType;
-
     const matchesDomain =
-      filterDomain === 'ALL' ||
-      (m.type === 'SPECIALISTE' && m.domaineSpecialisation === filterDomain);
-
+      filterDomain === 'ALL' || (m.type === 'SPECIALISTE' && m.domaineSpecialisation === filterDomain);
     return matchesSearch && matchesType && matchesDomain;
   });
 
-  // Calculate patient counts for each doctor
   const getPatientCount = (doctor: Medecin) => {
     if (doctor.type !== 'GENERALISTE') return '-';
     return assures.filter((a) => a.medecinTraitant && a.medecinTraitant.id === doctor.id).length;
@@ -224,7 +296,6 @@ export default function MedecinsAdminPage() {
       {/* FILTER BAR */}
       <Card>
         <CardBody className="p-4 flex flex-col md:flex-row gap-4 items-center">
-          {/* Search box */}
           <div className="w-full md:flex-1 relative">
             <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-500">
               <Search size={18} />
@@ -238,7 +309,6 @@ export default function MedecinsAdminPage() {
             />
           </div>
 
-          {/* Toggle Type */}
           <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
             {(['ALL', 'GENERALISTE', 'SPECIALISTE'] as const).map((tVal) => (
               <button
@@ -262,7 +332,6 @@ export default function MedecinsAdminPage() {
             ))}
           </div>
 
-          {/* Select Speciality */}
           {filterType === 'SPECIALISTE' && (
             <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-1.5 animate-fade-in">
               <Bookmark size={16} className="text-slate-400 shrink-0" />
@@ -310,7 +379,20 @@ export default function MedecinsAdminPage() {
                 filteredMedecins.map((m) => (
                   <TableRow key={m.id}>
                     <TableCell className="font-display font-bold text-slate-800">
-                      {m.nom}
+                      <div className="flex items-center gap-2.5">
+                        {m.photoUrl ? (
+                          <img
+                            src={m.photoUrl}
+                            alt={m.nom}
+                            className="h-8 w-8 rounded-full object-cover border border-slate-200 shrink-0"
+                          />
+                        ) : (
+                          <div className="h-8 w-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-500 text-white flex items-center justify-center text-xs font-extrabold shrink-0">
+                            {m.nom.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                        {m.nom}
+                      </div>
                     </TableCell>
                     <TableCell className="text-xs text-slate-600">
                       <span className="flex items-center gap-1.5">
@@ -337,11 +419,22 @@ export default function MedecinsAdminPage() {
                     <TableCell className="text-xs text-slate-350">
                       <span className="flex items-center gap-1">
                         <Phone size={12} className="text-slate-500" />
-                        {m.indicatifPays ? `${m.indicatifPays} ` : ''}{m.numTelephone}
+                        {m.indicatifPays ? `${m.indicatifPays} ` : ''}
+                        {m.numTelephone}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        {/* Edit button */}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="p-1.5 h-8 w-8 text-primary-600 hover:bg-primary-50"
+                          title="Modifier les informations"
+                          onClick={() => openEditModal(m)}
+                        >
+                          <Pencil size={15} />
+                        </Button>
                         <Button
                           variant="ghost"
                           size="sm"
@@ -418,24 +511,22 @@ export default function MedecinsAdminPage() {
 
           <div className="form-group">
             <label className="form-label-inline">{t('admin.medecins.form_type')}</label>
-            <select
-              className="dashboard-input"
-              {...register('type')}
-            >
+            <select className="dashboard-input" {...register('type')}>
               <option value="GENERALISTE">{t('admin.medecins.generaliste')}</option>
               <option value="SPECIALISTE">{t('admin.medecins.specialiste')}</option>
             </select>
           </div>
 
           {watchType === 'SPECIALISTE' && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-            >
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
               <Input
                 label={t('admin.medecins.form_speciality') || 'Speciality'}
                 placeholder="Ex: Cardiologie, Pédiatrie, Dermatologie"
-                error={errors.domaineSpecialisation?.message ? String(errors.domaineSpecialisation.message) : undefined}
+                error={
+                  errors.domaineSpecialisation?.message
+                    ? String(errors.domaineSpecialisation.message)
+                    : undefined
+                }
                 {...register('domaineSpecialisation')}
               />
             </motion.div>
@@ -457,6 +548,117 @@ export default function MedecinsAdminPage() {
             </Button>
           </div>
         </form>
+      </Modal>
+
+      {/* EDIT MODAL */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setEditingMedecin(null);
+        }}
+        title="Modifier les informations du médecin"
+        description={
+          editingMedecin
+            ? `Mise à jour du profil de ${editingMedecin.nom} (${editingMedecin.matricule}) — le mot de passe ne peut pas être modifié ici.`
+            : ''
+        }
+      >
+        {editingMedecin && (
+          <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4">
+            <Input
+              label="Nom complet"
+              placeholder="Ex: Dr. Célestin Etoa"
+              error={editErrors.nom?.message ? String(editErrors.nom.message) : undefined}
+              {...registerEdit('nom')}
+            />
+
+            <Input
+              label="Email"
+              type="email"
+              placeholder="medecin@csi.cm"
+              leftIcon={<Mail size={16} />}
+              error={editErrors.email?.message ? String(editErrors.email.message) : undefined}
+              {...registerEdit('email')}
+            />
+
+            <div className="grid grid-cols-3 gap-2">
+              <div className="col-span-1">
+                <Input
+                  label="Indicatif"
+                  placeholder="+237"
+                  error={editErrors.indicatifPays?.message ? String(editErrors.indicatifPays.message) : undefined}
+                  {...registerEdit('indicatifPays')}
+                />
+              </div>
+              <div className="col-span-2">
+                <Input
+                  label="Téléphone"
+                  placeholder="6xx xx xx xx"
+                  error={editErrors.numTelephone?.message ? String(editErrors.numTelephone.message) : undefined}
+                  {...registerEdit('numTelephone')}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="form-group">
+                <label className="form-label-inline">Genre</label>
+                <select className="dashboard-input" {...registerEdit('sexe')}>
+                  <option value="">— Non précisé —</option>
+                  <option value="Homme">Masculin</option>
+                  <option value="Femme">Féminin</option>
+                </select>
+              </div>
+              <div>
+                <Input
+                  label="Date de naissance"
+                  type="date"
+                  error={editErrors.dateNaissance?.message ? String(editErrors.dateNaissance.message) : undefined}
+                  {...registerEdit('dateNaissance')}
+                />
+              </div>
+            </div>
+
+            {editingMedecin.type === 'SPECIALISTE' && (
+              <Input
+                label="Domaine de spécialisation"
+                placeholder="Ex: Cardiologie, Pédiatrie"
+                error={
+                  editErrors.domaineSpecialisation?.message
+                    ? String(editErrors.domaineSpecialisation.message)
+                    : undefined
+                }
+                {...registerEdit('domaineSpecialisation')}
+              />
+            )}
+
+            {/* Info badge */}
+            <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
+              <KeyRound size={13} className="shrink-0" />
+              <span>
+                Le mot de passe ne peut pas être modifié ici. Utilisez le bouton{' '}
+                <strong>Réinitialiser</strong> pour envoyer un nouveau mot de passe par email.
+              </span>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setIsEditModalOpen(false);
+                  setEditingMedecin(null);
+                }}
+              >
+                Annuler
+              </Button>
+              <Button type="submit" variant="primary" isLoading={isEditSubmitting}>
+                Enregistrer les modifications
+              </Button>
+            </div>
+          </form>
+        )}
       </Modal>
 
       {/* CONFIRM MODAL */}

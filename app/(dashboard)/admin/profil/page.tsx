@@ -19,8 +19,10 @@ import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { getApiErrorMessage } from '@/lib/api';
+import { getApiErrorMessage, uploadAgentPhoto } from '@/lib/api';
 import { useToast } from '@/components/ui/Toast';
+import { Camera } from 'lucide-react';
+import Loader from '@/components/ui/Loader';
 
 const changePasswordSchema = z.object({
   ancienMotDePasse: z.string().min(1, { message: 'L\'ancien mot de passe est requis' }),
@@ -35,10 +37,11 @@ type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
 
 export default function AdminProfilePage() {
   const { t, i18n } = useTranslation();
-  const { user, changePassword } = useAuth();
+  const { user, changePassword, updateUserPhotoUrl } = useAuth();
   const { success, error } = useToast();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const {
     register,
@@ -59,6 +62,26 @@ export default function AdminProfilePage() {
       error(getApiErrorMessage(e));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !user) return;
+
+    setIsUploading(true);
+    try {
+      const res = await uploadAgentPhoto(user.id, file);
+      if (res.photoUrl) {
+        updateUserPhotoUrl(res.photoUrl);
+        success('Photo de profil mise à jour.');
+      } else {
+        error('La mise à jour de la photo a échoué.');
+      }
+    } catch (err) {
+      error(getApiErrorMessage(err));
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -88,8 +111,34 @@ export default function AdminProfilePage() {
         <div className="md:col-span-5 space-y-6">
           <Card>
             <CardBody className="p-6 flex flex-col items-center text-center space-y-4">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white flex items-center justify-center font-display font-extrabold text-2xl shadow-xl shadow-primary-500/10">
-                {user.avatarInitiales || user.nom?.charAt(0) || 'A'}
+              <div className="relative group">
+                {user.photoUrl ? (
+                  <img
+                    src={user.photoUrl}
+                    alt={user.nom}
+                    className="h-20 w-20 rounded-2xl object-cover shadow-xl shadow-primary-500/10 border border-slate-200"
+                  />
+                ) : (
+                  <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white flex items-center justify-center font-display font-extrabold text-2xl shadow-xl shadow-primary-500/10">
+                    {user.avatarInitiales || user.nom?.charAt(0) || 'A'}
+                  </div>
+                )}
+                <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-2xl cursor-pointer duration-200">
+                  <Camera size={18} className="mb-0.5" />
+                  <span className="text-[9px] font-semibold font-display">Modifier</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handlePhotoUpload}
+                    disabled={isUploading}
+                  />
+                </label>
+                {isUploading && (
+                  <div className="absolute inset-0 bg-white/70 flex items-center justify-center rounded-2xl">
+                    <Loader size="sm" />
+                  </div>
+                )}
               </div>
               
               <div className="space-y-1">
