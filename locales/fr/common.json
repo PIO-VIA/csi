@@ -254,7 +254,7 @@
       "tab_pending": "En attente",
       "tab_done": "Remboursés",
       "history_title": "Historique des remboursements",
-      "history_total": "Total remboursé",
+      "history_total": "Total remboursé cette semaine",
       "history_none": "Aucun remboursement effectué.",
       "search_placeholder": "Rechercher par assuré, ID feuille, médecin...",
       "filter_all_mode": "Tous les modes",

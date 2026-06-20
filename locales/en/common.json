@@ -254,7 +254,7 @@
       "tab_pending": "Pending",
       "tab_done": "Reimbursed",
       "history_title": "Reimbursement history",
-      "history_total": "Total reimbursed",
+      "history_total": "Total reimbursed this week",
       "history_none": "No reimbursements completed.",
       "search_placeholder": "Search by insured, sheet ID, doctor...",
       "filter_all_mode": "All modes",

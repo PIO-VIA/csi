@@ -92,6 +92,11 @@ export default function AdminDashboard() {
 
   const remboursementsTotaux =
     totalRemb || remboursements.reduce((acc, r) => acc + r.montant, 0);
+  const remboursementsCeMois =
+    remboursements.filter((r) => {
+    const d = new Date(r.dateRemboursement);
+    return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+  }).reduce((s, r) => s + r.montant, 0);
 
   const monthsList = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
   const chartLineData = Array.from({ length: 6 }).map((_, idx) => {
@@ -192,7 +197,7 @@ export default function AdminDashboard() {
         />
         <StatCard
           label={t('dashboard.stats.total_remb')}
-          value={formatFCFA(remboursementsTotaux)}
+          value={formatFCFA(remboursementsCeMois)}
           icon={<DollarSign size={20} />}
           color="success"
           href="/admin/remboursements"
