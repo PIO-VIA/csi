@@ -125,7 +125,14 @@ async function enrichConsultations(
 async function loadAllConsultations(): Promise<Consultation[]> {
   const medecins = await loadMedecins();
   const results = await Promise.all(
-    medecins.map((m) => ConsultationsService.getByGeneraliste(m.id)),
+    medecins.map(async (m) => {
+      try {
+        return await ConsultationsService.getByGeneraliste(m.id);
+      } catch (err) {
+        console.error(`Error fetching consultations for doctor ID ${m.id}:`, err);
+        return [];
+      }
+    }),
   );
 
   const seen = new Set<number>();
