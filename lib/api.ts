@@ -301,6 +301,15 @@ export const getAssuresByGeneraliste = async (
   return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
 };
 
+/**
+ * Liste les assurés affectés au médecin connecté (via endpoint GET /api/medecins/me/assures).
+ */
+export const getMesAssures = async (): Promise<ApiPayload<Assure[]>> => {
+  const medecins = await loadMedecins();
+  const raw = await MDecinsService.getMesAssures();
+  return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
+};
+
 export const createMedecin = async (
   data: CreateMedecinInput,
 ): Promise<ApiPayload<Medecin>> => {
@@ -485,6 +494,37 @@ export const getFeuillesByAssure = async (
 export const getFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => ({
   data: await loadFeuilles(),
 });
+
+/**
+ * Liste les feuilles de maladie créées par le médecin connecté (via endpoint GET /api/feuilles-maladie/medecin/me).
+ */
+export const getMesFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> => {
+  const raw = await FeuillesMaladieService.getMesFeuilles();
+  const feuilles = toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item));
+
+  const enriched = await Promise.all(
+    feuilles.map(async (feuille) => {
+      if (!feuille.estRembourse) return feuille;
+      try {
+        const remb = await RemboursementsService.getById5(feuille.id);
+        return mapFeuille(
+          {
+            id: feuille.id,
+            idFeuille: feuille.idFeuille,
+            montantSoin: feuille.montantSoin,
+            estRembourse: feuille.estRembourse,
+            consultationId: feuille.consultationId,
+          },
+          mapRemboursement(remb as Record<string, unknown>),
+        );
+      } catch {
+        return feuille;
+      }
+    }),
+  );
+
+  return { data: enriched };
+};
 
 // ============================================================
 // REMBOURSEMENTS

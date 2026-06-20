@@ -6,7 +6,7 @@ import { FileText, Search, Calendar, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getConsultationsByMedecin } from '@/lib/api';
+import { getMesFeuilles, getConsultationsByMedecin } from '@/lib/api';
 import { Consultation, FeuillemMaladie } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -26,17 +26,20 @@ export default function MedecinFeuillesPage() {
 
     const loadData = async () => {
       try {
-        const res = await getConsultationsByMedecin(user.id);
-        const consults: Consultation[] = res.data;
+        const [resFeuilles, resConsults] = await Promise.all([
+          getMesFeuilles(),
+          getConsultationsByMedecin(user.id),
+        ]);
         
-        // Extract all sheets
-        const list = consults
-          .filter((c) => c.feuilleMaladie)
-          .map((c) => ({
-            ...c.feuilleMaladie!,
-            date: c.date,
-            patient: c.assure.nom,
-          }));
+        const consultMap = new Map(resConsults.data.map((c) => [c.id, c]));
+        const list = resFeuilles.data.map((f) => {
+          const c = consultMap.get(f.consultationId);
+          return {
+            ...f,
+            date: c ? c.date : '',
+            patient: c ? c.assure.nom : 'Inconnu',
+          };
+        });
         
         setFeuilles(list);
       } catch (e) {

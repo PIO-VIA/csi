@@ -19,6 +19,8 @@ export interface Assure {
   groupeSanguin: string;
   indicatifPays?: string;
   numTelephone: string;
+  email?: string;
+  photoUrl?: string;
   medecinTraitant?: Medecin;
 }
 
@@ -32,6 +34,9 @@ export interface Medecin {
   estAssure: boolean;
   indicatifPays?: string;
   numTelephone: string;
+  photoUrl?: string;
+  dateNaissance?: string;
+  sexe?: string;
 }
 
 export interface CreateMedecinInput {

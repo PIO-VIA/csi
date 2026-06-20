@@ -18,7 +18,7 @@ import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { getApiErrorMessage, getMedecins } from '@/lib/api';
+import { getApiErrorMessage, getMedecinById } from '@/lib/api';
 import { Medecin } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 
@@ -45,9 +45,8 @@ export default function MedecinProfilePage() {
     if (!user) return;
     const loadDoctorInfo = async () => {
       try {
-        const res = await getMedecins();
-        const found = res.data.find((m) => m.id === user.id);
-        if (found) setMedecinInfo(found);
+        const res = await getMedecinById(user.id);
+        setMedecinInfo(res.data);
       } catch (e) {
         console.error(e);
       }
@@ -103,9 +102,17 @@ export default function MedecinProfilePage() {
         <div className="md:col-span-5 space-y-6">
           <Card>
             <CardBody className="p-6 flex flex-col items-center text-center space-y-4">
-              <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white flex items-center justify-center font-display font-extrabold text-2xl shadow-xl shadow-primary-500/10">
-                {user.avatarInitiales || user.nom?.charAt(0) || 'D'}
-              </div>
+              {medecinInfo?.photoUrl ? (
+                <img
+                  src={medecinInfo.photoUrl}
+                  alt={user.nom}
+                  className="h-20 w-20 rounded-2xl object-cover shadow-xl shadow-primary-500/10"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white flex items-center justify-center font-display font-extrabold text-2xl shadow-xl shadow-primary-500/10">
+                  {user.avatarInitiales || user.nom?.charAt(0) || 'D'}
+                </div>
+              )}
               
               <div className="space-y-1">
                 <h3 className="font-display font-bold text-lg text-slate-900">Dr. {user.nom}</h3>
@@ -123,6 +130,35 @@ export default function MedecinProfilePage() {
                   )}
                 </div>
               </div>
+
+              {medecinInfo && (medecinInfo.dateNaissance || medecinInfo.sexe || medecinInfo.numTelephone) && (
+                <div className="w-full border-t border-slate-100 pt-4 mt-4 space-y-3 text-xs font-body text-left">
+                  {medecinInfo.dateNaissance && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Date de naissance</span>
+                      <span className="text-slate-700 font-medium">
+                        {new Date(medecinInfo.dateNaissance).toLocaleDateString('fr-FR')}
+                      </span>
+                    </div>
+                  )}
+                  {medecinInfo.sexe && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Genre</span>
+                      <span className="text-slate-700 font-medium">
+                        {medecinInfo.sexe === 'Homme' ? 'Masculin' : medecinInfo.sexe === 'Femme' ? 'Féminin' : medecinInfo.sexe}
+                      </span>
+                    </div>
+                  )}
+                  {medecinInfo.numTelephone && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Téléphone</span>
+                      <span className="text-slate-700 font-medium">
+                        {medecinInfo.indicatifPays ? `${medecinInfo.indicatifPays} ` : ''}{medecinInfo.numTelephone}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
             </CardBody>
           </Card>
 

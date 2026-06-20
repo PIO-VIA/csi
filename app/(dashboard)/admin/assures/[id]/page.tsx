@@ -14,6 +14,7 @@ import {
   Droplet,
   Smartphone,
   Briefcase,
+  Mail,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
@@ -105,9 +106,17 @@ export default function AssureDetailPage({ params }: PageProps) {
           <Card>
             <CardBody className="flex flex-col items-center text-center p-6 space-y-6">
               {/* Profile Avatar */}
-              <div className="h-20 w-20 rounded-full flex items-center justify-center font-display font-extrabold text-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-xl">
-                {assure.nom.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
-              </div>
+              {assure.photoUrl ? (
+                <img
+                  src={assure.photoUrl}
+                  alt={assure.nom}
+                  className="h-20 w-20 rounded-full object-cover shadow-xl"
+                />
+              ) : (
+                <div className="h-20 w-20 rounded-full flex items-center justify-center font-display font-extrabold text-2xl bg-gradient-to-br from-primary-500 to-accent-500 text-white shadow-xl">
+                  {assure.nom.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()}
+                </div>
+              )}
 
               <div className="space-y-1">
                 <h2 className="font-display font-bold text-lg text-slate-900">{assure.nom}</h2>
@@ -131,6 +140,12 @@ export default function AssureDetailPage({ params }: PageProps) {
                   <span className="text-slate-400 flex items-center gap-1.5"><Smartphone size={13} /> {t('admin.assures.form_phone')}</span>
                   <span className="text-slate-700 font-medium">{assure.indicatifPays ? `${assure.indicatifPays} ` : ''}{assure.numTelephone}</span>
                 </div>
+                {assure.email && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-slate-400 flex items-center gap-1.5"><Mail size={13} /> Email</span>
+                    <span className="text-slate-700 font-medium">{assure.email}</span>
+                  </div>
+                )}
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400 flex items-center gap-1.5"><Briefcase size={13} /> {t('admin.assures.form_profession')}</span>
                   <span className="text-slate-700 font-medium">{assure.profession}</span>

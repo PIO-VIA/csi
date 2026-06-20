@@ -26,7 +26,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getConsultationsByMedecin, getAssures, getMedecins } from '@/lib/api';
+import { getConsultationsByMedecin, getMesAssures, getMedecinById } from '@/lib/api';
 import { Consultation, Assure, Medecin } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
@@ -50,14 +50,14 @@ export default function MedecinDashboardPage() {
     if (!user) return;
     const loadData = async () => {
       try {
-        const [resConsults, resAssures, resMedecins] = await Promise.all([
+        const [resConsults, resAssures, resMedecin] = await Promise.all([
           getConsultationsByMedecin(user.id),
-          getAssures(),
-          getMedecins(),
+          getMesAssures(),
+          getMedecinById(user.id),
         ]);
         setConsultations(resConsults.data);
         setAllAssures(resAssures.data);
-        setMedecinInfo(resMedecins.data.find((m) => m.id === user.id) || null);
+        setMedecinInfo(resMedecin.data);
       } catch (e) {
         console.error(e);
       } finally {
@@ -73,9 +73,7 @@ export default function MedecinDashboardPage() {
   const totalConsults = consultations.length;
   const uniquePatientIds = new Set(consultations.map((c) => c.assure.id));
   const patientsCount = uniquePatientIds.size;
-  const declaredPatientsCount = allAssures.filter(
-    (a) => a.medecinTraitant && a.medecinTraitant.id === user.id
-  ).length;
+  const declaredPatientsCount = allAssures.length;
   const totalPrescriptions = consultations.reduce(
     (sum, c) => sum + (c.prescriptions ? c.prescriptions.length : 0),
     0
