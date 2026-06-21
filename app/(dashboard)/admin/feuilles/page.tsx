@@ -245,7 +245,9 @@ export default function AdminFeuillesPage() {
                       <TableCell className="text-xs text-slate-600">{doctorName}</TableCell>
                       <TableCell className="text-xs font-semibold text-slate-700">{formatFCFA(f.montantSoin)}</TableCell>
                       <TableCell className="text-xs">
-                        {f.remboursement ? (
+                        {f.statut === 'ANNULE' ? (
+                          <span className="text-slate-400 line-through">0 FCFA</span>
+                        ) : f.remboursement ? (
                           <span className="text-success font-semibold">+{formatFCFA(f.remboursement.montant)}</span>
                         ) : (
                           <span className="text-slate-400 italic">—</span>

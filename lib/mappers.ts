@@ -127,15 +127,22 @@ export function mapRemboursement(raw: RawRecord): Remboursement {
 }
 
 export function mapFeuille(raw: RawRecord, remboursement?: Remboursement): FeuillemMaladie {
+  const mappedRemboursement = remboursement || (raw.estRembourse ? {
+    id: Number(raw.id),
+    montant: raw.montantRembourse != null ? Number(raw.montantRembourse) : Number(raw.montantSoin ?? 0),
+    dateRemboursement: raw.dateRemboursement ? String(raw.dateRemboursement) : '',
+    modePaiement: raw.modePaiement === 'CASH' ? ('CASH' as const) : ('VIREMENT' as const),
+    feuilleMaladieId: Number(raw.id),
+  } : undefined);
+
   return {
     id: Number(raw.id),
     idFeuille: String(raw.idFeuille ?? ''),
     montantSoin: Number(raw.montantSoin ?? 0),
     estRembourse: Boolean(raw.estRembourse),
     consultationId: Number(raw.consultationId),
-    // Le backend renvoie déjà ce montant dans FeuillemMaladieResponseDTO.montantRembourse
     montantRembourse: raw.montantRembourse != null ? Number(raw.montantRembourse) : undefined,
-    remboursement,
+    remboursement: mappedRemboursement,
     statut: raw.statut ? String(raw.statut) : undefined,
   };
 }
