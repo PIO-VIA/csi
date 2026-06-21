@@ -13,13 +13,16 @@ import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
 import { formatDate, formatFCFA } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import FeuilleMaladieTemplate from '@/components/ui/FeuilleMaladieTemplate';
 
 export default function MedecinFeuillesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [feuilles, setFeuilles] = useState<(FeuillemMaladie & { date: string; patient: string })[]>([]);
+  const [feuilles, setFeuilles] = useState<(FeuillemMaladie & { date: string; patient: string; consultation?: Consultation | null })[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedSheet, setSelectedSheet] = useState<(FeuillemMaladie & { date: string; patient: string; consultation?: Consultation | null }) | null>(null);
 
   useEffect(() => {
     if (!user) return;
@@ -44,6 +47,7 @@ export default function MedecinFeuillesPage() {
             ...f,
             date: c ? c.date : '',
             patient: c ? c.assure.nom : 'Inconnu',
+            consultation: c || null,
           };
         });
         
@@ -106,12 +110,13 @@ export default function MedecinFeuillesPage() {
                 <TableHead>{t('common.patient')}</TableHead>
                 <TableHead>{t('medecin.feuilles.col_amount')}</TableHead>
                 <TableHead>{t('medecin.feuilles.col_status')}</TableHead>
+                <TableHead className="no-print">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={6} className="text-center py-12 text-slate-500 font-body">
                     {t('medecin.feuilles.not_found')}
                   </TableCell>
                 </TableRow>
@@ -146,6 +151,16 @@ export default function MedecinFeuillesPage() {
                         {f.estRembourse ? t('medecin.feuilles.reimbursed') : t('medecin.feuilles.pending')}
                       </Badge>
                     </TableCell>
+                    <TableCell className="no-print">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="text-xs px-3"
+                        onClick={() => setSelectedSheet(f)}
+                      >
+                        Visualiser
+                      </Button>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -153,6 +168,13 @@ export default function MedecinFeuillesPage() {
           </Table>
         </CardBody>
       </Card>
+
+      <FeuilleMaladieTemplate
+        isOpen={!!selectedSheet}
+        onClose={() => setSelectedSheet(null)}
+        sheet={selectedSheet}
+        consultation={selectedSheet?.consultation}
+      />
     </motion.div>
   );
 }

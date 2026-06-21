@@ -21,12 +21,14 @@ import Badge from '@/components/ui/Badge';
 import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
 import { formatFCFA, formatDate } from '@/lib/utils';
+import FeuilleMaladieTemplate from '@/components/ui/FeuilleMaladieTemplate';
 
 export default function AdminFeuillesPage() {
   const { t } = useTranslation();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
+  const [selectedSheet, setSelectedSheet] = useState<FeuillemMaladie | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
 
   // Search & Filter state
@@ -187,7 +189,7 @@ export default function AdminFeuillesPage() {
                 <TableHead>{t('admin.remboursements.col_soin_amount') || 'Montant Soin'}</TableHead>
                 <TableHead>{t('admin.remboursements.col_reimb_amount') || 'Remboursement'}</TableHead>
                 <TableHead>{t('common.status') || 'Statut'}</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead className="no-print">Action</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -222,19 +224,29 @@ export default function AdminFeuillesPage() {
                           {f.estRembourse ? t('admin.remboursements.status_reimbursed') || 'Remboursé' : t('admin.remboursements.pending_title') || 'En attente'}
                         </Badge>
                       </TableCell>
-                      <TableCell>
-                        {!f.estRembourse ? (
+                      <TableCell className="no-print">
+                        <div className="flex gap-2 items-center">
                           <Button
-                            variant="primary"
+                            variant="secondary"
                             size="sm"
-                            className="text-xs px-3"
-                            onClick={() => router.push('/admin/remboursements')}
+                            className="text-xs px-2.5 py-1.5"
+                            onClick={() => setSelectedSheet(f)}
                           >
-                            Rembourser
+                            Visualiser
                           </Button>
-                        ) : (
-                          <Badge variant="success">Remboursé</Badge>
-                        )}
+                          {!f.estRembourse ? (
+                            <Button
+                              variant="primary"
+                              size="sm"
+                              className="text-xs px-2.5 py-1.5"
+                              onClick={() => router.push('/admin/remboursements')}
+                            >
+                              Rembourser
+                            </Button>
+                          ) : (
+                            <Badge variant="success">Remboursé</Badge>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   );
@@ -252,6 +264,13 @@ export default function AdminFeuillesPage() {
           />
         </CardBody>
       </Card>
+
+      <FeuilleMaladieTemplate
+        isOpen={!!selectedSheet}
+        onClose={() => setSelectedSheet(null)}
+        sheet={selectedSheet}
+        consultation={selectedSheet ? getConsultationForSheet(selectedSheet) : null}
+      />
     </motion.div>
   );
 }
