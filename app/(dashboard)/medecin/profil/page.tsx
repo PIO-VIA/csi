@@ -9,8 +9,8 @@ import {
   Shield,
   KeyRound,
   Globe,
-  CheckCircle,
   Camera,
+  User,
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
@@ -19,7 +19,7 @@ import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { getApiErrorMessage, getMedecinById, uploadMedecinPhoto } from '@/lib/api';
+import { getApiErrorMessage, getMedecinById, uploadMedecinPhoto, updateMedecin } from '@/lib/api';
 import { Medecin } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 import Loader from '@/components/ui/Loader';
@@ -33,15 +33,32 @@ const changePasswordSchema = z.object({
   path: ['confirmerMotDePasse'],
 });
 
+const personalInfoSchema = z.object({
+  nom: z.string().min(3, { message: 'Le nom doit faire au moins 3 caractères' }),
+  email: z.string().email({ message: 'Adresse email invalide' }),
+  indicatifPays: z.string().min(1, { message: "L'indicatif pays est requis" }),
+  numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
+  matricule: z.string().min(1, { message: 'Le matricule est requis' }),
+  sexe: z.string().optional(),
+  dateNaissance: z.string().optional(),
+  domaineSpecialisation: z.string().optional(),
+});
+
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
+type PersonalInfoFormValues = z.infer<typeof personalInfoSchema>;
+
+const initialsFromName = (name: string) => {
+  return name ? name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) : 'D';
+};
 
 export default function MedecinProfilePage() {
   const { t, i18n } = useTranslation();
-  const { user, changePassword, updateUserPhotoUrl } = useAuth();
+  const { user, changePassword, updateUserPhotoUrl, updateUserInfo } = useAuth();
   const { success, error } = useToast();
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isUpdatingInfo, setIsUpdatingInfo] = useState(false);
   const [medecinInfo, setMedecinInfo] = useState<Medecin | null>(null);
 
   useEffect(() => {
@@ -57,6 +74,7 @@ export default function MedecinProfilePage() {
     loadDoctorInfo();
   }, [user]);
 
+  // Form for password change
   const {
     register,
     handleSubmit,
@@ -65,6 +83,31 @@ export default function MedecinProfilePage() {
   } = useForm<ChangePasswordFormValues>({
     resolver: zodResolver(changePasswordSchema),
   });
+
+  // Form for personal info
+  const {
+    register: registerInfo,
+    handleSubmit: handleSubmitInfo,
+    reset: resetInfo,
+    formState: { errors: infoErrors },
+  } = useForm<PersonalInfoFormValues>({
+    resolver: zodResolver(personalInfoSchema),
+  });
+
+  useEffect(() => {
+    if (medecinInfo) {
+      resetInfo({
+        nom: medecinInfo.nom,
+        email: medecinInfo.email,
+        indicatifPays: medecinInfo.indicatifPays ?? '+237',
+        numTelephone: medecinInfo.numTelephone,
+        matricule: medecinInfo.matricule ?? '',
+        sexe: medecinInfo.sexe ?? '',
+        dateNaissance: medecinInfo.dateNaissance ?? '',
+        domaineSpecialisation: medecinInfo.domaineSpecialisation ?? '',
+      });
+    }
+  }, [medecinInfo, resetInfo]);
 
   const onSubmit = async (data: ChangePasswordFormValues) => {
     setIsSubmitting(true);
@@ -76,6 +119,35 @@ export default function MedecinProfilePage() {
       error(getApiErrorMessage(e));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const onInfoSubmit = async (data: PersonalInfoFormValues) => {
+    if (!user) return;
+    setIsUpdatingInfo(true);
+    try {
+      const res = await updateMedecin(user.id, {
+        nom: data.nom,
+        email: data.email,
+        indicatifPays: data.indicatifPays,
+        numTelephone: data.numTelephone,
+        matricule: data.matricule,
+        sexe: data.sexe || undefined,
+        dateNaissance: data.dateNaissance || undefined,
+        domaineSpecialisation: data.domaineSpecialisation || undefined,
+        type: medecinInfo?.type,
+      });
+      success('Informations personnelles mises à jour avec succès.');
+      setMedecinInfo(res.data);
+      updateUserInfo({
+        nom: res.data.nom,
+        email: res.data.email,
+        avatarInitiales: initialsFromName(res.data.nom),
+      });
+    } catch (e) {
+      error(getApiErrorMessage(e));
+    } finally {
+      setIsUpdatingInfo(false);
     }
   };
 
@@ -159,7 +231,7 @@ export default function MedecinProfilePage() {
               <div className="space-y-1">
                 <h3 className="font-display font-bold text-lg text-slate-900">Dr. {user.nom}</h3>
                 <p className="text-xs text-slate-500 font-body">{user.email}</p>
-                {medecinInfo && (
+                {medecinInfo?.matricule && (
                   <p className="text-xs text-primary-600 font-mono font-semibold pt-1">{medecinInfo.matricule}</p>
                 )}
                 <div className="pt-2 flex flex-wrap gap-1.5 justify-center">
@@ -244,8 +316,110 @@ export default function MedecinProfilePage() {
           </Card>
         </div>
 
-        {/* Change Password Panel */}
-        <div className="md:col-span-7">
+        {/* Edit Panels */}
+        <div className="md:col-span-7 space-y-6">
+          {/* Personal Info Panel */}
+          <Card>
+            <CardHeader className="flex items-center gap-2 border-b border-slate-100 pb-3">
+              <User size={16} className="text-primary-600" />
+              <span className="font-display font-semibold text-xs text-slate-800 uppercase tracking-wider">
+                Informations personnelles
+              </span>
+            </CardHeader>
+            <CardBody className="p-5">
+              <form onSubmit={handleSubmitInfo(onInfoSubmit)} className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Input
+                    label="Nom complet"
+                    placeholder="Ex: Dr. Célestin Etoa"
+                    error={infoErrors.nom?.message ? String(infoErrors.nom.message) : undefined}
+                    {...registerInfo('nom')}
+                  />
+
+                  <Input
+                    label="Adresse email"
+                    type="email"
+                    placeholder="Ex: email@domaine.com"
+                    error={infoErrors.email?.message ? String(infoErrors.email.message) : undefined}
+                    {...registerInfo('email')}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="col-span-1">
+                      <Input
+                        label="Indicatif"
+                        placeholder="+237"
+                        error={infoErrors.indicatifPays?.message ? String(infoErrors.indicatifPays.message) : undefined}
+                        {...registerInfo('indicatifPays')}
+                      />
+                    </div>
+                    <div className="col-span-2">
+                      <Input
+                        label="N° Téléphone"
+                        placeholder="699000000"
+                        error={infoErrors.numTelephone?.message ? String(infoErrors.numTelephone.message) : undefined}
+                        {...registerInfo('numTelephone')}
+                      />
+                    </div>
+                  </div>
+
+                  <Input
+                    label="Matricule professionnel"
+                    placeholder="Ex: MED-12345"
+                    error={infoErrors.matricule?.message ? String(infoErrors.matricule.message) : undefined}
+                    {...registerInfo('matricule')}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-display font-semibold text-slate-700 block mb-1">
+                      Genre
+                    </label>
+                    <select
+                      {...registerInfo('sexe')}
+                      className="w-full h-[38px] px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-primary-500 transition duration-150"
+                    >
+                      <option value="">Sélectionner</option>
+                      <option value="Homme">Homme</option>
+                      <option value="Femme">Femme</option>
+                    </select>
+                  </div>
+
+                  <Input
+                    label="Date de naissance"
+                    type="date"
+                    error={infoErrors.dateNaissance?.message ? String(infoErrors.dateNaissance.message) : undefined}
+                    {...registerInfo('dateNaissance')}
+                  />
+
+                  {medecinInfo?.type === 'SPECIALISTE' && (
+                    <Input
+                      label="Spécialisation"
+                      placeholder="Ex: Cardiologie"
+                      error={infoErrors.domaineSpecialisation?.message ? String(infoErrors.domaineSpecialisation.message) : undefined}
+                      {...registerInfo('domaineSpecialisation')}
+                    />
+                  )}
+                </div>
+
+                <div className="flex justify-end pt-2">
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    isLoading={isUpdatingInfo}
+                    className="w-full sm:w-auto text-xs"
+                  >
+                    Enregistrer les modifications
+                  </Button>
+                </div>
+              </form>
+            </CardBody>
+          </Card>
+
+          {/* Change Password Panel */}
           <Card>
             <CardHeader className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <KeyRound size={16} className="text-primary-600" />

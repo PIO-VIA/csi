@@ -398,6 +398,19 @@ export const uploadAgentPhoto = async (
   return { photoUrl: getFullPhotoUrl(String((raw as Record<string, unknown>).photoUrl ?? '')) ?? '' };
 };
 
+export const getAgentById = async (id: number): Promise<ApiPayload<Record<string, any>>> => {
+  const raw = await AgentsService.getById3(id);
+  return { data: raw };
+};
+
+export const updateAgent = async (
+  id: number,
+  data: any,
+): Promise<ApiPayload<Record<string, any>>> => {
+  const raw = await AgentsService.update2(id, data);
+  return { data: raw };
+};
+
 export const uploadAssurePhoto = async (
   id: number,
   file: File,

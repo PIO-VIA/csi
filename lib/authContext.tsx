@@ -34,6 +34,7 @@ interface AuthContextType {
     [key: string]: unknown;
   }) => Promise<void>;
   updateUserPhotoUrl: (photoUrl: string) => void;
+  updateUserInfo: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -205,8 +206,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserInfo = (userData: Partial<User>) => {
+    if (!user) return;
+    const updatedUser = { ...user, ...userData };
+    setUser(updatedUser);
+    
+    const storedUser = localStorage.getItem('csi_session');
+    if (storedUser) {
+      try {
+        const session = JSON.parse(storedUser) as SessionUser;
+        const updatedSession = { ...session, ...userData };
+        localStorage.setItem('csi_session', JSON.stringify(updatedSession));
+      } catch (e) {
+        console.error(e);
+      }
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, registerUser, updateUserPhotoUrl }}>
+    <AuthContext.Provider value={{ user, loading, login, logout, changePassword, registerUser, updateUserPhotoUrl, updateUserInfo }}>
       {children}
     </AuthContext.Provider>
   );
