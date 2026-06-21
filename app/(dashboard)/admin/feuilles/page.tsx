@@ -8,11 +8,12 @@ import {
   CheckCircle,
   Clock,
   Filter,
+  Edit,
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getFeuilles, getConsultations, annulerFeuille } from '@/lib/api';
+import { getFeuilles, getConsultations, annulerFeuille, updateFeuille } from '@/lib/api';
 import { FeuillemMaladie, Consultation } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
@@ -24,16 +25,65 @@ import { formatFCFA, formatDate } from '@/lib/utils';
 import FeuilleMaladieTemplate from '@/components/ui/FeuilleMaladieTemplate';
 import { useToast } from '@/components/ui/Toast';
 import { X } from 'lucide-react';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
 
 export default function AdminFeuillesPage() {
   const { t } = useTranslation();
   const router = useRouter();
-  const { success, error } = useToast();
+  const { success, error, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<FeuillemMaladie | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
+
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSheet, setEditingSheet] = useState<FeuillemMaladie | null>(null);
+  const [editIdFeuille, setEditIdFeuille] = useState('');
+  const [editMontantSoin, setEditMontantSoin] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleOpenEdit = (f: FeuillemMaladie) => {
+    setEditingSheet(f);
+    setEditIdFeuille(f.idFeuille);
+    setEditMontantSoin(f.montantSoin);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingSheet) return;
+    if (!editIdFeuille.trim()) {
+      warning("Veuillez renseigner la référence de la feuille de maladie.");
+      return;
+    }
+    if (editMontantSoin < 0) {
+      warning("Le montant des soins doit être supérieur ou égal à 0.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await updateFeuille(editingSheet.id, {
+        idFeuille: editIdFeuille,
+        montantSoin: editMontantSoin,
+        consultationId: editingSheet.consultationId,
+      });
+
+      setFeuilles((prev) =>
+        prev.map((item) => (item.id === editingSheet.id ? { ...item, ...res.data } : item))
+      );
+
+      success("Feuille de maladie modifiée avec succès.");
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error(err);
+      error("Erreur lors de la modification de la feuille de maladie.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const handleCancelSheet = async (id: number) => {
     if (!window.confirm("Êtes-vous sûr de vouloir annuler cette feuille de maladie ? Cette action est irréversible.")) {
@@ -287,6 +337,15 @@ export default function AdminFeuillesPage() {
                                 Rembourser
                               </Button>
                               <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-xs px-2.5 py-1.5 bg-white"
+                                onClick={() => handleOpenEdit(f)}
+                              >
+                                <Edit size={13} className="mr-1 inline" />
+                                Modifier
+                              </Button>
+                              <Button
                                 variant="danger"
                                 size="sm"
                                 className="text-xs px-2.5 py-1.5"
@@ -322,6 +381,50 @@ export default function AdminFeuillesPage() {
         sheet={selectedSheet}
         consultation={selectedSheet ? getConsultationForSheet(selectedSheet) : null}
       />
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Modifier la feuille de maladie"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            id="input-edit-id-feuille"
+            label="Référence de la feuille (ID)"
+            value={editIdFeuille}
+            onChange={(e) => setEditIdFeuille(e.target.value)}
+            leftIcon={<FileText size={16} className="text-slate-400" />}
+          />
+          <Input
+            id="input-edit-montant-soin"
+            label="Montant des soins (FCFA)"
+            type="number"
+            value={editMontantSoin}
+            onChange={(e) => setEditMontantSoin(Number(e.target.value))}
+            leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSaveEdit}
+              isLoading={isSaving}
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 }

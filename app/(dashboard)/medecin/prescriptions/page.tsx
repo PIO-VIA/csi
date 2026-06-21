@@ -2,34 +2,59 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Pill, Search, Calendar, User } from 'lucide-react';
+import { Pill, Search, Calendar, User, Edit, Trash2, Stethoscope, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getConsultationsByMedecin } from '@/lib/api';
-import { Consultation, Prescription } from '@/types';
+import { getConsultationsByMedecin, updatePrescription, deletePrescription, getMedecins } from '@/lib/api';
+import { Consultation, Prescription, Medecin } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 import Badge from '@/components/ui/Badge';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
+import Button from '@/components/ui/Button';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 
 export default function MedecinPrescriptionsPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [prescriptions, setPrescriptions] = useState<(Prescription & { date: string; patient: string })[]>([]);
+  const [specialists, setSpecialists] = useState<Medecin[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+
+  // Modals state
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
+  
+  // Form fields state for editing
+  const [editType, setEditType] = useState<'MEDICAMENT' | 'CONSULTATION_SPECIALISTE'>('MEDICAMENT');
+  const [editMedicament, setEditMedicament] = useState('');
+  const [editPosologie, setEditPosologie] = useState('');
+  const [editMatricule, setEditMatricule] = useState('');
+  const [editMotif, setEditMotif] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
     const loadData = async () => {
       try {
-        const res = await getConsultationsByMedecin(user.id).catch((err) => {
-          console.error('Failed to load consultations for prescriptions:', err);
-          return { data: [] };
-        });
-        const consults: Consultation[] = res.data || [];
+        const [resConsults, resMedecins] = await Promise.all([
+          getConsultationsByMedecin(user.id).catch((err) => {
+            console.error('Failed to load consultations for prescriptions:', err);
+            return { data: [] };
+          }),
+          getMedecins().catch((err) => {
+            console.error('Failed to load specialists:', err);
+            return { data: [] };
+          })
+        ]);
+        
+        const consults: Consultation[] = resConsults.data || [];
         
         // Extract all prescriptions
         const list = consults.flatMap((c) =>
@@ -41,6 +66,7 @@ export default function MedecinPrescriptionsPage() {
         );
         
         setPrescriptions(list);
+        setSpecialists(resMedecins.data.filter((m) => m.type === 'SPECIALISTE'));
       } catch (e) {
         console.error(e);
       } finally {
@@ -49,6 +75,75 @@ export default function MedecinPrescriptionsPage() {
     };
     loadData();
   }, [user]);
+
+  const handleOpenEdit = (p: Prescription) => {
+    setEditingPrescription(p);
+    setEditType(p.type);
+    setEditMedicament(p.medicament || '');
+    setEditPosologie(p.posologie || '');
+    setEditMatricule(p.matriculeMedecin || '');
+    setEditMotif(p.motif || '');
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingPrescription) return;
+
+    if (editType === 'MEDICAMENT') {
+      if (!editMedicament.trim() || !editPosologie.trim()) {
+        warning(t('medecin.nouvelle_consultation.form_error_med') || 'Veuillez renseigner le nom du médicament et sa posologie.');
+        return;
+      }
+    } else {
+      if (!editMatricule || !editMotif.trim()) {
+        warning(t('medecin.nouvelle_consultation.form_error_spec') || 'Veuillez sélectionner le spécialiste ciblé et renseigner le motif.');
+        return;
+      }
+    }
+
+    setIsSaving(true);
+    try {
+      const payload = {
+        consultationId: editingPrescription.consultationId,
+        medicament: editType === 'MEDICAMENT' ? editMedicament : undefined,
+        posologie: editType === 'MEDICAMENT' ? editPosologie : undefined,
+        matriculeMedecin: editType === 'CONSULTATION_SPECIALISTE' ? editMatricule : undefined,
+        motif: editType === 'CONSULTATION_SPECIALISTE' ? editMotif : undefined,
+      };
+
+      const res = await updatePrescription(editingPrescription.id, payload);
+      
+      setPrescriptions((prev) =>
+        prev.map((item) =>
+          item.id === editingPrescription.id
+            ? { ...item, ...res.data, type: editType }
+            : item
+        )
+      );
+
+      success("Prescription modifiée avec succès.");
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors de la modification de la prescription.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette prescription ?")) {
+      return;
+    }
+    try {
+      await deletePrescription(id);
+      setPrescriptions((prev) => prev.filter((p) => p.id !== id));
+      success("Prescription supprimée avec succès.");
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors de la suppression de la prescription.");
+    }
+  };
 
   const filtered = prescriptions.filter((p) =>
     (p.type === 'MEDICAMENT' ? p.medicament || '' : p.motif || '')
@@ -100,12 +195,13 @@ export default function MedecinPrescriptionsPage() {
                 <TableHead>{t('medecin.prescriptions.col_patient')}</TableHead>
                 <TableHead>{t('medecin.prescriptions.col_type')}</TableHead>
                 <TableHead>{t('medecin.prescriptions.col_details')}</TableHead>
+                <TableHead className="no-print">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={5} className="text-center py-12 text-slate-500 font-body">
                     {t('medecin.prescriptions.not_found')}
                   </TableCell>
                 </TableRow>
@@ -147,6 +243,28 @@ export default function MedecinPrescriptionsPage() {
                         </div>
                       )}
                     </TableCell>
+                    <TableCell className="no-print">
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs px-2.5 py-1.5"
+                          onClick={() => handleOpenEdit(p)}
+                        >
+                          <Edit size={14} className="mr-1 inline" />
+                          Modifier
+                        </Button>
+                        <Button
+                          variant="danger"
+                          size="sm"
+                          className="text-xs px-2.5 py-1.5"
+                          onClick={() => handleDelete(p.id)}
+                        >
+                          <Trash2 size={14} className="mr-1 inline" />
+                          Supprimer
+                        </Button>
+                      </div>
+                    </TableCell>
                   </TableRow>
                 ))
               )}
@@ -154,6 +272,111 @@ export default function MedecinPrescriptionsPage() {
           </Table>
         </CardBody>
       </Card>
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Modifier la prescription"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl">
+            <button
+              type="button"
+              onClick={() => { setEditType('MEDICAMENT'); }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                editType === 'MEDICAMENT' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {t('medecin.nouvelle_consultation.type_med')}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setEditType('CONSULTATION_SPECIALISTE'); }}
+              className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                editType === 'CONSULTATION_SPECIALISTE' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+              }`}
+            >
+              {t('medecin.nouvelle_consultation.type_spec')}
+            </button>
+          </div>
+
+          {editType === 'MEDICAMENT' ? (
+            <div className="space-y-4">
+              <Input
+                id="input-edit-medicament"
+                label={t('medecin.nouvelle_consultation.medicament')}
+                placeholder={t('medecin.nouvelle_consultation.medicament_placeholder')}
+                value={editMedicament}
+                onChange={(e) => setEditMedicament(e.target.value)}
+                leftIcon={<Pill size={16} className="text-slate-400" />}
+              />
+              <Input
+                id="input-edit-posologie"
+                label={t('medecin.nouvelle_consultation.posologie')}
+                placeholder={t('medecin.nouvelle_consultation.posologie_placeholder')}
+                value={editPosologie}
+                onChange={(e) => setEditPosologie(e.target.value)}
+                leftIcon={<FileText size={16} className="text-slate-400" />}
+              />
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="form-group">
+                <label className="font-display font-semibold text-[13px] text-slate-700 tracking-wide mb-1 block">
+                  {t('medecin.nouvelle_consultation.target_spec')}
+                </label>
+                <div className="relative flex items-center">
+                  <div className="absolute left-3.5 text-slate-400 pointer-events-none flex items-center justify-center">
+                    <Stethoscope size={16} />
+                  </div>
+                  <select
+                    id="select-edit-specialist"
+                    value={editMatricule}
+                    onChange={(e) => setEditMatricule(e.target.value)}
+                    className="w-full h-11 bg-slate-50/80 border border-slate-200 rounded-xl font-body text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 pl-10 pr-10 dashboard-input"
+                  >
+                    <option value="">-- {t('medecin.nouvelle_consultation.choose_spec')} --</option>
+                    {specialists.map((s) => (
+                      <option key={s.id} value={s.matricule}>
+                        Dr. {s.nom} ({s.domaineSpecialisation})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <Input
+                id="input-edit-referral-reason"
+                label={t('medecin.nouvelle_consultation.referral_reason')}
+                placeholder={t('medecin.nouvelle_consultation.referral_motif_placeholder')}
+                value={editMotif}
+                onChange={(e) => setEditMotif(e.target.value)}
+                leftIcon={<FileText size={16} className="text-slate-400" />}
+              />
+            </div>
+          )}
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSaveEdit}
+              isLoading={isSaving}
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 }
+

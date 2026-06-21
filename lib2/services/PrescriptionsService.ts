@@ -8,6 +8,44 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class PrescriptionsService {
     /**
+     * Modifier une prescription
+     * @param id
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static modifier(
+        id: number,
+        requestBody: PrescriptionRequestDTO,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'PUT',
+            url: '/api/prescriptions/{id}',
+            path: {
+                'id': id,
+            },
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
+     * Supprimer une prescription
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static supprimer(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'DELETE',
+            url: '/api/prescriptions/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Prescrire un médicament
      * @param requestBody
      * @returns any OK

@@ -395,12 +395,12 @@ export const updateMedecin = async (
     matricule: data.matricule,
     estAssure: data.estAssure,
   };
-  const raw = await MDecinsService.modifier(id, payload as Parameters<typeof MDecinsService.modifier>[1]);
+  const raw = await MDecinsService.modifier1(id, payload as Parameters<typeof MDecinsService.modifier1>[1]);
   return { data: mapMedecin(raw as Record<string, unknown>) };
 };
 
 export const deleteMedecin = async (id: number): Promise<void> => {
-  await MDecinsService.supprimer(id);
+  await MDecinsService.supprimer1(id);
 };
 
 export const uploadMedecinPhoto = async (
@@ -560,6 +560,24 @@ export const prescrireConsultation = async (data: {
   return { data: mapPrescription(raw as Record<string, unknown>) };
 };
 
+export const updatePrescription = async (
+  id: number,
+  data: {
+    consultationId?: number;
+    medicament?: string;
+    posologie?: string;
+    matriculeMedecin?: string;
+    motif?: string;
+  },
+): Promise<ApiPayload<Prescription>> => {
+  const raw = await PrescriptionsService.modifier(id, data);
+  return { data: mapPrescription(raw as Record<string, unknown>) };
+};
+
+export const deletePrescription = async (id: number): Promise<void> => {
+  await PrescriptionsService.supprimer(id);
+};
+
 // ============================================================
 // FEUILLES MALADIE
 // ============================================================
@@ -601,6 +619,18 @@ export const getMesFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> =
 
 export const annulerFeuille = async (id: number): Promise<ApiPayload<FeuillemMaladie>> => {
   const raw = await FeuillesMaladieService.annuler(id);
+  return { data: mapFeuille(raw as Record<string, unknown>) };
+};
+
+export const updateFeuille = async (
+  id: number,
+  data: {
+    idFeuille?: string;
+    montantSoin?: number;
+    consultationId?: number;
+  },
+): Promise<ApiPayload<FeuillemMaladie>> => {
+  const raw = await FeuillesMaladieService.update(id, data);
   return { data: mapFeuille(raw as Record<string, unknown>) };
 };
 

@@ -31,7 +31,7 @@ export class MDecinsService {
      * @returns any OK
      * @throws ApiError
      */
-    public static modifier(
+    public static modifier1(
         id: number,
         requestBody: MedecinRequestDTO,
     ): CancelablePromise<Record<string, any>> {
@@ -51,7 +51,7 @@ export class MDecinsService {
      * @returns any OK
      * @throws ApiError
      */
-    public static supprimer(
+    public static supprimer1(
         id: number,
     ): CancelablePromise<Record<string, any>> {
         return __request(OpenAPI, {

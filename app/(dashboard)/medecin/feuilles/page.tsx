@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Search, Calendar, User } from 'lucide-react';
+import { FileText, Search, Calendar, User, Edit } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesFeuilles, getConsultationsByMedecin } from '@/lib/api';
+import { getMesFeuilles, getConsultationsByMedecin, updateFeuille } from '@/lib/api';
 import { Consultation, FeuillemMaladie } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -15,14 +15,25 @@ import Loader from '@/components/ui/Loader';
 import { formatDate, formatFCFA } from '@/lib/utils';
 import Button from '@/components/ui/Button';
 import FeuilleMaladieTemplate from '@/components/ui/FeuilleMaladieTemplate';
+import Modal from '@/components/ui/Modal';
+import Input from '@/components/ui/Input';
+import { useToast } from '@/components/ui/Toast';
 
 export default function MedecinFeuillesPage() {
   const { t } = useTranslation();
   const { user } = useAuth();
+  const { success, error, warning } = useToast();
   const [loading, setLoading] = useState(true);
   const [feuilles, setFeuilles] = useState<(FeuillemMaladie & { date: string; patient: string; consultation?: Consultation | null })[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSheet, setSelectedSheet] = useState<(FeuillemMaladie & { date: string; patient: string; consultation?: Consultation | null }) | null>(null);
+
+  // Edit Modal State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editingSheet, setEditingSheet] = useState<FeuillemMaladie | null>(null);
+  const [editIdFeuille, setEditIdFeuille] = useState('');
+  const [editMontantSoin, setEditMontantSoin] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -60,6 +71,56 @@ export default function MedecinFeuillesPage() {
     };
     loadData();
   }, [user]);
+
+  const handleOpenEdit = (f: FeuillemMaladie) => {
+    setEditingSheet(f);
+    setEditIdFeuille(f.idFeuille);
+    setEditMontantSoin(f.montantSoin);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingSheet) return;
+    if (!editIdFeuille.trim()) {
+      warning("Vaudrait mieux renseigner la référence de la feuille de maladie.");
+      return;
+    }
+    if (editMontantSoin < 0) {
+      warning("Le montant des soins doit être supérieur ou égal à 0.");
+      return;
+    }
+
+    setIsSaving(true);
+    try {
+      const res = await updateFeuille(editingSheet.id, {
+        idFeuille: editIdFeuille,
+        montantSoin: editMontantSoin,
+        consultationId: editingSheet.consultationId,
+      });
+
+      setFeuilles((prev) =>
+        prev.map((item) =>
+          item.id === editingSheet.id
+            ? {
+                ...item,
+                ...res.data,
+                date: item.date,
+                patient: item.patient,
+                consultation: item.consultation,
+              }
+            : item
+        )
+      );
+
+      success("Feuille de maladie modifiée avec succès.");
+      setIsEditModalOpen(false);
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors de la modification de la feuille de maladie.");
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   const filtered = feuilles.filter((f) =>
     f.idFeuille.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -110,7 +171,7 @@ export default function MedecinFeuillesPage() {
                 <TableHead>{t('common.patient')}</TableHead>
                 <TableHead>{t('medecin.feuilles.col_amount')}</TableHead>
                 <TableHead>{t('medecin.feuilles.col_status')}</TableHead>
-                <TableHead className="no-print">Action</TableHead>
+                <TableHead className="no-print">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -147,19 +208,35 @@ export default function MedecinFeuillesPage() {
                       {formatFCFA(f.montantSoin)}
                     </TableCell>
                     <TableCell>
-                      <Badge variant={f.estRembourse ? 'success' : 'warning'}>
-                        {f.estRembourse ? t('medecin.feuilles.reimbursed') : t('medecin.feuilles.pending')}
-                      </Badge>
+                      {f.statut === 'ANNULE' ? (
+                        <Badge variant="danger">ANNULÉ</Badge>
+                      ) : (
+                        <Badge variant={f.estRembourse ? 'success' : 'warning'}>
+                          {f.estRembourse ? t('medecin.feuilles.reimbursed') : t('medecin.feuilles.pending')}
+                        </Badge>
+                      )}
                     </TableCell>
                     <TableCell className="no-print">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        className="text-xs px-3"
-                        onClick={() => setSelectedSheet(f)}
-                      >
-                        Visualiser
-                      </Button>
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="text-xs px-3"
+                          onClick={() => setSelectedSheet(f)}
+                        >
+                          Visualiser
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="text-xs px-3 bg-white"
+                          onClick={() => handleOpenEdit(f)}
+                          disabled={f.statut === 'ANNULE' || f.estRembourse}
+                        >
+                          <Edit size={13} className="mr-1 inline" />
+                          Modifier
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -175,6 +252,51 @@ export default function MedecinFeuillesPage() {
         sheet={selectedSheet}
         consultation={selectedSheet?.consultation}
       />
+
+      {/* Edit Modal */}
+      <Modal
+        isOpen={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title="Modifier la feuille de maladie"
+        size="md"
+      >
+        <div className="space-y-4">
+          <Input
+            id="input-edit-id-feuille"
+            label="Référence de la feuille (ID)"
+            value={editIdFeuille}
+            onChange={(e) => setEditIdFeuille(e.target.value)}
+            leftIcon={<FileText size={16} className="text-slate-400" />}
+          />
+          <Input
+            id="input-edit-montant-soin"
+            label="Montant des soins (FCFA)"
+            type="number"
+            value={editMontantSoin}
+            onChange={(e) => setEditMontantSoin(Number(e.target.value))}
+            leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsEditModalOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSaveEdit}
+              isLoading={isSaving}
+            >
+              Enregistrer
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 }
+
