@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,12 +15,15 @@ import {
   FileText,
   Stethoscope,
   Pill,
-  Send
+  Send,
+  Search
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesAssures, getMedecins, createConsultation, getApiErrorMessage } from '@/lib/api';
+import { getMesAssures, getMedecins, createConsultation, getApiErrorMessage, getAssureById, choisirMedecinTraitant } from '@/lib/api';
+import { AssurSService } from '@/lib2';
+import { mapAssure } from '@/lib/mappers';
 import { Assure, Medecin } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardBody } from '@/components/ui/Card';
@@ -47,6 +50,8 @@ export default function NouvelleConsultationPage() {
   const { t } = useTranslation();
   const { success, error, warning } = useToast();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryAssureId = searchParams.get('assureId');
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
@@ -64,6 +69,10 @@ export default function NouvelleConsultationPage() {
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  // Patient search states
+  const [searchIdAssure, setSearchIdAssure] = useState('');
+  const [isSearchingPatient, setIsSearchingPatient] = useState(false);
+
   // Form Validation Schema defined inside the component to use t() dynamically
   const consultationFormSchema = z.object({
     assureId: z.string().min(1, { message: t('medecin.nouvelle_consultation.error_patient') || 'Veuillez sélectionner un patient.' }),
@@ -76,6 +85,7 @@ export default function NouvelleConsultationPage() {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<ConsultationFormValues>({
     resolver: zodResolver(consultationFormSchema),
@@ -100,10 +110,31 @@ export default function NouvelleConsultationPage() {
             return { data: [] };
           }),
         ]);
-        setAssures(resAssures.data);
+
+        let loadedAssures = [...resAssures.data];
+
+        if (queryAssureId) {
+          const assureIdNum = Number(queryAssureId);
+          if (!loadedAssures.some((a) => a.id === assureIdNum)) {
+            try {
+              const resSingle = await getAssureById(assureIdNum);
+              if (resSingle.data) {
+                loadedAssures.push(resSingle.data);
+              }
+            } catch (err) {
+              console.error('Failed to load patient from query param:', err);
+            }
+          }
+        }
+
+        setAssures(loadedAssures);
         
         // Filter specialists
         setSpecialists(resMedecins.data.filter((m) => m.type === 'SPECIALISTE'));
+
+        if (queryAssureId) {
+          setValue('assureId', queryAssureId);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -111,7 +142,7 @@ export default function NouvelleConsultationPage() {
       }
     };
     loadData();
-  }, []);
+  }, [queryAssureId, setValue]);
 
   if (!user) return null;
 
@@ -173,11 +204,51 @@ export default function NouvelleConsultationPage() {
     setPrescriptions(prescriptions.filter((_, i) => i !== index));
   };
 
+  const handleSearchPatient = async () => {
+    if (!searchIdAssure.trim()) {
+      warning("Veuillez saisir un identifiant assuré (ex: ASS-12345).");
+      return;
+    }
+    setIsSearchingPatient(true);
+    try {
+      const raw = await AssurSService.getByIdAssure(searchIdAssure.trim());
+      const medecins = await getMedecins().then(res => res.data).catch(() => []);
+      const patient = mapAssure(raw as Record<string, unknown>, medecins);
+      
+      if (patient) {
+        setAssures((prev) => {
+          if (prev.some((p) => p.id === patient.id)) return prev;
+          return [...prev, patient];
+        });
+        setValue('assureId', String(patient.id));
+        success(`Patient trouvé : ${patient.nom}. Sélectionné.`);
+      } else {
+        error("Aucun patient trouvé avec cet identifiant.");
+      }
+    } catch (err) {
+      console.error(err);
+      error("Patient introuvable ou erreur de recherche.");
+    } finally {
+      setIsSearchingPatient(false);
+    }
+  };
+
   const onSubmit = async (data: ConsultationFormValues) => {
     setIsSubmitting(true);
     try {
+      const selectedAssureId = Number(data.assureId);
+      const selectedAssure = assures.find(a => a.id === selectedAssureId);
+      
+      if (selectedAssure && (!selectedAssure.medecinTraitant || selectedAssure.medecinTraitant.id !== user.id)) {
+        try {
+          await choisirMedecinTraitant(selectedAssureId, user.id);
+        } catch (assignErr) {
+          console.error("Failed to auto-assign doctor:", assignErr);
+        }
+      }
+
       const payload = {
-        assureId: Number(data.assureId),
+        assureId: selectedAssureId,
         generalisteId: user.id,
         motif: data.motif,
         prescriptions: prescriptions,
@@ -241,6 +312,37 @@ export default function NouvelleConsultationPage() {
                   </h3>
                 </div>
                 <div className="h-px bg-slate-200" />
+
+                {/* Search Patient Box */}
+                <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2 mb-2">
+                  <span className="font-display font-semibold text-xs text-slate-850 block">
+                    Rechercher un patient par identifiant (ASS-XXXXXXXX)
+                  </span>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                        <Search size={16} />
+                      </span>
+                      <input
+                        type="text"
+                        placeholder="Ex: ASS-12345678"
+                        value={searchIdAssure}
+                        onChange={(e) => setSearchIdAssure(e.target.value)}
+                        className="w-full h-10 pl-9 pr-3 bg-white border border-slate-200 rounded-xl font-body text-xs focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200"
+                      />
+                    </div>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleSearchPatient}
+                      isLoading={isSearchingPatient}
+                      className="text-xs h-10 px-4"
+                    >
+                      Rechercher
+                    </Button>
+                  </div>
+                </div>
 
                 {/* Patient Select */}
                 <div className="form-group">

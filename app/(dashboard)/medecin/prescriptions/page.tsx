@@ -6,7 +6,7 @@ import { Pill, Search, Calendar, User, Edit, Trash2, Stethoscope, FileText } fro
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getConsultationsByMedecin, updatePrescription, deletePrescription, getMedecins } from '@/lib/api';
+import { getConsultationsByMedecin, updatePrescription, deletePrescription, getMedecins, getPrescriptionsByConsultation, prescrireMedicament, prescrireConsultation } from '@/lib/api';
 import { Consultation, Prescription, Medecin } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -29,7 +29,7 @@ export default function MedecinPrescriptionsPage() {
 
   // Modals state
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  const [editingPrescription, setEditingPrescription] = useState<Prescription | null>(null);
+  const [editingPrescription, setEditingPrescription] = useState<(Prescription & { date: string; patient: string }) | null>(null);
   
   // Form fields state for editing
   const [editType, setEditType] = useState<'MEDICAMENT' | 'CONSULTATION_SPECIALISTE'>('MEDICAMENT');
@@ -38,6 +38,18 @@ export default function MedecinPrescriptionsPage() {
   const [editMatricule, setEditMatricule] = useState('');
   const [editMotif, setEditMotif] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+
+  // States for other prescriptions of the same consultation
+  const [relatedPrescriptions, setRelatedPrescriptions] = useState<Prescription[]>([]);
+  const [isLoadingRelated, setIsLoadingRelated] = useState(false);
+
+  // Form fields for adding new prescription in the modal
+  const [newType, setNewType] = useState<'MEDICAMENT' | 'CONSULTATION_SPECIALISTE'>('MEDICAMENT');
+  const [newMedicament, setNewMedicament] = useState('');
+  const [newPosologie, setNewPosologie] = useState('');
+  const [newMatricule, setNewMatricule] = useState('');
+  const [newMotif, setNewMotif] = useState('');
+  const [isAddingNew, setIsAddingNew] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -76,7 +88,7 @@ export default function MedecinPrescriptionsPage() {
     loadData();
   }, [user]);
 
-  const handleOpenEdit = (p: Prescription) => {
+  const handleOpenEdit = async (p: Prescription & { date: string; patient: string }) => {
     setEditingPrescription(p);
     setEditType(p.type);
     setEditMedicament(p.medicament || '');
@@ -84,6 +96,17 @@ export default function MedecinPrescriptionsPage() {
     setEditMatricule(p.matriculeMedecin || '');
     setEditMotif(p.motif || '');
     setIsEditModalOpen(true);
+    
+    // Fetch related prescriptions
+    setIsLoadingRelated(true);
+    try {
+      const res = await getPrescriptionsByConsultation(p.consultationId);
+      setRelatedPrescriptions(res.data || []);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoadingRelated(false);
+    }
   };
 
   const handleSaveEdit = async () => {
@@ -142,6 +165,81 @@ export default function MedecinPrescriptionsPage() {
     } catch (err) {
       console.error(err);
       error("Erreur lors de la suppression de la prescription.");
+    }
+  };
+
+  const handleAddNewPrescription = async () => {
+    if (!editingPrescription) return;
+
+    if (newType === 'MEDICAMENT') {
+      if (!newMedicament.trim() || !newPosologie.trim()) {
+        warning("Veuillez renseigner le nom du médicament et sa posologie.");
+        return;
+      }
+    } else {
+      if (!newMatricule || !newMotif.trim()) {
+        warning("Veuillez sélectionner le spécialiste ciblé et renseigner le motif.");
+        return;
+      }
+    }
+
+    setIsAddingNew(true);
+    try {
+      let res;
+      if (newType === 'MEDICAMENT') {
+        res = await prescrireMedicament({
+          consultationId: editingPrescription.consultationId,
+          medicament: newMedicament,
+          posologie: newPosologie,
+        });
+      } else {
+        res = await prescrireConsultation({
+          consultationId: editingPrescription.consultationId,
+          matriculeMedecin: newMatricule,
+          motif: newMotif,
+        });
+      }
+
+      const newPresc = res.data;
+      if (newPresc) {
+        setRelatedPrescriptions((prev) => [...prev, newPresc]);
+
+        // Add to main prescriptions table list
+        const mainItem = {
+          ...newPresc,
+          date: editingPrescription.date,
+          patient: editingPrescription.patient,
+        };
+        setPrescriptions((prev) => [...prev, mainItem]);
+
+        success("Prescription ajoutée avec succès à l'ordonnance.");
+        
+        // Reset fields
+        setNewMedicament('');
+        setNewPosologie('');
+        setNewMatricule('');
+        setNewMotif('');
+      }
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors de l'ajout de la prescription.");
+    } finally {
+      setIsAddingNew(false);
+    }
+  };
+
+  const handleDeleteRelated = async (id: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir supprimer cette prescription de l'ordonnance ?")) {
+      return;
+    }
+    try {
+      await deletePrescription(id);
+      setRelatedPrescriptions((prev) => prev.filter((p) => p.id !== id));
+      setPrescriptions((prev) => prev.filter((p) => p.id !== id));
+      success("Prescription retirée de l'ordonnance.");
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors du retrait de la prescription.");
     }
   };
 
@@ -277,102 +375,234 @@ export default function MedecinPrescriptionsPage() {
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Modifier la prescription"
-        size="md"
+        title="Modifier l'ordonnance"
+        size="lg"
       >
-        <div className="space-y-4">
-          <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl">
-            <button
-              type="button"
-              onClick={() => { setEditType('MEDICAMENT'); }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
-                editType === 'MEDICAMENT' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {t('medecin.nouvelle_consultation.type_med')}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setEditType('CONSULTATION_SPECIALISTE'); }}
-              className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
-                editType === 'CONSULTATION_SPECIALISTE' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
-              }`}
-            >
-              {t('medecin.nouvelle_consultation.type_spec')}
-            </button>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 divide-y md:divide-y-0 md:divide-x divide-slate-100">
+          
+          {/* SECTION 1: Edit Selected Prescription */}
+          <div className="space-y-4 pr-0 md:pr-4">
+            <h4 className="font-display font-semibold text-xs text-slate-400 uppercase tracking-wider mb-2">
+              Modifier l'élément actuel
+            </h4>
+            <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl">
+              <button
+                type="button"
+                onClick={() => { setEditType('MEDICAMENT'); }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                  editType === 'MEDICAMENT' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {t('medecin.nouvelle_consultation.type_med')}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setEditType('CONSULTATION_SPECIALISTE'); }}
+                className={`flex-1 py-1.5 rounded-lg text-xs font-display font-bold uppercase tracking-wider transition cursor-pointer ${
+                  editType === 'CONSULTATION_SPECIALISTE' ? 'bg-white text-slate-850 shadow-sm border border-slate-200/50' : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                {t('medecin.nouvelle_consultation.type_spec')}
+              </button>
+            </div>
+
+            {editType === 'MEDICAMENT' ? (
+              <div className="space-y-3">
+                <Input
+                  id="input-edit-medicament"
+                  label={t('medecin.nouvelle_consultation.medicament')}
+                  placeholder={t('medecin.nouvelle_consultation.medicament_placeholder')}
+                  value={editMedicament}
+                  onChange={(e) => setEditMedicament(e.target.value)}
+                  leftIcon={<Pill size={16} className="text-slate-400" />}
+                />
+                <Input
+                  id="input-edit-posologie"
+                  label={t('medecin.nouvelle_consultation.posologie')}
+                  placeholder={t('medecin.nouvelle_consultation.posologie_placeholder')}
+                  value={editPosologie}
+                  onChange={(e) => setEditPosologie(e.target.value)}
+                  leftIcon={<FileText size={16} className="text-slate-400" />}
+                />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="form-group">
+                  <label className="font-display font-semibold text-[13px] text-slate-700 tracking-wide mb-1 block">
+                    {t('medecin.nouvelle_consultation.target_spec')}
+                  </label>
+                  <div className="relative flex items-center">
+                    <div className="absolute left-3.5 text-slate-400 pointer-events-none flex items-center justify-center">
+                      <Stethoscope size={16} />
+                    </div>
+                    <select
+                      id="select-edit-specialist"
+                      value={editMatricule}
+                      onChange={(e) => setEditMatricule(e.target.value)}
+                      className="w-full h-11 bg-slate-50/80 border border-slate-200 rounded-xl font-body text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 pl-10 pr-10 dashboard-input"
+                    >
+                      <option value="">-- {t('medecin.nouvelle_consultation.choose_spec')} --</option>
+                      {specialists.map((s) => (
+                        <option key={s.id} value={s.matricule}>
+                          Dr. {s.nom} ({s.domaineSpecialisation})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+                <Input
+                  id="input-edit-referral-reason"
+                  label={t('medecin.nouvelle_consultation.referral_reason')}
+                  placeholder={t('medecin.nouvelle_consultation.referral_motif_placeholder')}
+                  value={editMotif}
+                  onChange={(e) => setEditMotif(e.target.value)}
+                  leftIcon={<FileText size={16} className="text-slate-400" />}
+                />
+              </div>
+            )}
+
+            <div className="flex justify-end gap-2 pt-4 border-t border-slate-100">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsEditModalOpen(false)}
+                className="text-xs"
+              >
+                {t('common.cancel')}
+              </Button>
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleSaveEdit}
+                isLoading={isSaving}
+                className="text-xs font-semibold"
+              >
+                Enregistrer
+              </Button>
+            </div>
           </div>
 
-          {editType === 'MEDICAMENT' ? (
-            <div className="space-y-4">
-              <Input
-                id="input-edit-medicament"
-                label={t('medecin.nouvelle_consultation.medicament')}
-                placeholder={t('medecin.nouvelle_consultation.medicament_placeholder')}
-                value={editMedicament}
-                onChange={(e) => setEditMedicament(e.target.value)}
-                leftIcon={<Pill size={16} className="text-slate-400" />}
-              />
-              <Input
-                id="input-edit-posologie"
-                label={t('medecin.nouvelle_consultation.posologie')}
-                placeholder={t('medecin.nouvelle_consultation.posologie_placeholder')}
-                value={editPosologie}
-                onChange={(e) => setEditPosologie(e.target.value)}
-                leftIcon={<FileText size={16} className="text-slate-400" />}
-              />
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <div className="form-group">
-                <label className="font-display font-semibold text-[13px] text-slate-700 tracking-wide mb-1 block">
-                  {t('medecin.nouvelle_consultation.target_spec')}
-                </label>
-                <div className="relative flex items-center">
-                  <div className="absolute left-3.5 text-slate-400 pointer-events-none flex items-center justify-center">
-                    <Stethoscope size={16} />
+          {/* SECTION 2: Ordonnance / Related Prescriptions list & addition */}
+          <div className="space-y-4 pt-4 md:pt-0 pl-0 md:pl-6">
+            <h4 className="font-display font-semibold text-xs text-slate-400 uppercase tracking-wider mb-2">
+              Médicaments & Soins de l'ordonnance
+            </h4>
+
+            {/* List of existing prescriptions in this order */}
+            <div className="max-h-[160px] overflow-y-auto space-y-2 pr-1 border border-slate-100 rounded-xl p-2 bg-slate-50/50">
+              {isLoadingRelated ? (
+                <div className="py-6 flex justify-center"><Loader size="sm" /></div>
+              ) : relatedPrescriptions.length === 0 ? (
+                <p className="text-slate-400 text-xs italic text-center py-4">Aucune prescription dans cette ordonnance.</p>
+              ) : (
+                relatedPrescriptions.map((rp) => (
+                  <div key={rp.id} className="flex justify-between items-center gap-2 bg-white p-2 rounded-lg border border-slate-200/60 shadow-sm">
+                    <div className="text-xs min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant={rp.type === 'MEDICAMENT' ? 'info' : 'warning'} className="text-[9px] px-1 py-0 scale-90 origin-left">
+                          {rp.type === 'MEDICAMENT' ? 'Med' : 'Spéc'}
+                        </Badge>
+                        <span className="font-semibold text-slate-800 truncate">
+                          {rp.type === 'MEDICAMENT' ? rp.medicament : `Orientation`}
+                        </span>
+                      </div>
+                      <p className="text-slate-400 text-[10px] truncate pl-1 mt-0.5">
+                        {rp.type === 'MEDICAMENT' ? rp.posologie : rp.motif}
+                      </p>
+                    </div>
+                    {editingPrescription && rp.id !== editingPrescription.id && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteRelated(rp.id)}
+                        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition cursor-pointer"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
                   </div>
+                ))
+              )}
+            </div>
+
+            {/* Form to add a new prescription to the same consultation */}
+            <div className="border border-slate-200 rounded-xl p-3 bg-slate-50 space-y-3">
+              <span className="font-display font-bold text-[10px] text-slate-700 uppercase tracking-wider block">
+                + Ajouter un autre élément à l'ordonnance
+              </span>
+              
+              <div className="flex bg-slate-200/60 p-0.5 rounded-lg text-[10px]">
+                <button
+                  type="button"
+                  onClick={() => setNewType('MEDICAMENT')}
+                  className={`flex-1 py-1 rounded-md font-bold uppercase transition cursor-pointer ${
+                    newType === 'MEDICAMENT' ? 'bg-white text-slate-850 shadow-sm' : 'text-slate-500'
+                  }`}
+                >
+                  Médicament
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNewType('CONSULTATION_SPECIALISTE')}
+                  className={`flex-1 py-1 rounded-md font-bold uppercase transition cursor-pointer ${
+                    newType === 'CONSULTATION_SPECIALISTE' ? 'bg-white text-slate-850 shadow-sm' : 'text-slate-500'
+                  }`}
+                >
+                  Spécialiste
+                </button>
+              </div>
+
+              {newType === 'MEDICAMENT' ? (
+                <div className="space-y-2">
+                  <input
+                    type="text"
+                    placeholder="Nom du médicament"
+                    value={newMedicament}
+                    onChange={(e) => setNewMedicament(e.target.value)}
+                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500"
+                  />
+                  <input
+                    type="text"
+                    placeholder="Posologie (ex: 1 cp matin/soir)"
+                    value={newPosologie}
+                    onChange={(e) => setNewPosologie(e.target.value)}
+                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500"
+                  />
+                </div>
+              ) : (
+                <div className="space-y-2">
                   <select
-                    id="select-edit-specialist"
-                    value={editMatricule}
-                    onChange={(e) => setEditMatricule(e.target.value)}
-                    className="w-full h-11 bg-slate-50/80 border border-slate-200 rounded-xl font-body text-sm text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 pl-10 pr-10 dashboard-input"
+                    value={newMatricule}
+                    onChange={(e) => setNewMatricule(e.target.value)}
+                    className="w-full h-8 px-2 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500"
                   >
-                    <option value="">-- {t('medecin.nouvelle_consultation.choose_spec')} --</option>
+                    <option value="">-- Sélectionner spécialiste --</option>
                     {specialists.map((s) => (
                       <option key={s.id} value={s.matricule}>
                         Dr. {s.nom} ({s.domaineSpecialisation})
                       </option>
                     ))}
                   </select>
+                  <input
+                    type="text"
+                    placeholder="Motif de l'orientation"
+                    value={newMotif}
+                    onChange={(e) => setNewMotif(e.target.value)}
+                    className="w-full h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500"
+                  />
                 </div>
-              </div>
-              <Input
-                id="input-edit-referral-reason"
-                label={t('medecin.nouvelle_consultation.referral_reason')}
-                placeholder={t('medecin.nouvelle_consultation.referral_motif_placeholder')}
-                value={editMotif}
-                onChange={(e) => setEditMotif(e.target.value)}
-                leftIcon={<FileText size={16} className="text-slate-400" />}
-              />
-            </div>
-          )}
+              )}
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={() => setIsEditModalOpen(false)}
-            >
-              {t('common.cancel')}
-            </Button>
-            <Button
-              type="button"
-              variant="primary"
-              onClick={handleSaveEdit}
-              isLoading={isSaving}
-            >
-              Enregistrer
-            </Button>
+              <Button
+                type="button"
+                variant="secondary"
+                size="sm"
+                className="w-full text-[10px] py-1.5 h-8 bg-slate-800 text-white hover:bg-slate-900"
+                onClick={handleAddNewPrescription}
+                isLoading={isAddingNew}
+              >
+                Ajouter à l'ordonnance
+              </Button>
+            </div>
           </div>
         </div>
       </Modal>

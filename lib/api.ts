@@ -578,6 +578,13 @@ export const deletePrescription = async (id: number): Promise<void> => {
   await PrescriptionsService.supprimer(id);
 };
 
+export const getPrescriptionsByConsultation = async (
+  consultationId: number,
+): Promise<ApiPayload<Prescription[]>> => {
+  const raw = await PrescriptionsService.getByConsultation(consultationId);
+  return { data: toList<Record<string, unknown>>(raw).map(mapPrescription) };
+};
+
 // ============================================================
 // FEUILLES MALADIE
 // ============================================================
