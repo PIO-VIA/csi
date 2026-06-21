@@ -48,6 +48,7 @@ export interface CreateMedecinInput {
   type: 'GENERALISTE' | 'SPECIALISTE';
   domaineSpecialisation?: string;
   matricule?: string;
+  estAssure?: boolean;
 }
 
 export interface Consultation {

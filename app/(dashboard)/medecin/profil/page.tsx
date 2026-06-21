@@ -42,6 +42,7 @@ const personalInfoSchema = z.object({
   sexe: z.string().optional(),
   dateNaissance: z.string().optional(),
   domaineSpecialisation: z.string().optional(),
+  estAssure: z.boolean().optional(),
 });
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
@@ -105,6 +106,7 @@ export default function MedecinProfilePage() {
         sexe: medecinInfo.sexe ?? '',
         dateNaissance: medecinInfo.dateNaissance ?? '',
         domaineSpecialisation: medecinInfo.domaineSpecialisation ?? '',
+        estAssure: medecinInfo.estAssure ?? false,
       });
     }
   }, [medecinInfo, resetInfo]);
@@ -136,6 +138,7 @@ export default function MedecinProfilePage() {
         dateNaissance: data.dateNaissance || undefined,
         domaineSpecialisation: data.domaineSpecialisation || undefined,
         type: medecinInfo?.type,
+        estAssure: data.estAssure,
       });
       success('Informations personnelles mises à jour avec succès.');
       setMedecinInfo(res.data);
@@ -394,6 +397,18 @@ export default function MedecinProfilePage() {
                     error={infoErrors.dateNaissance?.message ? String(infoErrors.dateNaissance.message) : undefined}
                     {...registerInfo('dateNaissance')}
                   />
+
+                  <div className="flex items-center gap-2 py-2">
+                    <input
+                      type="checkbox"
+                      id="estAssure"
+                      {...registerInfo('estAssure')}
+                      className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                    />
+                    <label htmlFor="estAssure" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                      Je suis également assuré de l'organisme (Rendre assuré)
+                    </label>
+                  </div>
 
                   {medecinInfo?.type === 'SPECIALISTE' && (
                     <Input

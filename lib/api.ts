@@ -329,9 +329,24 @@ export const getAssuresByGeneraliste = async (
  * Liste les assurés affectés au médecin connecté (via endpoint GET /api/medecins/me/assures).
  */
 export const getMesAssures = async (): Promise<ApiPayload<Assure[]>> => {
-  const medecins = await loadMedecins();
-  const raw = await MDecinsService.getMesAssures();
-  return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('csi_session') : null;
+  if (storedUser) {
+    try {
+      const session = JSON.parse(storedUser);
+      if (session.role === 'SPECIALISTE') {
+        return { data: [] };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  try {
+    const medecins = await loadMedecins();
+    const raw = await MDecinsService.getMesAssures();
+    return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
+  } catch (err) {
+    return { data: [] };
+  }
 };
 
 export const createMedecin = async (
@@ -344,9 +359,10 @@ export const createMedecin = async (
       indicatifPays: data.indicatifPays,
       numTelephone: data.numTelephone,
       type: data.type,
-      domaineSpecialisation: data.domaineSpecialisation,
+      domaineSpecialisation: data.domaineSpecialisation || undefined,
       motDePasse: randomPassword(),
       matricule: data.matricule,
+      estAssure: data.estAssure ?? false,
     };
 
     const raw = await MDecinsService.enregistrer(payload);
@@ -372,11 +388,12 @@ export const updateMedecin = async (
     email: data.email,
     indicatifPays: data.indicatifPays,
     numTelephone: data.numTelephone,
-    dateNaissance: data.dateNaissance,
-    sexe: data.sexe,
+    dateNaissance: (data.dateNaissance || null) as any,
+    sexe: (data.sexe || null) as any,
     type: data.type,
-    domaineSpecialisation: data.domaineSpecialisation,
+    domaineSpecialisation: (data.domaineSpecialisation || null) as any,
     matricule: data.matricule,
+    estAssure: data.estAssure,
   };
   const raw = await MDecinsService.modifier(id, payload as Parameters<typeof MDecinsService.modifier>[1]);
   return { data: mapMedecin(raw as Record<string, unknown>) };
@@ -496,8 +513,23 @@ export const getConsultationsByAssure = async (
 export const getConsultationsByGeneraliste = async (
   id: number,
 ): Promise<ApiPayload<Consultation[]>> => {
-  const raw = await ConsultationsService.getByGeneraliste(id);
-  return { data: await enrichConsultations(toList<Record<string, unknown>>(raw)) };
+  const storedUser = typeof window !== 'undefined' ? localStorage.getItem('csi_session') : null;
+  if (storedUser) {
+    try {
+      const session = JSON.parse(storedUser);
+      if (session.role === 'SPECIALISTE') {
+        return { data: [] };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  try {
+    const raw = await ConsultationsService.getByGeneraliste(id);
+    return { data: await enrichConsultations(toList<Record<string, unknown>>(raw)) };
+  } catch (err) {
+    return { data: [] };
+  }
 };
 
 export const getConsultationsByMedecin = getConsultationsByGeneraliste;

@@ -39,6 +39,7 @@ const medecinFormSchema = z.object({
   type: z.enum(['GENERALISTE', 'SPECIALISTE']),
   domaineSpecialisation: z.string().optional(),
   matricule: z.string().optional(),
+  estAssure: z.boolean().optional(),
 });
 
 const editMedecinSchema = z.object({
@@ -50,6 +51,7 @@ const editMedecinSchema = z.object({
   dateNaissance: z.string().optional(),
   domaineSpecialisation: z.string().optional(),
   matricule: z.string().optional(),
+  estAssure: z.boolean().optional(),
 });
 
 type MedecinFormValues = z.infer<typeof medecinFormSchema>;
@@ -133,6 +135,7 @@ export default function MedecinsAdminPage() {
         type: data.type,
         domaineSpecialisation: data.type === 'SPECIALISTE' ? data.domaineSpecialisation : undefined,
         matricule: data.matricule || undefined,
+        estAssure: data.estAssure,
       };
 
       await createMedecin(payload);
@@ -168,6 +171,7 @@ export default function MedecinsAdminPage() {
       dateNaissance: m.dateNaissance ?? '',
       domaineSpecialisation: m.domaineSpecialisation ?? '',
       matricule: m.matricule ?? '',
+      estAssure: m.estAssure,
     });
     setIsEditModalOpen(true);
   };
@@ -187,6 +191,7 @@ export default function MedecinsAdminPage() {
           editingMedecin.type === 'SPECIALISTE' ? (data.domaineSpecialisation || undefined) : undefined,
         type: editingMedecin.type,
         matricule: data.matricule || undefined,
+        estAssure: data.estAssure,
       });
       success('Informations du médecin mises à jour avec succès.');
       setIsEditModalOpen(false);
@@ -396,7 +401,14 @@ export default function MedecinsAdminPage() {
                             {m.nom.charAt(0).toUpperCase()}
                           </div>
                         )}
-                        {m.nom}
+                        <div className="flex flex-col">
+                          <span className="font-semibold text-slate-800">{m.nom}</span>
+                          {m.estAssure && (
+                            <span className="inline-flex max-w-fit items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 mt-0.5">
+                              Assuré
+                            </span>
+                          )}
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-slate-600">
@@ -529,6 +541,18 @@ export default function MedecinsAdminPage() {
             </select>
           </div>
 
+          <div className="flex items-center gap-2 py-2">
+            <input
+              type="checkbox"
+              id="estAssure"
+              {...register('estAssure')}
+              className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+            />
+            <label htmlFor="estAssure" className="text-xs font-semibold text-slate-700 cursor-pointer">
+              Rendre ce médecin également assuré de l'organisme
+            </label>
+          </div>
+
           {watchType === 'SPECIALISTE' && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
               <Input
@@ -637,6 +661,18 @@ export default function MedecinsAdminPage() {
                   {...registerEdit('dateNaissance')}
                 />
               </div>
+            </div>
+
+            <div className="flex items-center gap-2 py-2">
+              <input
+                type="checkbox"
+                id="estAssureEdit"
+                {...registerEdit('estAssure')}
+                className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+              />
+              <label htmlFor="estAssureEdit" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                Rendre ce médecin également assuré de l'organisme
+              </label>
             </div>
 
             {editingMedecin.type === 'SPECIALISTE' && (
