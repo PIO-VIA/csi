@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getMedecins, getAssures, createMedecin, updateMedecin, getApiErrorMessage } from '@/lib/api';
+import { getMedecins, getAssures, createMedecin, updateMedecin, deleteMedecin, getApiErrorMessage } from '@/lib/api';
 import { Medecin, Assure, CreateMedecinInput } from '@/types';
 import Button from '@/components/ui/Button';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
@@ -204,9 +204,24 @@ export default function MedecinsAdminPage() {
     }
   };
 
-  // ─── Actions ───────────────────────────────────────────────
-  const handleDelete = (_id: number) => {
-    warning(t('admin.medecins.delete_not_supported') || 'La suppression n est pas disponible.');
+  const handleDelete = (id: number) => {
+    const medecin = medecins.find((m) => m.id === id);
+    if (!medecin) return;
+    setConfirmModal({
+      isOpen: true,
+      title: 'Supprimer le médecin',
+      description: `Êtes-vous sûr de vouloir supprimer définitivement le médecin ${medecin.nom} ? Cette action est irréversible.`,
+      onConfirm: async () => {
+        setConfirmModal((prev) => ({ ...prev, isOpen: false }));
+        try {
+          await deleteMedecin(id);
+          success('Le médecin a été supprimé avec succès.');
+          loadData();
+        } catch (e) {
+          error(getApiErrorMessage(e));
+        }
+      },
+    });
   };
 
   const handleResetPassword = (id: number) => {

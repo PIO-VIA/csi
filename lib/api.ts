@@ -399,6 +399,10 @@ export const updateMedecin = async (
   return { data: mapMedecin(raw as Record<string, unknown>) };
 };
 
+export const deleteMedecin = async (id: number): Promise<void> => {
+  await MDecinsService.supprimer(id);
+};
+
 export const uploadMedecinPhoto = async (
   id: number,
   file: File,
