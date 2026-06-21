@@ -8,8 +8,24 @@ import type {
   User,
   UserRole,
 } from '@/types';
+import { OpenAPI } from '@/lib2';
 
 type RawRecord = Record<string, unknown>;
+
+export function getFullPhotoUrl(photoUrl?: string): string | undefined {
+  if (!photoUrl) return undefined;
+  if (
+    photoUrl.startsWith('http://') ||
+    photoUrl.startsWith('https://') ||
+    photoUrl.startsWith('data:')
+  ) {
+    return photoUrl;
+  }
+  const baseUrl = OpenAPI.BASE || '';
+  const cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  const cleanPath = photoUrl.startsWith('/') ? photoUrl : `/${photoUrl}`;
+  return `${cleanBase}${cleanPath}`;
+}
 
 export function asArray<T>(value: unknown): T[] {
   if (Array.isArray(value)) return value as T[];
@@ -49,7 +65,7 @@ export function mapMedecin(raw: RawRecord): Medecin {
     estAssure: Boolean(raw.estAssure),
     indicatifPays: raw.indicatifPays ? String(raw.indicatifPays) : undefined,
     numTelephone: String(raw.numTelephone ?? ''),
-    photoUrl: raw.photoUrl ? String(raw.photoUrl) : undefined,
+    photoUrl: getFullPhotoUrl(raw.photoUrl ? String(raw.photoUrl) : undefined),
     dateNaissance: raw.dateNaissance ? String(raw.dateNaissance) : undefined,
     sexe: raw.sexe ? String(raw.sexe) : undefined,
   };
@@ -75,7 +91,7 @@ export function mapAssure(raw: RawRecord, medecins: Medecin[] = []): Assure {
     indicatifPays: raw.indicatifPays ? String(raw.indicatifPays) : undefined,
     numTelephone: String(raw.numTelephone ?? ''),
     email: raw.email ? String(raw.email) : undefined,
-    photoUrl: raw.photoUrl ? String(raw.photoUrl) : undefined,
+    photoUrl: getFullPhotoUrl(raw.photoUrl ? String(raw.photoUrl) : undefined),
     medecinTraitant,
   };
 }
@@ -165,7 +181,7 @@ export function mapAuthMe(raw: RawRecord, fallbackEmail = ''): User {
     email,
     role,
     avatarInitiales: initialsFromName(nom),
-    photoUrl: raw.photoUrl ? String(raw.photoUrl) : undefined,
+    photoUrl: getFullPhotoUrl(raw.photoUrl ? String(raw.photoUrl) : undefined),
   };
 }
 

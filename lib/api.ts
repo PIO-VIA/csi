@@ -21,6 +21,7 @@ import {
   mapMedecin,
   mapPrescription,
   mapRemboursement,
+  getFullPhotoUrl,
 } from '@/lib/mappers';
 import type {
   Assure,
@@ -384,7 +385,7 @@ export const uploadMedecinPhoto = async (
   file: File,
 ): Promise<{ photoUrl: string }> => {
   const raw = await MDecinsService.uploadPhoto(id, { photo: file });
-  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
+  return { photoUrl: getFullPhotoUrl(String((raw as Record<string, unknown>).photoUrl ?? '')) ?? '' };
 };
 
 export const uploadAgentPhoto = async (
@@ -392,7 +393,7 @@ export const uploadAgentPhoto = async (
   file: File,
 ): Promise<{ photoUrl: string }> => {
   const raw = await AgentsService.uploadPhoto2(id, { photo: file });
-  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
+  return { photoUrl: getFullPhotoUrl(String((raw as Record<string, unknown>).photoUrl ?? '')) ?? '' };
 };
 
 export const uploadAssurePhoto = async (
@@ -400,7 +401,7 @@ export const uploadAssurePhoto = async (
   file: File,
 ): Promise<{ photoUrl: string }> => {
   const raw = await AssurSService.uploadPhoto1(id, { photo: file });
-  return { photoUrl: String((raw as Record<string, unknown>).photoUrl ?? '') };
+  return { photoUrl: getFullPhotoUrl(String((raw as Record<string, unknown>).photoUrl ?? '')) ?? '' };
 };
 
 // ============================================================
