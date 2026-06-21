@@ -1,23 +1,18 @@
 'use client';
 
-import React, { useState } from 'react';
-import { usePathname } from 'next/navigation';
+import React from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/authContext';
 import Avatar from './Avatar';
 import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
-import { Bell, LogOut, Settings, User, Globe, ChevronRight } from 'lucide-react';
-import { cn } from '@/lib/utils';
+import { LogOut, Settings, User, Globe, ChevronRight, Layout } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 export function TopBar() {
   const pathname = usePathname();
+  const router = useRouter();
   const { user, logout } = useAuth();
   const { i18n, t } = useTranslation();
-  const [notifications, setNotifications] = useState([
-    { id: 1, text: 'Nouveau remboursement validé (15 000 FCFA)', time: 'Il y a 10 min', read: false },
-    { id: 2, text: 'Dr. Etoa a enregistré une nouvelle consultation', time: 'Il y a 1h', read: false },
-    { id: 3, text: 'Rappel: Votre médecin traitant a changé', time: 'Hier', read: true },
-  ]);
 
   if (!user) return null;
 
@@ -60,132 +55,106 @@ export function TopBar() {
     return labels[user.role] || user.role;
   };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const getProfileLink = () => {
+    if (user.role === 'ADMIN') return '/admin/profil';
+    return '/medecin/profil';
+  };
 
-  const markAllRead = () => {
-    setNotifications(notifications.map((n) => ({ ...n, read: true })));
+  const getHomeLink = () => {
+    if (user.role === 'ADMIN') return '/admin';
+    return '/medecin';
   };
 
   return (
-    <header className="sticky top-0 z-20 h-[4.25rem] w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-white/90 backdrop-blur-lg border-b border-slate-200/70 shadow-sm">
+    <header className="sticky top-0 z-20 h-16 w-full flex items-center justify-between px-4 sm:px-6 lg:px-8 bg-white/75 backdrop-blur-md border-b border-slate-200/50 shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
+      {/* Left side: Breadcrumb & Title */}
       <div className="flex items-center gap-2 pl-10 lg:pl-0 min-w-0">
         <div className="min-w-0">
-          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-display mb-0.5">
-            <span className="truncate">{getRoleLabel()}</span>
-            <ChevronRight size={10} className="shrink-0" />
-            <span className="text-primary-600 font-semibold truncate">{getPageTitle()}</span>
+          <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-display font-medium mb-0.5">
+            <span className="bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full text-[9px] font-semibold tracking-wider uppercase">
+              {getRoleLabel()}
+            </span>
+            <ChevronRight size={10} className="text-slate-300 shrink-0" />
+            <span className="text-primary-600 font-semibold truncate hover:underline cursor-pointer" onClick={() => router.push(getProfileLink())}>
+              {getPageTitle()}
+            </span>
           </div>
-          <h2 className="font-display font-bold text-lg text-slate-900 tracking-tight truncate">
-            {getPageTitle()}
+          <h2 className="font-display font-extrabold text-base text-slate-800 tracking-tight truncate flex items-center gap-2">
+            <span>{getPageTitle()}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
           </h2>
         </div>
       </div>
 
-      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+      {/* Right side: Actions */}
+      <div className="flex items-center gap-3 shrink-0">
+        {/* Language button */}
         <button
           onClick={() => {
             const nextLang = i18n.language?.startsWith('fr') ? 'en' : 'fr';
             i18n.changeLanguage(nextLang);
           }}
-          className="px-2.5 py-1.5 rounded-lg border border-slate-200 bg-white text-[10px] font-display font-bold uppercase tracking-wider text-slate-600 hover:text-primary-600 hover:border-primary-200 transition flex items-center gap-1.5 cursor-pointer"
+          className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-[11px] font-display font-bold uppercase tracking-wider text-slate-600 hover:text-primary-600 hover:border-primary-200 transition-all duration-200 flex items-center gap-1.5 cursor-pointer shadow-sm hover:shadow active:scale-95"
+          title="Changer la langue / Change language"
         >
-          <Globe size={11} />
+          <Globe size={13} className="text-slate-400 group-hover:text-primary-500 transition-colors" />
           <span>{i18n.language?.startsWith('fr') ? 'FR' : 'EN'}</span>
         </button>
 
+        {/* User profile dropdown */}
         <DropdownMenu.Root>
           <DropdownMenu.Trigger asChild>
-            <button className="relative p-2 rounded-xl text-slate-500 hover:text-slate-800 hover:bg-slate-100 transition cursor-pointer">
-              <Bell size={19} />
-              {unreadCount > 0 && (
-                <span className="absolute top-1 right-1 h-4 w-4 bg-danger text-[9px] font-display font-bold text-white rounded-full flex items-center justify-center">
-                  {unreadCount}
-                </span>
-              )}
-            </button>
-          </DropdownMenu.Trigger>
-
-          <DropdownMenu.Portal>
-            <DropdownMenu.Content
-              className="z-50 w-80 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
-              align="end"
-              sideOffset={8}
-            >
-              <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 mb-2">
-                <span className="font-display font-semibold text-xs text-slate-900">Notifications</span>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllRead}
-                    className="text-[10px] font-body text-primary-600 hover:underline cursor-pointer"
-                  >
-                    {t('dashboard.notifications.mark_all_read') || 'Tout marquer lu'}
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-col gap-1 max-h-60 overflow-y-auto">
-                {notifications.length === 0 && (
-                  <p className="text-xs text-slate-400 text-center py-6">
-                    Aucune notification
-                  </p>
-                )}
-                {notifications.map((n) => (
-                  <div
-                    key={n.id}
-                    className={cn(
-                      'p-2.5 rounded-xl flex flex-col gap-1 transition',
-                      n.read
-                        ? 'hover:bg-slate-50'
-                        : 'bg-primary-50/60 hover:bg-primary-50 border-l-2 border-primary-500'
-                    )}
-                  >
-                    <p className="text-xs font-body text-slate-700 leading-normal">{n.text}</p>
-                    <span className="text-[9px] font-body text-slate-400">{n.time}</span>
-                  </div>
-                ))}
-              </div>
-            </DropdownMenu.Content>
-          </DropdownMenu.Portal>
-        </DropdownMenu.Root>
-
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger asChild>
-            <button className="flex items-center gap-2 focus:outline-none cursor-pointer group pl-1">
+            <button className="flex items-center gap-2 focus:outline-none cursor-pointer group p-0.5 rounded-full border border-slate-200/60 bg-slate-50 hover:bg-white hover:border-primary-300 transition-all duration-200 active:scale-95 shadow-sm">
               <Avatar
                 nom={user.nom}
                 initials={user.avatarInitiales}
                 src={user.photoUrl}
                 size="sm"
-                className="ring-2 ring-transparent group-hover:ring-primary-200 transition"
+                className="ring-2 ring-transparent group-hover:ring-primary-100 transition duration-200"
               />
             </button>
           </DropdownMenu.Trigger>
 
           <DropdownMenu.Portal>
             <DropdownMenu.Content
-              className="z-50 w-56 rounded-2xl border border-slate-200 bg-white p-2 shadow-xl"
+              className="z-50 w-56 rounded-2xl border border-slate-200 bg-white p-1.5 shadow-xl animate-fade-in"
               align="end"
               sideOffset={8}
             >
-              <div className="px-3 py-2 border-b border-slate-100 mb-2">
-                <p className="font-display font-semibold text-xs text-slate-900 truncate">{user.nom}</p>
-                <p className="text-[10px] font-body text-slate-400 truncate">{user.email}</p>
+              <div className="px-3 py-2.5 border-b border-slate-100 mb-1.5">
+                <p className="font-display font-bold text-xs text-slate-800 truncate leading-none">{user.nom}</p>
+                <p className="text-[10px] font-body text-slate-400 truncate mt-1 leading-none">{user.email}</p>
               </div>
 
-              <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-xs font-display text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition outline-none cursor-pointer">
-                <User size={14} />
+              <DropdownMenu.Item
+                onClick={() => router.push(getProfileLink())}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-display font-medium text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition outline-none cursor-pointer"
+              >
+                <User size={14} className="text-slate-400" />
                 <span>Mon profil</span>
               </DropdownMenu.Item>
 
-              <DropdownMenu.Item className="flex items-center gap-2 px-3 py-2 text-xs font-display text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-50 transition outline-none cursor-pointer">
-                <Settings size={14} />
+              <DropdownMenu.Item
+                onClick={() => router.push(getProfileLink())}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-display font-medium text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition outline-none cursor-pointer"
+              >
+                <Settings size={14} className="text-slate-400" />
                 <span>Paramètres</span>
               </DropdownMenu.Item>
 
-              <DropdownMenu.Separator className="h-px bg-slate-100 my-1" />
+              <DropdownMenu.Item
+                onClick={() => router.push(getHomeLink())}
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-display font-medium text-slate-600 hover:text-slate-900 rounded-xl hover:bg-slate-50 transition outline-none cursor-pointer"
+              >
+                <Layout size={14} className="text-slate-400" />
+                <span>Tableau de bord</span>
+              </DropdownMenu.Item>
+
+              <DropdownMenu.Separator className="h-px bg-slate-100 my-1.5" />
 
               <DropdownMenu.Item
                 onClick={logout}
-                className="flex items-center gap-2 px-3 py-2 text-xs font-display text-danger hover:bg-danger/10 rounded-lg transition outline-none cursor-pointer"
+                className="flex items-center gap-2.5 px-3 py-2 text-xs font-display font-semibold text-danger hover:bg-danger/10 rounded-xl transition outline-none cursor-pointer"
               >
                 <LogOut size={14} />
                 <span>Déconnexion</span>
