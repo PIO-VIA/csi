@@ -136,6 +136,7 @@ export function mapFeuille(raw: RawRecord, remboursement?: Remboursement): Feuil
     // Le backend renvoie déjà ce montant dans FeuillemMaladieResponseDTO.montantRembourse
     montantRembourse: raw.montantRembourse != null ? Number(raw.montantRembourse) : undefined,
     remboursement,
+    statut: raw.statut ? String(raw.statut) : undefined,
   };
 }
 

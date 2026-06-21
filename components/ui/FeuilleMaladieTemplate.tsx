@@ -314,9 +314,13 @@ export function FeuilleMaladieTemplate({
               <div>
                 <span className="text-slate-400 text-xs block">Statut de la Caisse :</span>
                 <span className="mt-1 block">
-                  <Badge variant={sheet.estRembourse ? 'success' : 'warning'}>
-                    {sheet.estRembourse ? 'REMBOURSÉ' : 'EN ATTENTE'}
-                  </Badge>
+                  {sheet.statut === 'ANNULE' ? (
+                    <Badge variant="danger">ANNULÉ</Badge>
+                  ) : (
+                    <Badge variant={sheet.estRembourse ? 'success' : 'warning'}>
+                      {sheet.estRembourse ? 'REMBOURSÉ' : 'EN ATTENTE'}
+                    </Badge>
+                  )}
                 </span>
               </div>
               {sheet.estRembourse && (
@@ -330,7 +334,9 @@ export function FeuilleMaladieTemplate({
               <div className="flex justify-between">
                 <span className="text-slate-400">Montant remboursé :</span>
                 <span className="font-bold text-success-600">
-                  {sheet.estRembourse && sheet.remboursement 
+                  {sheet.statut === 'ANNULE'
+                    ? '0 FCFA (Annulé)'
+                    : sheet.estRembourse && sheet.remboursement 
                     ? formatFCFA(sheet.remboursement.montant)
                     : sheet.montantRembourse != null 
                     ? formatFCFA(sheet.montantRembourse)

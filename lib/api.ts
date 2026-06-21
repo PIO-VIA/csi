@@ -346,6 +346,7 @@ export const createMedecin = async (
       type: data.type,
       domaineSpecialisation: data.domaineSpecialisation,
       motDePasse: randomPassword(),
+      matricule: data.matricule,
     };
 
     const raw = await MDecinsService.enregistrer(payload);
@@ -375,6 +376,7 @@ export const updateMedecin = async (
     sexe: data.sexe,
     type: data.type,
     domaineSpecialisation: data.domaineSpecialisation,
+    matricule: data.matricule,
   };
   const raw = await MDecinsService.modifier(id, payload as Parameters<typeof MDecinsService.modifier>[1]);
   return { data: mapMedecin(raw as Record<string, unknown>) };
@@ -546,6 +548,11 @@ export const getMesFeuilles = async (): Promise<ApiPayload<FeuillemMaladie[]>> =
   const raw = await FeuillesMaladieService.getMesFeuilles();
   // montantRembourse déjà renvoyé par le DTO backend — pas de second appel nécessaire
   return { data: toList<Record<string, unknown>>(raw).map((item) => mapFeuille(item)) };
+};
+
+export const annulerFeuille = async (id: number): Promise<ApiPayload<FeuillemMaladie>> => {
+  const raw = await FeuillesMaladieService.annuler(id);
+  return { data: mapFeuille(raw as Record<string, unknown>) };
 };
 
 // ============================================================

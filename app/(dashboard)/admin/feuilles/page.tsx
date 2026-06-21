@@ -12,7 +12,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
-import { getFeuilles, getConsultations } from '@/lib/api';
+import { getFeuilles, getConsultations, annulerFeuille } from '@/lib/api';
 import { FeuillemMaladie, Consultation } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
@@ -22,18 +22,41 @@ import Button from '@/components/ui/Button';
 import Loader from '@/components/ui/Loader';
 import { formatFCFA, formatDate } from '@/lib/utils';
 import FeuilleMaladieTemplate from '@/components/ui/FeuilleMaladieTemplate';
+import { useToast } from '@/components/ui/Toast';
+import { X } from 'lucide-react';
 
 export default function AdminFeuillesPage() {
   const { t } = useTranslation();
   const router = useRouter();
+  const { success, error } = useToast();
   const [loading, setLoading] = useState(true);
+  const [cancellingId, setCancellingId] = useState<number | null>(null);
   const [feuilles, setFeuilles] = useState<FeuillemMaladie[]>([]);
   const [selectedSheet, setSelectedSheet] = useState<FeuillemMaladie | null>(null);
   const [consultations, setConsultations] = useState<Consultation[]>([]);
 
+  const handleCancelSheet = async (id: number) => {
+    if (!window.confirm("Êtes-vous sûr de vouloir annuler cette feuille de maladie ? Cette action est irréversible.")) {
+      return;
+    }
+    setCancellingId(id);
+    try {
+      await annulerFeuille(id);
+      success("La feuille de maladie a été annulée avec succès.");
+      setFeuilles((prev) =>
+        prev.map((f) => (f.id === id ? { ...f, statut: 'ANNULE' } : f))
+      );
+    } catch (err: any) {
+      console.error(err);
+      error("Erreur lors de l'annulation de la feuille de maladie.");
+    } finally {
+      setCancellingId(null);
+    }
+  };
+
   // Search & Filter state
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'REIMBURSED' | 'PENDING'>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'REIMBURSED' | 'PENDING' | 'CANCELLED'>('ALL');
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -72,8 +95,9 @@ export default function AdminFeuillesPage() {
 
     const matchesStatus =
       statusFilter === 'ALL' ||
-      (statusFilter === 'REIMBURSED' && f.estRembourse) ||
-      (statusFilter === 'PENDING' && !f.estRembourse);
+      (statusFilter === 'REIMBURSED' && f.estRembourse && f.statut !== 'ANNULE') ||
+      (statusFilter === 'PENDING' && !f.estRembourse && f.statut !== 'ANNULE') ||
+      (statusFilter === 'CANCELLED' && f.statut === 'ANNULE');
 
     return matchesSearch && matchesStatus;
   });
@@ -109,7 +133,7 @@ export default function AdminFeuillesPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard
           label="Total feuilles"
           value={feuilles.length}
@@ -118,15 +142,21 @@ export default function AdminFeuillesPage() {
         />
         <StatCard
           label="Remboursées"
-          value={feuilles.filter((f) => f.estRembourse).length}
+          value={feuilles.filter((f) => f.estRembourse && f.statut !== 'ANNULE').length}
           icon={<CheckCircle size={20} />}
           color="success"
         />
         <StatCard
           label="En attente"
-          value={feuilles.filter((f) => !f.estRembourse).length}
+          value={feuilles.filter((f) => !f.estRembourse && f.statut !== 'ANNULE').length}
           icon={<Clock size={20} />}
           color="warning"
+        />
+        <StatCard
+          label="Annulées"
+          value={feuilles.filter((f) => f.statut === 'ANNULE').length}
+          icon={<X size={20} />}
+          color="danger"
         />
       </div>
 
@@ -152,7 +182,7 @@ export default function AdminFeuillesPage() {
 
           {/* Toggle Status */}
           <div className="flex bg-slate-100 p-1 border border-slate-200 rounded-xl w-full md:w-auto">
-            {(['ALL', 'REIMBURSED', 'PENDING'] as const).map((status) => (
+            {(['ALL', 'REIMBURSED', 'PENDING', 'CANCELLED'] as const).map((status) => (
               <button
                 key={status}
                 onClick={() => {
@@ -169,7 +199,9 @@ export default function AdminFeuillesPage() {
                   ? t('admin.medecins.filter_all') || 'Tous'
                   : status === 'REIMBURSED'
                   ? t('admin.remboursements.status_reimbursed') || 'Remboursés'
-                  : t('admin.remboursements.pending_title') || 'En attente'}
+                  : status === 'PENDING'
+                  ? t('admin.remboursements.pending_title') || 'En attente'
+                  : 'Annulées'}
               </button>
             ))}
           </div>
@@ -220,9 +252,13 @@ export default function AdminFeuillesPage() {
                         )}
                       </TableCell>
                       <TableCell>
-                        <Badge variant={f.estRembourse ? 'success' : 'warning'}>
-                          {f.estRembourse ? t('admin.remboursements.status_reimbursed') || 'Remboursé' : t('admin.remboursements.pending_title') || 'En attente'}
-                        </Badge>
+                        {f.statut === 'ANNULE' ? (
+                          <Badge variant="danger">Annulé</Badge>
+                        ) : (
+                          <Badge variant={f.estRembourse ? 'success' : 'warning'}>
+                            {f.estRembourse ? t('admin.remboursements.status_reimbursed') || 'Remboursé' : t('admin.remboursements.pending_title') || 'En attente'}
+                          </Badge>
+                        )}
                       </TableCell>
                       <TableCell className="no-print">
                         <div className="flex gap-2 items-center">
@@ -234,17 +270,30 @@ export default function AdminFeuillesPage() {
                           >
                             Visualiser
                           </Button>
-                          {!f.estRembourse ? (
-                            <Button
-                              variant="primary"
-                              size="sm"
-                              className="text-xs px-2.5 py-1.5"
-                              onClick={() => router.push('/admin/remboursements')}
-                            >
-                              Rembourser
-                            </Button>
-                          ) : (
+                          {f.statut === 'ANNULE' ? (
+                            <span className="text-xs text-slate-400 italic">Annulé</span>
+                          ) : f.estRembourse ? (
                             <Badge variant="success">Remboursé</Badge>
+                          ) : (
+                            <>
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                className="text-xs px-2.5 py-1.5"
+                                onClick={() => router.push('/admin/remboursements')}
+                              >
+                                Rembourser
+                              </Button>
+                              <Button
+                                variant="danger"
+                                size="sm"
+                                className="text-xs px-2.5 py-1.5"
+                                onClick={() => handleCancelSheet(f.id)}
+                                isLoading={cancellingId === f.id}
+                              >
+                                Annuler
+                              </Button>
+                            </>
                           )}
                         </div>
                       </TableCell>

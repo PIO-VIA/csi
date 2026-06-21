@@ -90,6 +90,23 @@ export class FeuillesMaladieService {
         });
     }
     /**
+     * Annuler une feuille de maladie (agent)
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static annuler(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'PATCH',
+            url: '/api/feuilles-maladie/{id}/annuler',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Lister les feuilles de maladie créées par le médecin connecté
      * @returns any OK
      * @throws ApiError

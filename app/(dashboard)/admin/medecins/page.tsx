@@ -38,6 +38,7 @@ const medecinFormSchema = z.object({
   numTelephone: z.string().min(6, { message: 'Le numéro de téléphone est requis' }),
   type: z.enum(['GENERALISTE', 'SPECIALISTE']),
   domaineSpecialisation: z.string().optional(),
+  matricule: z.string().optional(),
 });
 
 const editMedecinSchema = z.object({
@@ -48,6 +49,7 @@ const editMedecinSchema = z.object({
   sexe: z.string().optional(),
   dateNaissance: z.string().optional(),
   domaineSpecialisation: z.string().optional(),
+  matricule: z.string().optional(),
 });
 
 type MedecinFormValues = z.infer<typeof medecinFormSchema>;
@@ -130,6 +132,7 @@ export default function MedecinsAdminPage() {
         numTelephone: data.numTelephone,
         type: data.type,
         domaineSpecialisation: data.type === 'SPECIALISTE' ? data.domaineSpecialisation : undefined,
+        matricule: data.matricule || undefined,
       };
 
       await createMedecin(payload);
@@ -164,6 +167,7 @@ export default function MedecinsAdminPage() {
       sexe: m.sexe ?? '',
       dateNaissance: m.dateNaissance ?? '',
       domaineSpecialisation: m.domaineSpecialisation ?? '',
+      matricule: m.matricule ?? '',
     });
     setIsEditModalOpen(true);
   };
@@ -182,6 +186,7 @@ export default function MedecinsAdminPage() {
         domaineSpecialisation:
           editingMedecin.type === 'SPECIALISTE' ? (data.domaineSpecialisation || undefined) : undefined,
         type: editingMedecin.type,
+        matricule: data.matricule || undefined,
       });
       success('Informations du médecin mises à jour avec succès.');
       setIsEditModalOpen(false);
@@ -482,6 +487,13 @@ export default function MedecinsAdminPage() {
           />
 
           <Input
+            label={t('admin.medecins.col_matricule') || 'Matricule'}
+            placeholder="Ex: MED-12345 (Laisser vide pour auto-générer)"
+            error={errors.matricule?.message ? String(errors.matricule.message) : undefined}
+            {...register('matricule')}
+          />
+
+          <Input
             label={t('admin.medecins.form_email') || 'Email'}
             type="email"
             placeholder="medecin@csi.cm"
@@ -571,6 +583,13 @@ export default function MedecinsAdminPage() {
               placeholder="Ex: Dr. Célestin Etoa"
               error={editErrors.nom?.message ? String(editErrors.nom.message) : undefined}
               {...registerEdit('nom')}
+            />
+
+            <Input
+              label="Matricule professionnel"
+              placeholder="Ex: MED-12345"
+              error={editErrors.matricule?.message ? String(editErrors.matricule.message) : undefined}
+              {...registerEdit('matricule')}
             />
 
             <Input

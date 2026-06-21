@@ -47,6 +47,7 @@ export interface CreateMedecinInput {
   numTelephone: string;
   type: 'GENERALISTE' | 'SPECIALISTE';
   domaineSpecialisation?: string;
+  matricule?: string;
 }
 
 export interface Consultation {
@@ -77,6 +78,7 @@ export interface FeuillemMaladie {
   consultationId: number;
   montantRembourse?: number;  // Rempli par le backend dans FeuillemMaladieResponseDTO
   remboursement?: Remboursement;
+  statut?: string;
 }
 
 export interface Remboursement {
