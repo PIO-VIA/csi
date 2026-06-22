@@ -98,18 +98,28 @@ export default function AdminDashboard() {
     return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
   }).reduce((s, r) => s + r.montant, 0);
 
+  const startOfCurrentWeek = new Date(now);
+  const currentDay = startOfCurrentWeek.getDay();
+  const distanceToMonday = currentDay === 0 ? 6 : currentDay - 1;
+  startOfCurrentWeek.setDate(startOfCurrentWeek.getDate() - distanceToMonday);
+  startOfCurrentWeek.setHours(0, 0, 0, 0);
+
   const monthsList = ['Jan', 'Fév', 'Mar', 'Avr', 'Mai', 'Jun', 'Jul', 'Aoû', 'Sep', 'Oct', 'Nov', 'Déc'];
   const chartLineData = Array.from({ length: 6 }).map((_, idx) => {
-    const d = new Date();
-    d.setMonth(now.getMonth() - (5 - idx));
-    const mLabel = monthsList[d.getMonth()];
-    const mVal = d.getMonth();
-    const yVal = d.getFullYear();
+    const startOfWeek = new Date(startOfCurrentWeek);
+    startOfWeek.setDate(startOfWeek.getDate() - (5 - idx) * 7);
+
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 7);
+
+    const mLabel = monthsList[startOfWeek.getMonth()];
+    const label = `${startOfWeek.getDate()} ${mLabel}`;
+
     const count = consultations.filter((c) => {
       const cd = new Date(c.date);
-      return cd.getMonth() === mVal && cd.getFullYear() === yVal;
+      return cd >= startOfWeek && cd < endOfWeek;
     }).length;
-    return { name: mLabel, Consultations: count };
+    return { name: label, Consultations: count };
   });
 
   let generalistRefund = 0;
@@ -212,7 +222,7 @@ export default function AdminDashboard() {
                 <span className="font-display font-semibold text-sm text-slate-800">
                   {t('dashboard.stats.evolution_consults')}
                 </span>
-                <Badge variant="neutral">{t('dashboard.stats.last_6_months')}</Badge>
+                <Badge variant="neutral">{t('dashboard.stats.last_6_weeks')}</Badge>
               </CardHeader>
               <CardBody className="h-80 pt-2">
                 <ResponsiveContainer width="100%" height="100%">

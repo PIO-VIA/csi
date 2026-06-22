@@ -208,7 +208,6 @@ export default function AssureDetailPage({ params }: PageProps) {
                     </div>
                     <div className="flex flex-col min-w-0">
                       <span className="font-display font-semibold text-xs text-white truncate">{assure.medecinTraitant.nom}</span>
-                      <span className="text-[9px] text-slate-500 font-mono truncate">{assure.medecinTraitant.matricule}</span>
                     </div>
                   </div>
                 ) : (

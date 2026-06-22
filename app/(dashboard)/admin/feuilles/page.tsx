@@ -45,12 +45,6 @@ export default function AdminFeuillesPage() {
   const [editMontantSoin, setEditMontantSoin] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
 
-  const handleOpenEdit = (f: FeuillemMaladie) => {
-    setEditingSheet(f);
-    setEditIdFeuille(f.idFeuille);
-    setEditMontantSoin(f.montantSoin);
-    setIsEditModalOpen(true);
-  };
 
   const handleSaveEdit = async () => {
     if (!editingSheet) return;
@@ -335,15 +329,6 @@ export default function AdminFeuillesPage() {
                                 onClick={() => router.push('/admin/remboursements')}
                               >
                                 Rembourser
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="text-xs px-2.5 py-1.5 bg-white"
-                                onClick={() => handleOpenEdit(f)}
-                              >
-                                <Edit size={13} className="mr-1 inline" />
-                                Modifier
                               </Button>
                               <Button
                                 variant="danger"

@@ -185,7 +185,7 @@ function AssureForm({
           <option value="">-- {t('admin.assures.form_doctor_select')} --</option>
           {generalistes.map((g) => (
             <option key={g.id} value={g.id}>
-              {g.nom} ({g.matricule})
+              {g.nom}
             </option>
           ))}
         </select>
