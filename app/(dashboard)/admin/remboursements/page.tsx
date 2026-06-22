@@ -8,7 +8,9 @@ import {
   Clock,
   DollarSign,
   Calendar,
+  Printer,
 } from 'lucide-react';
+import { RemboursementTemplate } from '@/components/ui/RemboursementTemplate';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import {
@@ -46,6 +48,21 @@ export default function RemboursementsAdminPage() {
   const [paymentMode, setPaymentMode] = useState<'VIREMENT' | 'CASH'>('VIREMENT');
   const [isPaying, setIsPaying] = useState(false);
 
+  // Receipt Template Modal State
+  const [isReceiptOpen, setIsReceiptOpen] = useState(false);
+  const [activeRemboursement, setActiveRemboursement] = useState<Remboursement | null>(null);
+  const [activeFeuille, setActiveFeuille] = useState<FeuillemMaladie | null>(null);
+  const [activeConsultation, setActiveConsultation] = useState<Consultation | null>(null);
+
+  const handleOpenReceipt = (r: Remboursement) => {
+    const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId) || null;
+    const cons = sheet ? getConsultationForSheet(sheet) : null;
+    setActiveRemboursement(r);
+    setActiveFeuille(sheet);
+    setActiveConsultation(cons || null);
+    setIsReceiptOpen(true);
+  };
+
   const loadData = async () => {
     try {
       const [resFeuilles, resPending, resConsultations, resRemboursements, resTotal] =
@@ -82,11 +99,22 @@ export default function RemboursementsAdminPage() {
     if (!selectedFeuille) return;
     setIsPaying(true);
     try {
-      await effectuerRemboursement(selectedFeuille.id, paymentMode);
+      const res = await effectuerRemboursement(selectedFeuille.id, paymentMode);
       success(t('admin.remboursements.payment_success') || 'Remboursement effectué avec succès.');
+      
+      const newRemb = res.data;
+      const cons = getConsultationForSheet(selectedFeuille);
+      
       setIsModalOpen(false);
-      setSelectedFeuille(null);
       await loadData(); // Reload all data
+      
+      // Automatically open printable receipt template
+      setActiveRemboursement(newRemb);
+      setActiveFeuille(selectedFeuille);
+      setActiveConsultation(cons || null);
+      setIsReceiptOpen(true);
+
+      setSelectedFeuille(null);
     } catch (e) {
       error(t('common.error'));
     } finally {
@@ -276,12 +304,13 @@ export default function RemboursementsAdminPage() {
                   <TableHead>Taux</TableHead>
                   <TableHead>{t('admin.remboursements.col_mode')}</TableHead>
                   <TableHead>{t('common.status')}</TableHead>
+                  <TableHead className="text-right">Action</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
               {historicalPayments.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={9} className="text-center py-12 text-slate-500 font-body">
                     {t('admin.remboursements.history_none')}
                   </TableCell>
                 </TableRow>
@@ -306,6 +335,17 @@ export default function RemboursementsAdminPage() {
                     </TableCell>
                     <TableCell>
                       <Badge variant="success">{t('admin.remboursements.status_reimbursed')}</Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleOpenReceipt(r)}
+                        className="px-2.5 py-1 text-xs flex items-center gap-1 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200/50"
+                        leftIcon={<Printer size={13} />}
+                      >
+                        Reçu
+                      </Button>
                     </TableCell>
                   </TableRow>
                 ))
@@ -427,6 +467,19 @@ export default function RemboursementsAdminPage() {
           })()}
         </Modal>
       )}
+      {/* RECEIPT TEMPLATE PRINT DIALOG */}
+      <RemboursementTemplate
+        isOpen={isReceiptOpen}
+        onClose={() => {
+          setIsReceiptOpen(false);
+          setActiveRemboursement(null);
+          setActiveFeuille(null);
+          setActiveConsultation(null);
+        }}
+        remboursement={activeRemboursement}
+        feuille={activeFeuille}
+        consultation={activeConsultation}
+      />
     </motion.div>
   );
 }
