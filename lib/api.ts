@@ -704,3 +704,70 @@ export const effectuerRemboursement = async (
   const raw = await RemboursementsService.confirmer(feuilleId, mode);
   return { data: mapRemboursement(raw as Record<string, unknown>) };
 };
+
+// ============================================================
+// ORIENTATIONS SPECIALISTE
+// ============================================================
+
+export interface EnrichedOrientation extends Prescription {
+  date: string;
+  patientName: string;
+  patientIdAssure: string;
+  patientPhone: string;
+  patientId: number;
+  medecinPrescripteur: string;
+  consultation?: Consultation;
+}
+
+export const getMesOrientations = async (): Promise<ApiPayload<Prescription[]>> => {
+  const raw = await PrescriptionsService.getMesOrientations();
+  return { data: toList<Record<string, unknown>>(raw).map(mapPrescription) };
+};
+
+export const getOrientationsByMatricule = async (
+  matricule: string,
+): Promise<ApiPayload<Prescription[]>> => {
+  const raw = await PrescriptionsService.getOrientationsByMatricule(matricule);
+  return { data: toList<Record<string, unknown>>(raw).map(mapPrescription) };
+};
+
+export const getMesOrientationsEnriched = async (): Promise<EnrichedOrientation[]> => {
+  try {
+    const raw = await PrescriptionsService.getMesOrientations();
+    const list = toList<Record<string, unknown>>(raw).map(mapPrescription);
+    
+    const enriched = await Promise.all(
+      list.map(async (presc) => {
+        try {
+          const resCons = await getConsultationById(presc.consultationId);
+          const cons = resCons.data;
+          return {
+            ...presc,
+            date: cons.date,
+            patientName: cons.assure.nom,
+            patientIdAssure: cons.assure.idAssure,
+            patientPhone: cons.assure.numTelephone,
+            patientId: cons.assure.id,
+            medecinPrescripteur: cons.generaliste.nom,
+            consultation: cons,
+          } as EnrichedOrientation;
+        } catch {
+          return {
+            ...presc,
+            date: '',
+            patientName: 'Assuré',
+            patientIdAssure: 'N/A',
+            patientPhone: '',
+            patientId: 0,
+            medecinPrescripteur: 'Médecin',
+          } as EnrichedOrientation;
+        }
+      })
+    );
+    return enriched;
+  } catch (err) {
+    console.error('Failed to load enriched orientations:', err);
+    return [];
+  }
+};
+

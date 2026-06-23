@@ -78,6 +78,34 @@ export class PrescriptionsService {
         });
     }
     /**
+     * Lister les orientations (prescriptions de consultation) adressées au spécialiste connecté
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getMesOrientations(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/prescriptions/specialiste/me',
+        });
+    }
+    /**
+     * Lister les orientations (prescriptions de consultation) adressées à un spécialiste par son matricule
+     * @param matricule
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getOrientationsByMatricule(
+        matricule: string,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/prescriptions/specialiste/matricule/{matricule}',
+            path: {
+                'matricule': matricule,
+            },
+        });
+    }
+    /**
      * Lister toutes les prescriptions d'une consultation
      * @param consultationId
      * @returns any OK

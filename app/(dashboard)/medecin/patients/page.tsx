@@ -8,7 +8,7 @@ import { Search, User, Smartphone, Droplet, Calendar } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesAssures, getConsultationsByMedecin } from '@/lib/api';
+import { getMesAssures, getConsultationsByMedecin, getMesOrientationsEnriched, type EnrichedOrientation } from '@/lib/api';
 import { Assure, Consultation } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -27,23 +27,31 @@ export default function MedecinPatientsPage() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [activeSubTab, setActiveSubTab] = useState<'consultes' | 'declares'>('consultes');
+  const [orientations, setOrientations] = useState<EnrichedOrientation[]>([]);
 
   useEffect(() => {
     if (!user) return;
     const loadData = async () => {
       try {
-        const [resAssures, resConsults] = await Promise.all([
+        const [resAssures, resConsults, resOrientations] = await Promise.all([
           getMesAssures().catch((err) => {
             console.error('Failed to load assured patients:', err);
-            return { data: [] };
+            return { data: [] as Assure[] };
           }),
           getConsultationsByMedecin(user.id).catch((err) => {
             console.error('Failed to load consultations:', err);
-            return { data: [] };
+            return { data: [] as Consultation[] };
           }),
+          user.role === 'SPECIALISTE'
+            ? getMesOrientationsEnriched().catch((err) => {
+                console.error('Failed to load orientations:', err);
+                return [] as EnrichedOrientation[];
+              })
+            : Promise.resolve([] as EnrichedOrientation[])
         ]);
         setAllAssures(resAssures.data);
         setConsultations(resConsults.data);
+        setOrientations(resOrientations);
       } catch (e) {
         console.error(e);
       } finally {
@@ -56,14 +64,34 @@ export default function MedecinPatientsPage() {
   if (loading) return <Loader className="min-h-[60vh]" size="lg" />;
   if (!user) return null;
 
+  const isSpecialistUser = user.role === 'SPECIALISTE';
+  const activeSubTabEffective = isSpecialistUser ? 'declares' : activeSubTab;
   const declaredPatients = allAssures;
+
+  // Gather oriented patients from orientations
+  const orientedPatientsMap = new Map();
+  orientations.forEach((o) => {
+    if (!o.patientId) return;
+    orientedPatientsMap.set(o.patientId, {
+      id: o.patientId,
+      idAssure: o.patientIdAssure,
+      nom: o.patientName,
+      numTelephone: o.patientPhone,
+      email: o.consultation?.assure?.email || '',
+      groupeSanguin: o.consultation?.assure?.groupeSanguin || '',
+      photoUrl: o.consultation?.assure?.photoUrl || undefined,
+    });
+  });
+  const orientedPatients = Array.from(orientedPatientsMap.values()) as Assure[];
 
   // Gather unique consulted patients directly from consultations so we get them even if not in allAssures (declared)
   const consultedPatientsMap = new Map(consultations.map((c) => [c.assure.id, c.assure]));
   const consultedPatients = Array.from(consultedPatientsMap.values());
 
   const activePatientsList =
-    activeSubTab === 'declares' ? declaredPatients : consultedPatients;
+    activeSubTabEffective === 'declares'
+      ? (isSpecialistUser ? orientedPatients : declaredPatients)
+      : consultedPatients;
 
   const filteredPatients = activePatientsList.filter(
     (p) =>
@@ -91,25 +119,27 @@ export default function MedecinPatientsPage() {
 
       {/* TABS */}
       <div className="flex border-b border-slate-200 gap-4">
-        <button
-          onClick={() => setActiveSubTab('consultes')}
-          className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
-            activeSubTab === 'consultes'
-              ? 'border-primary-500 text-primary-600'
-              : 'border-transparent text-slate-500 hover:text-slate-800'
-          }`}
-        >
-          {t('medecin.patients.tab_consulted')} ({consultedPatients.length})
-        </button>
+        {!isSpecialistUser && (
+          <button
+            onClick={() => setActiveSubTab('consultes')}
+            className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
+              activeSubTabEffective === 'consultes'
+                ? 'border-primary-500 text-primary-600'
+                : 'border-transparent text-slate-500 hover:text-slate-800'
+            }`}
+          >
+            {t('medecin.patients.tab_consulted')} ({consultedPatients.length})
+          </button>
+        )}
         <button
           onClick={() => setActiveSubTab('declares')}
           className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
-            activeSubTab === 'declares'
+            activeSubTabEffective === 'declares'
               ? 'border-primary-500 text-primary-600'
               : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
-          {t('medecin.patients.tab_declared')} ({declaredPatients.length})
+          {isSpecialistUser ? "Patients orientés" : t('medecin.patients.tab_declared')} ({isSpecialistUser ? orientedPatients.length : declaredPatients.length})
         </button>
       </div>
 
@@ -139,7 +169,7 @@ export default function MedecinPatientsPage() {
                 <TableHead>{t('medecin.patients.col_id')}</TableHead>
                 <TableHead>{t('medecin.patients.col_phone')}</TableHead>
                 <TableHead>{t('medecin.patients.col_blood')}</TableHead>
-                <TableHead>{t('medecin.patients.col_last_consult')}</TableHead>
+                <TableHead>{isSpecialistUser ? "Orientation" : t('medecin.patients.col_last_consult')}</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -156,8 +186,8 @@ export default function MedecinPatientsPage() {
                       />
                     ) : (
                       <EmptyState
-                        title="Aucun assuré déclaré"
-                        description="Aucun assuré ne vous a encore déclaré comme médecin traitant."
+                        title={isSpecialistUser ? "Aucun patient orienté" : "Aucun assuré déclaré"}
+                        description={isSpecialistUser ? "Aucun médecin généraliste ne vous a encore orienté de patient." : "Aucun assuré ne vous a encore déclaré comme médecin traitant."}
                       />
                     )}
                   </TableCell>
@@ -167,6 +197,8 @@ export default function MedecinPatientsPage() {
                   const lastConsult = consultations
                     .filter((c) => c.assure.id === p.id)
                     .sort((a, b) => b.id - a.id)[0];
+
+                  const patientOrientation = orientations.find((o) => o.patientId === p.id);
 
                   return (
                     <TableRow key={p.id}>
@@ -205,7 +237,19 @@ export default function MedecinPatientsPage() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-xs text-slate-500">
-                        {lastConsult ? (
+                        {isSpecialistUser && patientOrientation ? (
+                          <div className="flex flex-col gap-0.5">
+                            <span className="flex items-center gap-1 text-xs text-amber-600 font-semibold">
+                              <Calendar size={11} /> Référé le {patientOrientation.date ? formatDate(patientOrientation.date) : '—'}
+                            </span>
+                            <span
+                              className="text-[10px] text-slate-500 truncate max-w-32"
+                              title={patientOrientation.motif || ''}
+                            >
+                              Prescrit par Dr. {patientOrientation.medecinPrescripteur}
+                            </span>
+                          </div>
+                        ) : lastConsult ? (
                           <div className="flex flex-col gap-0.5">
                             <span className="flex items-center gap-1 text-xs">
                               <Calendar size={11} /> {formatDate(lastConsult.date)}
@@ -223,11 +267,15 @@ export default function MedecinPatientsPage() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
-                          <Link href={`/medecin/consultations/nouvelle?assureId=${p.id}`}>
-                            <Button variant="primary" size="sm" className="text-xs px-3">
-                              Consulter
-                            </Button>
-                          </Link>
+                          {isSpecialistUser ? (
+                            <Badge variant="warning" className="px-3 py-1 text-[10px] font-semibold">Dossier Orienté</Badge>
+                          ) : (
+                            <Link href={`/medecin/consultations/nouvelle?assureId=${p.id}`}>
+                              <Button variant="primary" size="sm" className="text-xs px-3">
+                                Consulter
+                              </Button>
+                            </Link>
+                          )}
                         </div>
                       </TableCell>
                     </TableRow>
@@ -241,3 +289,4 @@ export default function MedecinPatientsPage() {
     </motion.div>
   );
 }
+

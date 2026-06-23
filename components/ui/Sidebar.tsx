@@ -259,7 +259,10 @@ export function Sidebar() {
         )}
 
         {(role === 'GENERALISTE' || role === 'SPECIALISTE') &&
-          MEDECIN_NAV.map((item) => (
+          (role === 'SPECIALISTE'
+            ? MEDECIN_NAV.filter((item) => ['/medecin', '/medecin/patients', '/medecin/profil'].includes(item.href))
+            : MEDECIN_NAV
+          ).map((item) => (
             <NavLink
               key={item.href}
               item={item}
