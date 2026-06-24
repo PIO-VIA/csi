@@ -6,5 +6,6 @@ export type ConsultationRequestDTO = {
     date?: string;
     assureId?: number;
     generalisteId?: number;
+    motif?: string;
 };
 

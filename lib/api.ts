@@ -475,6 +475,7 @@ export const createConsultation = async (data: {
     date: data.date ?? new Date().toISOString().split('T')[0],
     assureId: Number(data.assureId),
     generalisteId: Number(data.generalisteId),
+    motif: data.motif,
   });
 
   const consultationId = Number((raw as Record<string, unknown>).id);
@@ -734,34 +735,72 @@ export const getOrientationsByMatricule = async (
 export const getMesOrientationsEnriched = async (): Promise<EnrichedOrientation[]> => {
   try {
     const raw = await PrescriptionsService.getMesOrientations();
-    const list = toList<Record<string, unknown>>(raw).map(mapPrescription);
+    const rawList = toList<Record<string, unknown>>(raw);
     
     const enriched = await Promise.all(
-      list.map(async (presc) => {
+      rawList.map(async (rawItem) => {
+        const presc = mapPrescription(rawItem);
+        
+        // Extract fields directly from the raw item DTO
+        const rawAssure = rawItem.assure as Record<string, any> | undefined;
+        let date = rawItem.dateConsultation ? String(rawItem.dateConsultation) : '';
+        let patientName = rawAssure?.nom ? String(rawAssure.nom) : 'Assuré';
+        let patientIdAssure = rawAssure?.idAssure ? String(rawAssure.idAssure) : 'N/A';
+        let patientPhone = rawAssure?.numTelephone ? String(rawAssure.numTelephone) : '';
+        let patientId = rawAssure?.id ? Number(rawAssure.id) : 0;
+        let medecinPrescripteur = rawItem.medecinPrescripteurNom ? String(rawItem.medecinPrescripteurNom) : 'Médecin';
+        let consultation: Consultation | undefined = undefined;
+
         try {
           const resCons = await getConsultationById(presc.consultationId);
-          const cons = resCons.data;
-          return {
-            ...presc,
-            date: cons.date,
-            patientName: cons.assure.nom,
-            patientIdAssure: cons.assure.idAssure,
-            patientPhone: cons.assure.numTelephone,
-            patientId: cons.assure.id,
-            medecinPrescripteur: cons.generaliste.nom,
-            consultation: cons,
-          } as EnrichedOrientation;
+          consultation = resCons.data;
+          if (consultation) {
+            date = consultation.date;
+            patientName = consultation.assure.nom;
+            patientIdAssure = consultation.assure.idAssure;
+            patientPhone = consultation.assure.numTelephone;
+            patientId = consultation.assure.id;
+            medecinPrescripteur = consultation.generaliste.nom;
+          }
         } catch {
-          return {
-            ...presc,
-            date: '',
-            patientName: 'Assuré',
-            patientIdAssure: 'N/A',
-            patientPhone: '',
-            patientId: 0,
-            medecinPrescripteur: 'Médecin',
-          } as EnrichedOrientation;
+          // If fetching consultation fails (e.g. 403 Forbidden for specialists),
+          // fallback to pre-enriched fields from the prescription DTO
         }
+
+        return {
+          ...presc,
+          date,
+          patientName,
+          patientIdAssure,
+          patientPhone,
+          patientId,
+          medecinPrescripteur,
+          consultation: consultation || {
+            id: presc.consultationId,
+            date,
+            assure: {
+              id: patientId,
+              idAssure: patientIdAssure,
+              nom: patientName,
+              numTelephone: patientPhone,
+              dateNaissance: '',
+              sexe: rawAssure?.sexe ? String(rawAssure.sexe) : '',
+              profession: '',
+              statutMatrimoniale: '',
+              groupeSanguin: rawAssure?.groupeSanguin ? String(rawAssure.groupeSanguin) : '',
+            },
+            generaliste: {
+              id: 0,
+              nom: medecinPrescripteur,
+              matricule: presc.matriculeMedecin || '',
+              email: '',
+              type: 'GENERALISTE',
+              estAssure: false,
+              numTelephone: '',
+            },
+            prescriptions: [presc],
+          },
+        } as EnrichedOrientation;
       })
     );
     return enriched;
