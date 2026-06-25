@@ -247,11 +247,20 @@ export default function NouvelleConsultationPage() {
         }
       }
 
+      let finalPrescriptions = [...prescriptions];
+      
+      // Auto-add any pending prescription that the user forgot to add before submitting
+      if (prescType === 'SPECIALISTE' && specMatricule && specMotif.trim()) {
+        finalPrescriptions.push({ type: 'SPECIALISTE', matriculeMedecin: specMatricule, motif: specMotif });
+      } else if (prescType === 'MEDICAMENT' && medName.trim() && posology.trim()) {
+        finalPrescriptions.push({ type: 'MEDICAMENT', medicament: medName, posologie: posology });
+      }
+
       const payload = {
         assureId: selectedAssureId,
         generalisteId: user.id,
         motif: data.motif,
-        prescriptions: prescriptions,
+        prescriptions: finalPrescriptions,
         creerFeuille: data.creerFeuille,
         montantSoin: data.creerFeuille ? data.montantSoin : undefined,
       };
@@ -594,7 +603,7 @@ export default function NouvelleConsultationPage() {
                             className="w-full h-11 bg-white border border-slate-200 rounded-xl font-body text-xs text-slate-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 focus:border-primary-500 transition-all duration-200 pl-10 pr-10 dashboard-input"
                           >
                             <option value="">-- {t('medecin.nouvelle_consultation.choose_spec')} --</option>
-                            {specialists.map((s) => (
+                            {specialists.filter(s => s.matricule).map((s) => (
                               <option key={s.id} value={s.matricule}>
                                 Dr. {s.nom} ({s.domaineSpecialisation})
                               </option>
