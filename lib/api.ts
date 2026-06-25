@@ -744,28 +744,15 @@ export const getMesOrientationsEnriched = async (): Promise<EnrichedOrientation[
         // Extract fields directly from the raw item DTO
         const rawAssure = rawItem.assure as Record<string, any> | undefined;
         let date = rawItem.dateConsultation ? String(rawItem.dateConsultation) : '';
-        let patientName = rawAssure?.nom ? String(rawAssure.nom) : 'Assuré';
-        let patientIdAssure = rawAssure?.idAssure ? String(rawAssure.idAssure) : 'N/A';
-        let patientPhone = rawAssure?.numTelephone ? String(rawAssure.numTelephone) : '';
-        let patientId = rawAssure?.id ? Number(rawAssure.id) : 0;
+        let patientName = rawAssure?.nom ? String(rawAssure.nom) : (rawItem.assureNom ? String(rawItem.assureNom) : 'Assuré');
+        let patientIdAssure = rawAssure?.idAssure ? String(rawAssure.idAssure) : (rawItem.assureIdAssure ? String(rawItem.assureIdAssure) : 'N/A');
+        let patientPhone = rawAssure?.numTelephone ? String(rawAssure.numTelephone) : (rawItem.assureTelephone ? String(rawItem.assureTelephone) : '');
+        let patientId = rawAssure?.id ? Number(rawAssure.id) : (rawItem.assureId ? Number(rawItem.assureId) : 0);
         let medecinPrescripteur = rawItem.medecinPrescripteurNom ? String(rawItem.medecinPrescripteurNom) : 'Médecin';
         let consultation: Consultation | undefined = undefined;
 
-        try {
-          const resCons = await getConsultationById(presc.consultationId);
-          consultation = resCons.data;
-          if (consultation) {
-            date = consultation.date;
-            patientName = consultation.assure.nom;
-            patientIdAssure = consultation.assure.idAssure;
-            patientPhone = consultation.assure.numTelephone;
-            patientId = consultation.assure.id;
-            medecinPrescripteur = consultation.generaliste.nom;
-          }
-        } catch {
-          // If fetching consultation fails (e.g. 403 Forbidden for specialists),
-          // fallback to pre-enriched fields from the prescription DTO
-        }
+        // We no longer call getConsultationById here because specialists are forbidden
+        // from accessing it (403). We rely entirely on the enriched PrescriptionResponseDTO.
 
         return {
           ...presc,
