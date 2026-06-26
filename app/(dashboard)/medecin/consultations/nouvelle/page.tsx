@@ -52,6 +52,7 @@ export default function NouvelleConsultationPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryAssureId = searchParams.get('assureId');
+  const queryIdAssure = searchParams.get('idAssure'); // identifiant ASS-XXXXX passé par le dashboard spécialiste
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [assures, setAssures] = useState<Assure[]>([]);
@@ -114,13 +115,30 @@ export default function NouvelleConsultationPage() {
         if (queryAssureId) {
           const assureIdNum = Number(queryAssureId);
           if (!loadedAssures.some((a) => a.id === assureIdNum)) {
-            try {
-              const resSingle = await getAssureById(assureIdNum);
-              if (resSingle.data) {
-                loadedAssures.push(resSingle.data);
+            // Stratégie 1 : utiliser l'identifiant ASS-XXXXX si disponible (accessible aux spécialistes)
+            if (queryIdAssure) {
+              try {
+                const raw = await AssurSService.getByIdAssure(queryIdAssure);
+                const medecins = await getMedecins().then(res => res.data).catch(() => []);
+                const patient = mapAssure(raw as Record<string, unknown>, medecins);
+                if (patient) {
+                  loadedAssures.push(patient);
+                }
+              } catch (err) {
+                console.error('Failed to load patient by idAssure:', err);
               }
-            } catch (err) {
-              console.error('Failed to load patient from query param:', err);
+            }
+
+            // Stratégie 2 : fallback par ID numérique (peut échouer en 403 pour les spécialistes)
+            if (!loadedAssures.some((a) => a.id === assureIdNum)) {
+              try {
+                const resSingle = await getAssureById(assureIdNum);
+                if (resSingle.data) {
+                  loadedAssures.push(resSingle.data);
+                }
+              } catch (err) {
+                console.error('Failed to load patient by numeric ID:', err);
+              }
             }
           }
         }
@@ -140,7 +158,7 @@ export default function NouvelleConsultationPage() {
       }
     };
     loadData();
-  }, [queryAssureId, setValue]);
+  }, [queryAssureId, queryIdAssure, setValue]);
 
   if (!user) return null;
 

@@ -285,7 +285,7 @@ export default function MedecinDashboardPage() {
                           <span className="text-[10px] text-slate-450 font-mono">
                             {o.patientPhone || 'Pas de numéro'}
                           </span>
-                          <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}`}>
+                          <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
                             <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
                               Consulter
                             </Button>
@@ -413,7 +413,7 @@ export default function MedecinDashboardPage() {
                             Dr. {o.medecinPrescripteur}
                           </TableCell>
                           <TableCell>
-                            <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}`}>
+                            <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
                               <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
                                 Consulter
                               </Button>
