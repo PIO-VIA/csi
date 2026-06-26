@@ -138,8 +138,7 @@ export function Sidebar() {
   const compose =
     role === 'ADMIN'
       ? { label: t('admin.assures.new'), href: '/admin/assures', icon: UserPlus }
-      : role === 'GENERALISTE'
-        // Seuls les généralistes peuvent créer une consultation (BUG FRONT #1)
+      : (role === 'GENERALISTE' || role === 'SPECIALISTE')
         ? { label: t('medecin.dashboard.new_consultation'), href: '/medecin/consultations/nouvelle', icon: PenLine }
         : null;
 
@@ -259,10 +258,7 @@ export function Sidebar() {
         )}
 
         {(role === 'GENERALISTE' || role === 'SPECIALISTE') &&
-          (role === 'SPECIALISTE'
-            ? MEDECIN_NAV.filter((item) => ['/medecin', '/medecin/patients', '/medecin/profil'].includes(item.href))
-            : MEDECIN_NAV
-          ).map((item) => (
+          MEDECIN_NAV.map((item) => (
             <NavLink
               key={item.href}
               item={item}

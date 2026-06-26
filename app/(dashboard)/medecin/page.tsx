@@ -180,18 +180,16 @@ export default function MedecinDashboardPage() {
             </h1>
             <p className="text-sm text-primary-100/80">{user.email}</p>
           </div>
-          {!isSpecialistUser && (
-            <Link href="/medecin/consultations/nouvelle">
-              <Button
-                variant="primary"
-                size="sm"
-                className="bg-white text-primary-700 hover:bg-primary-50 border-none animate-pulse-slow"
-                leftIcon={<Plus size={16} />}
-              >
-                {t('medecin.dashboard.new_consultation')}
-              </Button>
-            </Link>
-          )}
+          <Link href="/medecin/consultations/nouvelle">
+            <Button
+              variant="primary"
+              size="sm"
+              className="bg-white text-primary-700 hover:bg-primary-50 border-none animate-pulse-slow"
+              leftIcon={<Plus size={16} />}
+            >
+              {t('medecin.dashboard.new_consultation')}
+            </Button>
+          </Link>
         </div>
       </div>
 
@@ -287,9 +285,11 @@ export default function MedecinDashboardPage() {
                           <span className="text-[10px] text-slate-450 font-mono">
                             {o.patientPhone || 'Pas de numéro'}
                           </span>
-                          <Badge variant="warning" className="font-mono text-[10px] px-2 py-0.5">
-                            En attente
-                          </Badge>
+                          <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}`}>
+                            <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
+                              Consulter
+                            </Button>
+                          </Link>
                         </div>
                       </div>
                     </div>
@@ -385,13 +385,14 @@ export default function MedecinDashboardPage() {
                     <TableHead>{t('common.patient')}</TableHead>
                     <TableHead>{isSpecialistUser ? "Motif de l'orientation" : t('medecin.consultations.col_motif')}</TableHead>
                     <TableHead>{isSpecialistUser ? "Médecin Prescripteur" : t('dashboard.stats.prescriptions')}</TableHead>
+                    {isSpecialistUser && <TableHead>Action</TableHead>}
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isSpecialistUser ? (
                     latestOrientations.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={4} className="text-center py-12 text-slate-400 text-xs">
+                        <TableCell colSpan={5} className="text-center py-12 text-slate-400 text-xs">
                           Aucune orientation récente reçue.
                         </TableCell>
                       </TableRow>
@@ -410,6 +411,13 @@ export default function MedecinDashboardPage() {
                           </TableCell>
                           <TableCell className="text-xs font-semibold text-primary-700">
                             Dr. {o.medecinPrescripteur}
+                          </TableCell>
+                          <TableCell>
+                            <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}`}>
+                              <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
+                                Consulter
+                              </Button>
+                            </Link>
                           </TableCell>
                         </TableRow>
                       ))

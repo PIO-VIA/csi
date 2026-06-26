@@ -78,24 +78,22 @@ export default function NouvelleConsultationPage() {
     assureId: z.string().min(1, { message: t('medecin.nouvelle_consultation.error_patient') || 'Veuillez sélectionner un patient.' }),
     motif: z.string().min(5, { message: t('medecin.nouvelle_consultation.error_motif') || 'Veuillez saisir un motif de consultation détaillé.' }),
     creerFeuille: z.boolean(),
-    montantSoin: z.number().min(0, { message: t('medecin.nouvelle_consultation.error_montant') || 'Le montant doit être supérieur ou égal à 0.' }),
+    montantSoin: z.coerce.number()
+      .min(1, { message: 'Le montant de la consultation doit être supérieur à 0.' }),
   });
 
   const {
     register,
     handleSubmit,
-    watch,
     setValue,
     formState: { errors },
   } = useForm<ConsultationFormValues>({
-    resolver: zodResolver(consultationFormSchema),
+    resolver: zodResolver(consultationFormSchema) as any,
     defaultValues: {
-      creerFeuille: false,
-      montantSoin: 0,
+      creerFeuille: true,
+      montantSoin: undefined,
     }
   });
-
-  const watchCreerFeuille = watch('creerFeuille');
 
   useEffect(() => {
     const loadData = async () => {
@@ -145,34 +143,6 @@ export default function NouvelleConsultationPage() {
   }, [queryAssureId, setValue]);
 
   if (!user) return null;
-
-  // Seuls les médecins généralistes peuvent créer une consultation (BUG FRONT #1)
-  // Un spécialiste n'a pas de médecin traitant en base -> 400 backend
-  if (user.role === 'SPECIALISTE') {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-center">
-        <div className="p-4 bg-warning/10 rounded-2xl">
-          <AlertCircle size={32} className="text-warning" />
-        </div>
-        <div>
-          <h2 className="font-display font-bold text-lg text-slate-800">
-            Accès restreint
-          </h2>
-          <p className="font-body text-sm text-slate-500 mt-1 max-w-sm">
-            Seul le médecin traitant (généraliste) peut créer une consultation.<br />
-            Un spécialiste intervient uniquement via une prescription d&apos;orientation.
-          </p>
-        </div>
-        <button
-          onClick={() => router.push('/medecin')}
-          className="flex items-center gap-2 text-xs font-display text-primary-600 hover:underline transition"
-        >
-          <ArrowLeft size={14} />
-          Retour au tableau de bord
-        </button>
-      </div>
-    );
-  }
 
   const handleAddPrescription = () => {
     if (prescType === 'MEDICAMENT') {
@@ -408,53 +378,29 @@ export default function NouvelleConsultationPage() {
                   )}
                 </div>
 
-                {/* Feuille de maladie toggle block */}
+                {/* Feuille de maladie obligatoire */}
                 <div className="pt-4 border-t border-slate-200">
-                  <div className={`p-4 border rounded-2xl cursor-pointer transition-all duration-300 flex flex-col gap-3 select-none ${
-                    watchCreerFeuille 
-                      ? 'border-primary-500 bg-primary-50/40 shadow-sm ring-1 ring-primary-500/50' 
-                      : 'border-slate-200 hover:border-slate-300 bg-slate-50/30'
-                  }`}>
-                    <label className="flex items-center gap-3 cursor-pointer w-full" id="label-creer-feuille">
-                      <div className="relative flex items-center">
-                        <input
-                          id="checkbox-creer-feuille"
-                          type="checkbox"
-                          className="h-4.5 w-4.5 rounded border-slate-350 text-primary-600 focus:ring-primary-500/30 cursor-pointer accent-primary-600"
-                          {...register('creerFeuille')}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <span className="font-display font-semibold text-xs text-slate-800 block">
-                          {t('medecin.nouvelle_consultation.create_feuille')}
-                        </span>
-                        <span className="text-[10px] text-slate-500 font-body block mt-0.5">
-                          {t('medecin.nouvelle_consultation.step_feuille') + " - " + (t('medecin.consultations.generate_sheet_hint') || 'Permet le remboursement automatique de l\'assuré social')}
-                        </span>
-                      </div>
-                    </label>
+                  <input type="hidden" {...register('creerFeuille')} />
+                  <div className="p-4 border border-primary-500 bg-primary-50/40 rounded-2xl shadow-sm ring-1 ring-primary-500/50 flex flex-col gap-3">
+                    <div>
+                      <span className="font-display font-semibold text-xs text-slate-800 block">
+                        {t('medecin.nouvelle_consultation.create_feuille')} (Obligatoire)
+                      </span>
+                      <span className="text-[10px] text-slate-500 font-body block mt-0.5">
+                        {t('medecin.nouvelle_consultation.step_feuille') + " - " + (t('medecin.consultations.generate_sheet_hint') || 'Permet le remboursement automatique de l\'assuré social')}
+                      </span>
+                    </div>
 
-                    <AnimatePresence>
-                      {watchCreerFeuille && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          exit={{ opacity: 0, height: 0 }}
-                          className="overflow-hidden mt-1"
-                        >
-                          <div className="h-px bg-primary-200/50 mb-3" />
-                          <Input
-                            id="input-montant-soin"
-                            label={t('medecin.nouvelle_consultation.feuille_amount')}
-                            type="number"
-                            placeholder="Ex: 15000"
-                            leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
-                            error={errors.montantSoin?.message ? String(errors.montantSoin.message) : undefined}
-                            {...register('montantSoin', { valueAsNumber: true })}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                    <div className="h-px bg-primary-200/50 my-1" />
+                    <Input
+                      id="input-montant-soin"
+                      label="Montant de la consultation"
+                      type="number"
+                      placeholder="Ex: 15000"
+                      leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
+                      error={errors.montantSoin?.message ? String(errors.montantSoin.message) : undefined}
+                      {...register('montantSoin', { valueAsNumber: true })}
+                    />
                   </div>
                 </div>
               </CardBody>
