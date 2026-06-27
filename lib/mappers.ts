@@ -123,6 +123,9 @@ export function mapRemboursement(raw: RawRecord): Remboursement {
     dateRemboursement: String(raw.dateRemboursement ?? ''),
     modePaiement: mode === 'CASH' ? 'CASH' : 'VIREMENT',
     feuilleMaladieId: Number(raw.feuilleMaladieId),
+    feuilleMaladieIds: Array.isArray(raw.feuilleMaladieIds)
+      ? raw.feuilleMaladieIds.map(Number)
+      : undefined,
   };
 }
 

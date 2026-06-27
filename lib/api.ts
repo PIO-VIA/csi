@@ -673,7 +673,16 @@ export const getRemboursements = async (): Promise<ApiPayload<Remboursement[]>> 
       }),
   );
 
-  return { data: results.filter((r): r is Remboursement => r != null) };
+  const uniqueResults: Remboursement[] = [];
+  const seenIds = new Set<number>();
+  for (const r of results) {
+    if (r && !seenIds.has(r.id)) {
+      seenIds.add(r.id);
+      uniqueResults.push(r);
+    }
+  }
+
+  return { data: uniqueResults };
 };
 
 
@@ -703,6 +712,19 @@ export const effectuerRemboursement = async (
   mode: string,
 ): Promise<ApiPayload<Remboursement>> => {
   const raw = await RemboursementsService.confirmer(feuilleId, mode);
+  return { data: mapRemboursement(raw as Record<string, unknown>) };
+};
+
+export const effectuerRemboursementPlusieurs = async (
+  feuilleIds: number[],
+  mode: string,
+): Promise<ApiPayload<Remboursement>> => {
+  if (feuilleIds.length === 1) {
+    const raw = await RemboursementsService.confirmer(feuilleIds[0], mode);
+    return { data: mapRemboursement(raw as Record<string, unknown>) };
+  }
+  await RemboursementsService.initierPourPlusieurs(feuilleIds);
+  const raw = await RemboursementsService.confirmer(feuilleIds[0], mode);
   return { data: mapRemboursement(raw as Record<string, unknown>) };
 };
 

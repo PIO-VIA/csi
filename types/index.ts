@@ -88,6 +88,7 @@ export interface Remboursement {
   dateRemboursement: string;
   modePaiement: 'VIREMENT' | 'CASH';
   feuilleMaladieId: number;
+  feuilleMaladieIds?: number[];
 }
 
 export interface StatCard {

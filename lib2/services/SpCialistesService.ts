@@ -35,6 +35,34 @@ export class SpCialistesService {
         });
     }
     /**
+     * Lister les assurés attribués à un spécialiste par son ID
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getAssuresBySpecialiste(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/specialistes/{id}/assures',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
+     * Lister les assurés attribués au spécialiste connecté
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getMyAssures(): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/specialistes/me/assures',
+        });
+    }
+    /**
      * Filtrer les spécialistes par domaine
      * @param domaine
      * @returns any OK

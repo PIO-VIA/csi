@@ -7,6 +7,22 @@ import { OpenAPI } from '../core/OpenAPI';
 import { request as __request } from '../core/request';
 export class RemboursementsService {
     /**
+     * Initier un remboursement pour plusieurs feuilles de maladie
+     * @param requestBody
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static initierPourPlusieurs(
+        requestBody: Array<number>,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'POST',
+            url: '/api/remboursements/initier',
+            body: requestBody,
+            mediaType: 'application/json',
+        });
+    }
+    /**
      * Confirmer le remboursement d'une feuille (agent) : définit le mode de paiement et passe le statut à EFFECTUE
      * @param feuilleMaladieId
      * @param modePaiement

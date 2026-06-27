@@ -17,6 +17,7 @@ import {
   getFeuilles,
   getConsultations,
   effectuerRemboursement,
+  effectuerRemboursementPlusieurs,
   getRemboursements,
   getNonRembourses,
   getTotalRemboursements,
@@ -41,10 +42,11 @@ export default function RemboursementsAdminPage() {
   const [consultations, setConsultations] = useState<Consultation[]>([]);
   const [remboursements, setRemboursements] = useState<Remboursement[]>([]);
   const [totalRemb, setTotalRemb] = useState(0);
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
   
   // Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedFeuille, setSelectedFeuille] = useState<FeuillemMaladie | null>(null);
+  const [selectedFeuilles, setSelectedFeuilles] = useState<FeuillemMaladie[]>([]);
   const [paymentMode, setPaymentMode] = useState<'VIREMENT' | 'CASH'>('VIREMENT');
   const [isPaying, setIsPaying] = useState(false);
 
@@ -52,13 +54,21 @@ export default function RemboursementsAdminPage() {
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [activeRemboursement, setActiveRemboursement] = useState<Remboursement | null>(null);
   const [activeFeuille, setActiveFeuille] = useState<FeuillemMaladie | null>(null);
+  const [activeFeuilles, setActiveFeuilles] = useState<FeuillemMaladie[]>([]);
   const [activeConsultation, setActiveConsultation] = useState<Consultation | null>(null);
 
   const handleOpenReceipt = (r: Remboursement) => {
-    const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId) || null;
+    const associated = feuilles.filter(
+      (f) =>
+        f.remboursement?.id === r.id ||
+        f.id === r.feuilleMaladieId ||
+        r.feuilleMaladieIds?.includes(f.id)
+    );
+    const sheet = associated[0] || feuilles.find((f) => f.id === r.feuilleMaladieId) || null;
     const cons = sheet ? getConsultationForSheet(sheet) : null;
     setActiveRemboursement(r);
     setActiveFeuille(sheet);
+    setActiveFeuilles(associated);
     setActiveConsultation(cons || null);
     setIsReceiptOpen(true);
   };
@@ -78,6 +88,7 @@ export default function RemboursementsAdminPage() {
       setConsultations(resConsultations.data);
       setRemboursements(resRemboursements.data);
       setTotalRemb(resTotal);
+      setCheckedIds([]);
     } catch (e) {
       console.error('Failed to load reimbursement data:', e);
     } finally {
@@ -91,30 +102,33 @@ export default function RemboursementsAdminPage() {
   }, []);
 
   const handleOpenPaymentModal = (f: FeuillemMaladie) => {
-    setSelectedFeuille(f);
+    setSelectedFeuilles([f]);
     setIsModalOpen(true);
   };
 
   const handleConfirmPayment = async () => {
-    if (!selectedFeuille) return;
+    if (selectedFeuilles.length === 0) return;
     setIsPaying(true);
     try {
-      const res = await effectuerRemboursement(selectedFeuille.id, paymentMode);
+      const sheetIds = selectedFeuilles.map((f) => f.id);
+      const res = await effectuerRemboursementPlusieurs(sheetIds, paymentMode);
       success(t('admin.remboursements.payment_success') || 'Remboursement effectué avec succès.');
       
       const newRemb = res.data;
-      const cons = getConsultationForSheet(selectedFeuille);
+      const firstSheet = selectedFeuilles[0];
+      const cons = getConsultationForSheet(firstSheet);
       
       setIsModalOpen(false);
       await loadData(); // Reload all data
       
       // Automatically open printable receipt template
       setActiveRemboursement(newRemb);
-      setActiveFeuille(selectedFeuille);
+      setActiveFeuille(firstSheet);
+      setActiveFeuilles(selectedFeuilles);
       setActiveConsultation(cons || null);
       setIsReceiptOpen(true);
 
-      setSelectedFeuille(null);
+      setSelectedFeuilles([]);
     } catch (e) {
       error(t('common.error'));
     } finally {
@@ -144,13 +158,25 @@ export default function RemboursementsAdminPage() {
 
   // Reimbursed sheets with historical records
   const historicalPayments = remboursements.map((r) => {
-    const sheet = feuilles.find((f) => f.id === r.feuilleMaladieId);
+    const associated = feuilles.filter(
+      (f) =>
+        f.remboursement?.id === r.id ||
+        f.id === r.feuilleMaladieId ||
+        r.feuilleMaladieIds?.includes(f.id)
+    );
+    const sheet = associated[0] || feuilles.find((f) => f.id === r.feuilleMaladieId);
+    const refFeuille = associated.length > 0
+      ? associated.map((f) => f.idFeuille).join(', ')
+      : sheet?.idFeuille || 'N/A';
+    const montantSoin = associated.length > 0
+      ? associated.reduce((sum, f) => sum + f.montantSoin, 0)
+      : sheet?.montantSoin || 0;
     const details = sheet ? getRefundDetails(sheet) : { patientName: t('common.patient'), amount: r.montant, rateLabel: 'Calculé' };
     return {
       ...r,
-      refFeuille: sheet?.idFeuille || 'N/A',
+      refFeuille,
       patientName: details.patientName,
-      montantSoin: sheet?.montantSoin || 0
+      montantSoin
     };
   });
 
@@ -211,6 +237,20 @@ export default function RemboursementsAdminPage() {
             <span className="font-display font-semibold text-sm text-slate-800">
               {t('admin.remboursements.pending_title')}
             </span>
+            {checkedIds.length > 0 && (
+              <Button
+                variant="success"
+                size="sm"
+                onClick={() => {
+                  const selected = pendingFeuilles.filter((f) => checkedIds.includes(f.id));
+                  setSelectedFeuilles(selected);
+                  setIsModalOpen(true);
+                }}
+                className="ml-4 px-3.5 py-1.5 text-xs font-semibold shadow-sm hover:shadow-md transition-all"
+              >
+                Rembourser la sélection ({checkedIds.length})
+              </Button>
+            )}
           </div>
           <Badge variant="warning">{pendingFeuilles.length} dossiers</Badge>
         </CardHeader>
@@ -218,6 +258,20 @@ export default function RemboursementsAdminPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-12 text-center">
+                  <input
+                    type="checkbox"
+                    className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                    checked={pendingFeuilles.length > 0 && checkedIds.length === pendingFeuilles.length}
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        setCheckedIds(pendingFeuilles.map((f) => f.id));
+                      } else {
+                        setCheckedIds([]);
+                      }
+                    }}
+                  />
+                </TableHead>
                 <TableHead>{t('admin.remboursements.col_ref')}</TableHead>
                 <TableHead>{t('admin.remboursements.col_assure')}</TableHead>
                 <TableHead>{t('admin.remboursements.col_doctor')}</TableHead>
@@ -230,7 +284,7 @@ export default function RemboursementsAdminPage() {
             <TableBody>
               {pendingFeuilles.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center py-12 text-slate-500 font-body">
+                  <TableCell colSpan={8} className="text-center py-12 text-slate-500 font-body">
                     {t('admin.remboursements.pending_none')}
                   </TableCell>
                 </TableRow>
@@ -239,6 +293,20 @@ export default function RemboursementsAdminPage() {
                   const details = getRefundDetails(f);
                   return (
                      <TableRow key={f.id}>
+                      <TableCell className="text-center">
+                        <input
+                          type="checkbox"
+                          className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                          checked={checkedIds.includes(f.id)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setCheckedIds([...checkedIds, f.id]);
+                            } else {
+                              setCheckedIds(checkedIds.filter((id) => id !== f.id));
+                            }
+                          }}
+                        />
+                      </TableCell>
                       <TableCell className="font-mono text-xs font-semibold text-slate-800">
                         {f.idFeuille}
                       </TableCell>
@@ -356,50 +424,95 @@ export default function RemboursementsAdminPage() {
       </Card>
 
       {/* PAYMENT OPTIONS MODAL */}
-      {selectedFeuille && (
+      {selectedFeuilles.length > 0 && (
         <Modal
           isOpen={isModalOpen}
           onClose={() => {
             setIsModalOpen(false);
-            setSelectedFeuille(null);
+            setSelectedFeuilles([]);
           }}
           title={t('admin.remboursements.modal_title') || ''}
-          description={`${t('admin.remboursements.col_ref')}: ${selectedFeuille.idFeuille}`}
+          description={
+            selectedFeuilles.length === 1
+              ? `${t('admin.remboursements.col_ref')}: ${selectedFeuilles[0].idFeuille}`
+              : `Remboursement groupé de ${selectedFeuilles.length} dossiers`
+          }
         >
           {(() => {
-            const details = getRefundDetails(selectedFeuille);
+            const isSingle = selectedFeuilles.length === 1;
+            const singleFeuille = selectedFeuilles[0];
+            const details = isSingle ? getRefundDetails(singleFeuille) : null;
+            const totalSoin = selectedFeuilles.reduce((sum, f) => sum + f.montantSoin, 0);
+            const totalReimb = selectedFeuilles.reduce((sum, f) => sum + getRefundDetails(f).amount, 0);
+
             return (
               <div className="space-y-6">
-                {/* Summary Table */}
-                <div className="bg-slate-50 p-4 border border-slate-200 rounded-2xl space-y-3 font-body text-xs text-slate-500">
-                  <div className="flex justify-between">
-                    <span>{t('admin.remboursements.col_assure')} :</span>
-                    <span className="text-slate-850 font-semibold">{details.patientName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('admin.remboursements.modal_acted_by')} :</span>
-                    <span className="text-slate-700">{details.doctorName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('admin.remboursements.col_soin_amount')} :</span>
-                    <span className="text-slate-700">{formatFCFA(selectedFeuille.montantSoin)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>{t('admin.remboursements.modal_rate')} :</span>
-                    <span className="text-slate-850 font-semibold">{details.rateLabel}</span>
-                  </div>
-                  <div className="h-px bg-slate-200 my-1" />
-                  <div className="flex justify-between items-center text-sm">
-                    <span className="font-display font-bold text-slate-700">{t('admin.remboursements.col_reimb_amount')} :</span>
-                    <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
-                  </div>
-                </div>
+                {isSingle && details ? (
+                  <>
+                    {/* Summary Table for Single Sheet */}
+                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-2xl space-y-3 font-body text-xs text-slate-500">
+                      <div className="flex justify-between">
+                        <span>{t('admin.remboursements.col_assure')} :</span>
+                        <span className="text-slate-850 font-semibold">{details.patientName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('admin.remboursements.modal_acted_by')} :</span>
+                        <span className="text-slate-700">{details.doctorName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('admin.remboursements.col_soin_amount')} :</span>
+                        <span className="text-slate-700">{formatFCFA(singleFeuille.montantSoin)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>{t('admin.remboursements.modal_rate')} :</span>
+                        <span className="text-slate-850 font-semibold">{details.rateLabel}</span>
+                      </div>
+                      <div className="h-px bg-slate-200 my-1" />
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-display font-bold text-slate-700">{t('admin.remboursements.col_reimb_amount')} :</span>
+                        <span className="font-display font-extrabold text-success text-base">{formatFCFA(details.amount)}</span>
+                      </div>
+                    </div>
 
-                <p className="text-xs text-slate-500 leading-relaxed">
-                  {details.type === 'SPECIALISTE'
-                    ? 'Consultation chez un spécialiste — prise en charge à 80%'
-                    : 'Consultation chez un généraliste — prise en charge à 100%'}
-                </p>
+                    <p className="text-xs text-slate-500 leading-relaxed">
+                      {details.type === 'SPECIALISTE'
+                        ? 'Consultation chez un spécialiste — prise en charge à 80%'
+                        : 'Consultation chez un généraliste — prise en charge à 100%'}
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    {/* Multiple Sheets Summary */}
+                    <div className="bg-slate-50 p-4 border border-slate-200 rounded-2xl space-y-3 font-body text-xs text-slate-500">
+                      <div className="max-h-40 overflow-y-auto space-y-2 pr-1">
+                        {selectedFeuilles.map((f) => {
+                          const det = getRefundDetails(f);
+                          return (
+                            <div key={f.id} className="flex justify-between items-center border-b border-slate-100 pb-1.5 last:border-0 last:pb-0">
+                              <div className="flex flex-col">
+                                <span className="font-semibold text-slate-700">{det.patientName}</span>
+                                <span className="font-mono text-[10px] text-slate-400">Réf: {f.idFeuille}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="font-semibold text-slate-800">{formatFCFA(f.montantSoin)}</span>
+                                <span className="text-[10px] text-slate-450 block">{det.rateLabel}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                      <div className="h-px bg-slate-200 my-1" />
+                      <div className="flex justify-between items-center text-xs">
+                        <span>Total Frais de Soins :</span>
+                        <span className="font-semibold text-slate-700 font-mono">{formatFCFA(totalSoin)}</span>
+                      </div>
+                      <div className="flex justify-between items-center text-sm">
+                        <span className="font-display font-bold text-slate-700">Total à rembourser :</span>
+                        <span className="font-display font-extrabold text-success text-base">{formatFCFA(totalReimb)}</span>
+                      </div>
+                    </div>
+                  </>
+                )}
 
                 {/* Mode Selector */}
                 <div className="space-y-2">
@@ -448,7 +561,7 @@ export default function RemboursementsAdminPage() {
                     variant="ghost"
                     onClick={() => {
                       setIsModalOpen(false);
-                      setSelectedFeuille(null);
+                      setSelectedFeuilles([]);
                     }}
                   >
                     {t('common.cancel')}
@@ -474,11 +587,14 @@ export default function RemboursementsAdminPage() {
           setIsReceiptOpen(false);
           setActiveRemboursement(null);
           setActiveFeuille(null);
+          setActiveFeuilles([]);
           setActiveConsultation(null);
         }}
         remboursement={activeRemboursement}
         feuille={activeFeuille}
+        feuilles={activeFeuilles}
         consultation={activeConsultation}
+        consultations={consultations}
       />
     </motion.div>
   );

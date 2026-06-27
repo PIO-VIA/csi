@@ -41,6 +41,23 @@ export class ConsultationsService {
         });
     }
     /**
+     * Lister les consultations par spécialiste — Réservé aux médecins spécialistes. Renvoie 400 si l'ID fourni correspond à un généraliste.
+     * @param id
+     * @returns any OK
+     * @throws ApiError
+     */
+    public static getBySpecialiste(
+        id: number,
+    ): CancelablePromise<Record<string, any>> {
+        return __request(OpenAPI, {
+            method: 'GET',
+            url: '/api/consultations/specialiste/{id}',
+            path: {
+                'id': id,
+            },
+        });
+    }
+    /**
      * Lister les consultations par généraliste — Réservé aux médecins généralistes (médecin traitant). Renvoie 400 si l'ID fourni correspond à un spécialiste.
      * @param id
      * @returns any OK

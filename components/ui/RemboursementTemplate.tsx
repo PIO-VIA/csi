@@ -13,8 +13,10 @@ interface RemboursementTemplateProps {
   isOpen: boolean;
   onClose: () => void;
   remboursement: Remboursement | null;
-  feuille: FeuillemMaladie | null;
-  consultation: Consultation | null;
+  feuille?: FeuillemMaladie | null;
+  consultation?: Consultation | null;
+  feuilles?: FeuillemMaladie[];
+  consultations?: Consultation[];
 }
 
 export function RemboursementTemplate({
@@ -23,14 +25,24 @@ export function RemboursementTemplate({
   remboursement,
   feuille,
   consultation,
+  feuilles = [],
+  consultations = [],
 }: RemboursementTemplateProps) {
   const { t } = useTranslation();
 
   if (!remboursement) return null;
 
-  const patient = consultation?.assure;
-  const doctor = consultation?.generaliste;
-  const originalCareDate = consultation?.date ?? '';
+  const sheetsList = feuilles.length > 0 ? feuilles : (feuille ? [feuille] : []);
+
+  const getConsultationForSheet = (f: FeuillemMaladie) => {
+    return consultations.find((c) => c.id === f.consultationId) || (f.id === feuille?.id ? consultation : null);
+  };
+
+  const firstSheet = sheetsList[0];
+  const firstConsultation = firstSheet ? getConsultationForSheet(firstSheet) : null;
+  const patient = firstConsultation?.assure || consultation?.assure;
+  const doctor = firstConsultation?.generaliste || consultation?.generaliste;
+  const originalCareDate = firstConsultation?.date || consultation?.date || '';
   const isSpecialist = doctor?.type === 'SPECIALISTE';
   const coverageRate = isSpecialist ? 80 : 100;
 
@@ -190,26 +202,47 @@ export function RemboursementTemplate({
               Détails des Soins
             </h4>
             <div className="space-y-2 text-xs">
-              <div className="flex justify-between">
-                <span className="text-slate-400">Réf. Feuille:</span>
-                <span className="font-mono font-semibold text-slate-800">{feuille?.idFeuille ?? '—'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Date Consultation:</span>
-                <span className="font-semibold text-slate-800">
-                  {originalCareDate ? formatDate(originalCareDate) : '—'}
-                </span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Médecin Traitant:</span>
-                <span className="font-semibold text-slate-800">{doctor?.nom ?? '—'}</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-slate-400">Type de praticien:</span>
-                <span className="font-semibold text-slate-800">
-                  {doctor?.type === 'SPECIALISTE' ? 'Spécialiste' : 'Médecin Généraliste'}
-                </span>
-              </div>
+              {sheetsList.length === 1 ? (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Réf. Feuille:</span>
+                    <span className="font-mono font-semibold text-slate-800">{sheetsList[0]?.idFeuille ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Date Consultation:</span>
+                    <span className="font-semibold text-slate-800">
+                      {originalCareDate ? formatDate(originalCareDate) : '—'}
+                    </span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Médecin Traitant:</span>
+                    <span className="font-semibold text-slate-800">{doctor?.nom ?? '—'}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Type de praticien:</span>
+                    <span className="font-semibold text-slate-800">
+                      {doctor?.type === 'SPECIALISTE' ? 'Spécialiste' : 'Médecin Généraliste'}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Type:</span>
+                    <span className="font-semibold text-slate-800">Remboursement Groupé</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Dossiers traités:</span>
+                    <span className="font-semibold text-slate-800">{sheetsList.length} feuilles</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-400">Réf. Feuilles:</span>
+                    <span className="font-mono font-semibold text-slate-800 truncate max-w-[140px]" title={sheetsList.map(s => s.idFeuille).join(', ')}>
+                      {sheetsList.map(s => s.idFeuille).join(', ')}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -225,28 +258,38 @@ export function RemboursementTemplate({
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
-              <tr>
-                <td className="py-3 px-4 font-medium">
-                  Frais de soins médicaux et actes déclarés
-                  <span className="text-[10px] text-slate-400 block mt-0.5">
-                    Sur la feuille de maladie Réf: {feuille?.idFeuille}
-                  </span>
-                </td>
-                <td className="py-3 px-4 text-right font-semibold font-mono">
-                  {feuille ? formatFCFA(feuille.montantSoin) : '—'}
-                </td>
-              </tr>
-              <tr>
-                <td className="py-3 px-4 font-medium text-slate-500">
-                  Taux de prise en charge par la CSI
-                </td>
-                <td className="py-3 px-4 text-right font-medium text-slate-500">
-                  {coverageRate}% {isSpecialist ? '(Spécialiste)' : '(Généraliste)'}
-                </td>
-              </tr>
+              {sheetsList.map((s) => {
+                const sCons = getConsultationForSheet(s);
+                const sDoctor = sCons?.generaliste;
+                const sIsSpecialist = sDoctor?.type === 'SPECIALISTE';
+                const sRate = sIsSpecialist ? 80 : 100;
+                return (
+                  <tr key={s.id}>
+                    <td className="py-3 px-4 font-medium">
+                      Feuille de maladie Réf: <span className="font-mono">{s.idFeuille}</span>
+                      <span className="text-[10px] text-slate-400 block mt-0.5">
+                        Consultation {sCons?.date ? `du ${formatDate(sCons.date)}` : ''} par {sDoctor?.nom || 'Médecin'} ({sRate}% prise en charge)
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-right font-semibold font-mono">
+                      {formatFCFA(s.montantSoin)}
+                    </td>
+                  </tr>
+                );
+              })}
+              {sheetsList.length > 1 && (
+                <tr>
+                  <td className="py-3 px-4 font-medium text-slate-500">
+                    Total Frais de Soins
+                  </td>
+                  <td className="py-3 px-4 text-right font-semibold font-mono text-slate-650">
+                    {formatFCFA(sheetsList.reduce((sum, s) => sum + s.montantSoin, 0))}
+                  </td>
+                </tr>
+              )}
               <tr className="bg-emerald-50/30 text-emerald-900 font-semibold border-t border-slate-200">
                 <td className="py-3 px-4 font-display text-sm text-emerald-800">
-                  Montant Net Remboursé
+                  Montant Net Remboursé Total
                 </td>
                 <td className="py-3 px-4 text-right text-emerald-700 text-sm font-extrabold font-mono">
                   {formatFCFA(remboursement.montant)}
