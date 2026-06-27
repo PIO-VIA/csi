@@ -65,7 +65,7 @@ export default function MedecinPatientsPage() {
   if (!user) return null;
 
   const isSpecialistUser = user.role === 'SPECIALISTE';
-  const activeSubTabEffective = isSpecialistUser ? 'declares' : activeSubTab;
+  const activeSubTabEffective = activeSubTab;
   const declaredPatients = allAssures;
 
   // Gather oriented patients from orientations
@@ -119,18 +119,16 @@ export default function MedecinPatientsPage() {
 
       {/* TABS */}
       <div className="flex border-b border-slate-200 gap-4">
-        {!isSpecialistUser && (
-          <button
-            onClick={() => setActiveSubTab('consultes')}
-            className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
-              activeSubTabEffective === 'consultes'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-slate-500 hover:text-slate-800'
-            }`}
-          >
-            {t('medecin.patients.tab_consulted')} ({consultedPatients.length})
-          </button>
-        )}
+        <button
+          onClick={() => setActiveSubTab('consultes')}
+          className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
+            activeSubTabEffective === 'consultes'
+              ? 'border-primary-500 text-primary-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
+          }`}
+        >
+          {t('medecin.patients.tab_consulted')} ({consultedPatients.length})
+        </button>
         <button
           onClick={() => setActiveSubTab('declares')}
           className={`pb-3 px-1 border-b-2 font-display font-semibold text-xs tracking-wide uppercase transition cursor-pointer ${
@@ -266,16 +264,15 @@ export default function MedecinPatientsPage() {
                         )}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          {isSpecialistUser ? (
-                            <Badge variant="warning" className="px-3 py-1 text-[10px] font-semibold">Dossier Orienté</Badge>
-                          ) : (
-                            <Link href={`/medecin/consultations/nouvelle?assureId=${p.id}`}>
-                              <Button variant="primary" size="sm" className="text-xs px-3">
-                                Consulter
-                              </Button>
-                            </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          {isSpecialistUser && patientOrientation && (
+                            <Badge variant="warning" className="text-[10px] font-semibold">Orienté</Badge>
                           )}
+                          <Link href={`/medecin/consultations/nouvelle?assureId=${p.id}&idAssure=${encodeURIComponent(p.idAssure)}`}>
+                            <Button variant="primary" size="sm" className="text-xs px-3">
+                              Consulter
+                            </Button>
+                          </Link>
                         </div>
                       </TableCell>
                     </TableRow>

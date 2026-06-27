@@ -88,18 +88,14 @@ export default function MedecinDashboardPage() {
 
   const isSpecialistUser = user.role === 'SPECIALISTE';
 
-  const totalConsults = isSpecialistUser ? orientations.length : consultations.length;
-  const uniquePatientIds = isSpecialistUser
-    ? new Set(orientations.map((o) => o.patientId))
-    : new Set(consultations.map((c) => c.assure.id));
+  const totalConsults = consultations.length;
+  const uniquePatientIds = new Set(consultations.map((c) => c.assure.id));
   const patientsCount = uniquePatientIds.size;
   const declaredPatientsCount = allAssures.length;
-  const totalPrescriptions = isSpecialistUser
-    ? 0
-    : consultations.reduce(
-        (sum, c) => sum + (c.prescriptions ? c.prescriptions.length : 0),
-        0
-      );
+  const totalPrescriptions = consultations.reduce(
+    (sum, c) => sum + (c.prescriptions ? c.prescriptions.length : 0),
+    0
+  );
   const latestConsultations = [...consultations].sort((a, b) => b.id - a.id).slice(0, 4);
   const latestOrientations = [...orientations].sort((a, b) => b.id - a.id).slice(0, 4);
 
@@ -130,25 +126,16 @@ export default function MedecinDashboardPage() {
     const sunday = new Date(monday);
     sunday.setDate(monday.getDate() + 6);
 
-    const count = isSpecialistUser
-      ? orientations.filter((o) => {
-          if (!o.date) return false;
-          const d = new Date(o.date);
-          const checkD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-          const monD = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
-          const sunD = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
-          return checkD >= monD && checkD <= sunD;
-        }).length
-      : consultations.filter((c) => {
-          const d = new Date(c.date);
-          const checkD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-          const monD = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
-          const sunD = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
-          return checkD >= monD && checkD <= sunD;
-        }).length;
+    const count = consultations.filter((c) => {
+      const d = new Date(c.date);
+      const checkD = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+      const monD = new Date(monday.getFullYear(), monday.getMonth(), monday.getDate());
+      const sunD = new Date(sunday.getFullYear(), sunday.getMonth(), sunday.getDate());
+      return checkD >= monD && checkD <= sunD;
+    }).length;
 
     const label = `${monday.getDate().toString().padStart(2, '0')}/${(monday.getMonth() + 1).toString().padStart(2, '0')}`;
-    return { name: `${label}`, Consultations: count, Orientations: count };
+    return { name: `${label}`, Consultations: count };
   });
 
   return (
@@ -225,80 +212,23 @@ export default function MedecinDashboardPage() {
           </CardBody>
         </Card>
       )}
-
-      {/* Agenda du jour / Orientations reçues */}
-      <Card variant="solid">
-        <CardHeader className="flex justify-between items-center">
-          <div>
-            <span className="font-display font-bold text-sm text-slate-800 block">
-              {isSpecialistUser ? "Orientations reçues aujourd'hui" : "Consultations d'aujourd'hui"}
-            </span>
-            <span className="text-[10px] text-slate-450 font-body block mt-0.5">
-              {dateLabel}
-            </span>
-          </div>
-          <Badge variant={(isSpecialistUser ? todayOrientations.length : todayConsultations.length) > 0 ? 'warning' : 'neutral'}>
-            {isSpecialistUser ? todayOrientations.length : todayConsultations.length} {isSpecialistUser ? (todayOrientations.length > 1 ? 'orientations' : 'orientation') : (todayConsultations.length > 1 ? 'consultations' : 'consultation')}
-          </Badge>
-        </CardHeader>
-        <CardBody>
-          {isSpecialistUser ? (
-            todayOrientations.length === 0 ? (
-              <EmptyState
-                title="Pas d'orientation"
-                description="Aucune orientation reçue pour aujourd'hui."
-              />
-            ) : (
-              <div className="relative border-l-2 border-slate-100 pl-4 ml-3 space-y-6 my-2">
-                {todayOrientations.map((o) => {
-                  const initials = (o.patientName || '')
-                    .split(' ')
-                    .map((n) => n[0])
-                    .join('')
-                    .substring(0, 2)
-                    .toUpperCase() || '?';
-
-                  return (
-                    <div key={o.id} className="relative group">
-                      <div className="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-amber-500 shadow-sm group-hover:scale-110 duration-250" />
-                      
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-150/50 rounded-2xl duration-250">
-                        <div className="flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center font-display font-bold text-xs shrink-0">
-                            {initials}
-                          </div>
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-2">
-                              <span className="font-display font-bold text-xs text-slate-850">
-                                {o.patientName}
-                              </span>
-                              <span className="text-[10px] font-mono text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded">
-                                {o.patientIdAssure}
-                              </span>
-                            </div>
-                            <p className="text-[10px] text-slate-500 font-body">
-                              Prescrit par : <strong className="text-slate-700">{o.medecinPrescripteur}</strong> &bull; Motif : {o.motif || 'Non renseigné'}
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-3 justify-between sm:justify-end">
-                          <span className="text-[10px] text-slate-450 font-mono">
-                            {o.patientPhone || 'Pas de numéro'}
-                          </span>
-                          <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
-                            <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
-                              Consulter
-                            </Button>
-                          </Link>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )
-          ) : (
-            todayConsultations.length === 0 ? (
+      <div className={isSpecialistUser ? "grid grid-cols-1 md:grid-cols-2 gap-5" : "space-y-6"}>
+        <Card variant="solid">
+          <CardHeader className="flex justify-between items-center">
+            <div>
+              <span className="font-display font-bold text-sm text-slate-800 block">
+                Consultations d'aujourd'hui
+              </span>
+              <span className="text-[10px] text-slate-450 font-body block mt-0.5">
+                {dateLabel}
+              </span>
+            </div>
+            <Badge variant={todayConsultations.length > 0 ? 'info' : 'neutral'}>
+              {todayConsultations.length} {todayConsultations.length > 1 ? 'consultations' : 'consultation'}
+            </Badge>
+          </CardHeader>
+          <CardBody>
+            {todayConsultations.length === 0 ? (
               <EmptyState
                 title="Pas de consultation"
                 description="Aucune consultation enregistrée pour aujourd'hui."
@@ -322,7 +252,6 @@ export default function MedecinDashboardPage() {
 
                   return (
                     <div key={c.id} className="relative group">
-                      {/* Timeline Dot */}
                       <div className="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-primary-500 shadow-sm group-hover:scale-110 duration-250" />
                       
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-150/50 rounded-2xl duration-250">
@@ -357,96 +286,132 @@ export default function MedecinDashboardPage() {
                   );
                 })}
               </div>
-            )
-          )}
-        </CardBody>
-      </Card>
+            )}
+          </CardBody>
+        </Card>
+
+        {isSpecialistUser && (
+          <Card variant="solid">
+            <CardHeader className="flex justify-between items-center">
+              <div>
+                <span className="font-display font-bold text-sm text-slate-800 block">
+                  Orientations reçues aujourd'hui
+                </span>
+                <span className="text-[10px] text-slate-450 font-body block mt-0.5">
+                  {dateLabel}
+                </span>
+              </div>
+              <Badge variant={todayOrientations.length > 0 ? 'warning' : 'neutral'}>
+                {todayOrientations.length} {todayOrientations.length > 1 ? 'orientations' : 'orientation'}
+              </Badge>
+            </CardHeader>
+            <CardBody>
+              {todayOrientations.length === 0 ? (
+                <EmptyState
+                  title="Pas d'orientation"
+                  description="Aucune orientation reçue pour aujourd'hui."
+                />
+              ) : (
+                <div className="relative border-l-2 border-slate-100 pl-4 ml-3 space-y-6 my-2">
+                  {todayOrientations.map((o) => {
+                    const initials = (o.patientName || '')
+                      .split(' ')
+                      .map((n) => n[0])
+                      .join('')
+                      .substring(0, 2)
+                      .toUpperCase() || '?';
+
+                    return (
+                      <div key={o.id} className="relative group">
+                        <div className="absolute -left-[23px] top-1.5 h-3.5 w-3.5 rounded-full border-2 border-white bg-amber-500 shadow-sm group-hover:scale-110 duration-250" />
+                        
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-slate-50 hover:bg-slate-100/70 border border-slate-150/50 rounded-2xl duration-250">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-xl bg-amber-50 border border-amber-100 text-amber-700 flex items-center justify-center font-display font-bold text-xs shrink-0">
+                              {initials}
+                            </div>
+                            <div className="space-y-0.5">
+                              <div className="flex items-center gap-2">
+                                <span className="font-display font-bold text-xs text-slate-850">
+                                  {o.patientName}
+                                </span>
+                                <span className="text-[10px] font-mono text-slate-400 bg-slate-200/50 px-1.5 py-0.5 rounded">
+                                  {o.patientIdAssure}
+                                </span>
+                              </div>
+                              <p className="text-[10px] text-slate-500 font-body">
+                                Prescrit par : <strong className="text-slate-700">{o.medecinPrescripteur}</strong> &bull; Motif : {o.motif || 'Non renseigné'}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-3 justify-between sm:justify-end">
+                            <span className="text-[10px] text-slate-450 font-mono">
+                              {o.patientPhone || 'Pas de numéro'}
+                            </span>
+                            <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
+                              <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
+                                Consulter
+                              </Button>
+                            </Link>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardBody>
+          </Card>
+        )}
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         <div className="lg:col-span-8">
           <Card variant="solid" className="h-full">
             <CardHeader className="flex justify-between items-center">
               <span className="font-display font-semibold text-sm text-slate-800">
-                {isSpecialistUser ? "Orientations récentes reçues" : t('medecin.dashboard.recent_consultations')}
+                {t('medecin.dashboard.recent_consultations')}
               </span>
-              {!isSpecialistUser && (
-                <Link href="/medecin/consultations">
-                  <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
-                    {t('medecin.dashboard.see_all')}
-                  </Button>
-                </Link>
-              )}
+              <Link href="/medecin/consultations">
+                <Button variant="ghost" size="sm" className="text-xs" rightIcon={<ArrowRight size={12} />}>
+                  {t('medecin.dashboard.see_all')}
+                </Button>
+              </Link>
             </CardHeader>
             <CardBody className="p-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>{isSpecialistUser ? "Date Orientation" : t('common.date')}</TableHead>
+                    <TableHead>{t('common.date')}</TableHead>
                     <TableHead>{t('common.patient')}</TableHead>
-                    <TableHead>{isSpecialistUser ? "Motif de l'orientation" : t('medecin.consultations.col_motif')}</TableHead>
-                    <TableHead>{isSpecialistUser ? "Médecin Prescripteur" : t('dashboard.stats.prescriptions')}</TableHead>
-                    {isSpecialistUser && <TableHead>Action</TableHead>}
+                    <TableHead>{t('medecin.consultations.col_motif')}</TableHead>
+                    <TableHead>{t('dashboard.stats.prescriptions')}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isSpecialistUser ? (
-                    latestOrientations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="text-center py-12 text-slate-400 text-xs">
-                          Aucune orientation récente reçue.
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      latestOrientations.map((o) => (
-                        <TableRow key={o.id}>
-                          <TableCell className="font-semibold text-xs">{o.date ? formatDate(o.date) : '—'}</TableCell>
-                          <TableCell className="font-display font-medium text-xs">
-                            <div className="flex flex-col">
-                              <span className="text-slate-800 font-bold">{o.patientName}</span>
-                              <span className="text-[10px] font-mono text-slate-400">{o.patientIdAssure}</span>
-                            </div>
-                          </TableCell>
-                          <TableCell className="text-xs max-w-xs truncate" title={o.motif}>
-                            {o.motif}
-                          </TableCell>
-                          <TableCell className="text-xs font-semibold text-primary-700">
-                            Dr. {o.medecinPrescripteur}
-                          </TableCell>
-                          <TableCell>
-                            <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
-                              <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
-                                Consulter
-                              </Button>
-                            </Link>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )
+                  {latestConsultations.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center py-12 text-slate-400 text-xs">
+                        {t('medecin.dashboard.no_consultation')}
+                      </TableCell>
+                    </TableRow>
                   ) : (
-                    latestConsultations.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center py-12 text-slate-400 text-xs">
-                          {t('medecin.dashboard.no_consultation')}
+                    latestConsultations.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell className="font-semibold text-xs">{formatDate(c.date)}</TableCell>
+                        <TableCell className="font-display font-medium text-xs">{c.assure.nom}</TableCell>
+                        <TableCell className="text-xs max-w-xs truncate" title={c.motif}>
+                          {c.motif}
+                        </TableCell>
+                        <TableCell>
+                          {c.prescriptions && c.prescriptions.length > 0 ? (
+                            <Badge variant="info">{c.prescriptions.length} prescriptions</Badge>
+                          ) : (
+                            <span className="text-slate-400 text-xs italic">{t('common.none')}</span>
+                          )}
                         </TableCell>
                       </TableRow>
-                    ) : (
-                      latestConsultations.map((c) => (
-                        <TableRow key={c.id}>
-                          <TableCell className="font-semibold text-xs">{formatDate(c.date)}</TableCell>
-                          <TableCell className="font-display font-medium text-xs">{c.assure.nom}</TableCell>
-                          <TableCell className="text-xs max-w-xs truncate" title={c.motif}>
-                            {c.motif}
-                          </TableCell>
-                          <TableCell>
-                            {c.prescriptions && c.prescriptions.length > 0 ? (
-                              <Badge variant="info">{c.prescriptions.length} prescriptions</Badge>
-                            ) : (
-                              <span className="text-slate-400 text-xs italic">{t('common.none')}</span>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )
+                    ))
                   )}
                 </TableBody>
               </Table>
@@ -458,7 +423,7 @@ export default function MedecinDashboardPage() {
           <Card variant="solid" className="h-full">
             <CardHeader>
               <span className="font-display font-semibold text-sm text-slate-800">
-                {isSpecialistUser ? "Orientations / semaine" : "Consultations / semaine"}
+                Consultations / semaine
               </span>
             </CardHeader>
             <CardBody className="h-64 pt-2">
@@ -475,15 +440,72 @@ export default function MedecinDashboardPage() {
                       boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
                     }}
                     labelStyle={{ color: '#0f172a', fontWeight: 'bold' }}
-                    itemStyle={{ color: isSpecialistUser ? '#f59e0b' : '#2563eb' }}
+                    itemStyle={{ color: '#2563eb' }}
                   />
-                  <Bar dataKey={isSpecialistUser ? "Orientations" : "Consultations"} fill={isSpecialistUser ? "#f59e0b" : "#2563eb"} radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="Consultations" fill="#2563eb" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </CardBody>
           </Card>
         </div>
       </div>
+
+      {isSpecialistUser && (
+        <Card variant="solid">
+          <CardHeader className="flex justify-between items-center">
+            <span className="font-display font-semibold text-sm text-slate-800">
+              Orientations récentes reçues
+            </span>
+          </CardHeader>
+          <CardBody className="p-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Date Orientation</TableHead>
+                  <TableHead>Patient</TableHead>
+                  <TableHead>Motif de l'orientation</TableHead>
+                  <TableHead>Médecin Prescripteur</TableHead>
+                  <TableHead>Action</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {latestOrientations.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-12 text-slate-400 text-xs">
+                      Aucune orientation récente reçue.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  latestOrientations.map((o) => (
+                    <TableRow key={o.id}>
+                      <TableCell className="font-semibold text-xs">{o.date ? formatDate(o.date) : '—'}</TableCell>
+                      <TableCell className="font-display font-medium text-xs">
+                        <div className="flex flex-col">
+                          <span className="text-slate-800 font-bold">{o.patientName}</span>
+                          <span className="text-[10px] font-mono text-slate-400">{o.patientIdAssure}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-xs max-w-xs truncate" title={o.motif}>
+                        {o.motif}
+                      </TableCell>
+                      <TableCell className="text-xs font-semibold text-primary-700">
+                        Dr. {o.medecinPrescripteur}
+                      </TableCell>
+                      <TableCell>
+                        <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
+                          <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
+                            Consulter
+                          </Button>
+                        </Link>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </CardBody>
+        </Card>
+      )}
     </motion.div>
   );
 }

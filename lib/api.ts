@@ -135,13 +135,14 @@ async function enrichConsultations(
 
 async function loadAllConsultations(): Promise<Consultation[]> {
   const medecins = await loadMedecins();
-  // On ne boucle que sur les généralistes : l'endpoint /generaliste/{id} renvoie
-  // 400 Bad Request pour un spécialiste (BUG FRONT #3)
-  const generalistes = medecins.filter((m) => m.type === 'GENERALISTE');
   const results = await Promise.all(
-    generalistes.map(async (m) => {
+    medecins.map(async (m) => {
       try {
-        return await ConsultationsService.getByGeneraliste(m.id);
+        if (m.type === 'SPECIALISTE') {
+          return await ConsultationsService.getBySpecialiste(m.id);
+        } else {
+          return await ConsultationsService.getByGeneraliste(m.id);
+        }
       } catch (err) {
         console.error(`Error fetching consultations for doctor ID ${m.id}:`, err);
         return [];
@@ -340,11 +341,12 @@ export const getAssuresByGeneraliste = async (
  */
 export const getMesAssures = async (): Promise<ApiPayload<Assure[]>> => {
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem('csi_session') : null;
+  let isSpecialiste = false;
   if (storedUser) {
     try {
       const session = JSON.parse(storedUser);
       if (session.role === 'SPECIALISTE') {
-        return { data: [] };
+        isSpecialiste = true;
       }
     } catch (e) {
       console.error(e);
@@ -352,7 +354,9 @@ export const getMesAssures = async (): Promise<ApiPayload<Assure[]>> => {
   }
   try {
     const medecins = await loadMedecins();
-    const raw = await MDecinsService.getMesAssures();
+    const raw = isSpecialiste
+      ? await SpCialistesService.getMyAssures()
+      : await MDecinsService.getMesAssures();
     return { data: toList<Record<string, unknown>>(raw).map((item) => mapAssure(item, medecins)) };
   } catch (err) {
     return { data: [] };
@@ -529,18 +533,21 @@ export const getConsultationsByGeneraliste = async (
   id: number,
 ): Promise<ApiPayload<Consultation[]>> => {
   const storedUser = typeof window !== 'undefined' ? localStorage.getItem('csi_session') : null;
+  let isSpecialiste = false;
   if (storedUser) {
     try {
       const session = JSON.parse(storedUser);
       if (session.role === 'SPECIALISTE') {
-        return { data: [] };
+        isSpecialiste = true;
       }
     } catch (e) {
       console.error(e);
     }
   }
   try {
-    const raw = await ConsultationsService.getByGeneraliste(id);
+    const raw = isSpecialiste
+      ? await ConsultationsService.getBySpecialiste(id)
+      : await ConsultationsService.getByGeneraliste(id);
     return { data: await enrichConsultations(toList<Record<string, unknown>>(raw)) };
   } catch (err) {
     return { data: [] };
