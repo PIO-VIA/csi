@@ -21,8 +21,9 @@ import {
   getRemboursements,
   getNonRembourses,
   getTotalRemboursements,
+  getAssures,
 } from '@/lib/api';
-import { FeuillemMaladie, Consultation, Remboursement } from '@/types';
+import { FeuillemMaladie, Consultation, Remboursement, Assure } from '@/types';
 import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import StatCard from '@/components/ui/StatCard';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -50,6 +51,14 @@ export default function RemboursementsAdminPage() {
   const [paymentMode, setPaymentMode] = useState<'VIREMENT' | 'CASH'>('VIREMENT');
   const [isPaying, setIsPaying] = useState(false);
 
+  // Manual Reimbursement Modal State
+  const [isManualRembModalOpen, setIsManualRembModalOpen] = useState(false);
+  const [assures, setAssures] = useState<Assure[]>([]);
+  const [selectedAssureId, setSelectedAssureId] = useState<string>('');
+  const [selectedPendingSheetIds, setSelectedPendingSheetIds] = useState<number[]>([]);
+  const [manualPaymentMode, setManualPaymentMode] = useState<'VIREMENT' | 'CASH'>('VIREMENT');
+  const [isSubmittingManualRemb, setIsSubmittingManualRemb] = useState(false);
+
   // Receipt Template Modal State
   const [isReceiptOpen, setIsReceiptOpen] = useState(false);
   const [activeRemboursement, setActiveRemboursement] = useState<Remboursement | null>(null);
@@ -75,19 +84,21 @@ export default function RemboursementsAdminPage() {
 
   const loadData = async () => {
     try {
-      const [resFeuilles, resPending, resConsultations, resRemboursements, resTotal] =
+      const [resFeuilles, resPending, resConsultations, resRemboursements, resTotal, resAssures] =
         await Promise.all([
           getFeuilles(),
           getNonRembourses(),
           getConsultations(),
           getRemboursements(),
           getTotalRemboursements().catch(() => 0),
+          getAssures().catch(() => ({ data: [] })),
         ]);
       setFeuilles(resFeuilles.data);
       setPendingFeuilles(resPending.data);
       setConsultations(resConsultations.data);
       setRemboursements(resRemboursements.data);
       setTotalRemb(resTotal);
+      setAssures(resAssures?.data || []);
       setCheckedIds([]);
     } catch (e) {
       console.error('Failed to load reimbursement data:', e);
@@ -135,6 +146,47 @@ export default function RemboursementsAdminPage() {
       setIsPaying(false);
     }
   };
+
+  const handleConfirmManualPayment = async () => {
+    if (selectedPendingSheetIds.length === 0) {
+      error("Veuillez sélectionner au moins une feuille de maladie à rembourser.");
+      return;
+    }
+    setIsSubmittingManualRemb(true);
+    try {
+      const res = await effectuerRemboursementPlusieurs(selectedPendingSheetIds, manualPaymentMode);
+      success("Remboursement effectué avec succès.");
+      
+      const newRemb = res.data;
+      const associatedSheets = pendingFeuilles.filter((f) => selectedPendingSheetIds.includes(f.id));
+      const firstSheet = associatedSheets[0];
+      const cons = firstSheet ? getConsultationForSheet(firstSheet) : null;
+      
+      setIsManualRembModalOpen(false);
+      setSelectedAssureId('');
+      setSelectedPendingSheetIds([]);
+      setManualPaymentMode('VIREMENT');
+      
+      await loadData(); // Reload all data
+      
+      // Automatically open printable receipt template
+      setActiveRemboursement(newRemb);
+      setActiveFeuille(firstSheet || null);
+      setActiveFeuilles(associatedSheets);
+      setActiveConsultation(cons || null);
+      setIsReceiptOpen(true);
+    } catch (e) {
+      console.error(e);
+      error("Erreur lors de l'exécution du remboursement.");
+    } finally {
+      setIsSubmittingManualRemb(false);
+    }
+  };
+
+  const pendingSheetsForSelectedAssure = pendingFeuilles.filter((f) => {
+    const cons = consultations.find((c) => c.id === f.consultationId);
+    return cons && cons.assure.id === Number(selectedAssureId);
+  });
 
   // Helper: Find consultation for a sheet
   const getConsultationForSheet = (sheet: FeuillemMaladie) => {
@@ -196,13 +248,22 @@ export default function RemboursementsAdminPage() {
       className="space-y-8"
     >
       {/* Header */}
-      <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
-          {t('admin.remboursements.title')}
-        </h1>
-        <p className="font-body text-sm text-slate-500 mt-1">
-          {t('admin.remboursements.subtitle')}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+            {t('admin.remboursements.title')}
+          </h1>
+          <p className="font-body text-sm text-slate-500 mt-1">
+            {t('admin.remboursements.subtitle')}
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          onClick={() => setIsManualRembModalOpen(true)}
+          className="shadow-sm hover:shadow-md transition-all font-semibold"
+        >
+          Effectuer un remboursement
+        </Button>
       </div>
 
       {/* KPI Cards */}
@@ -596,6 +657,217 @@ export default function RemboursementsAdminPage() {
         consultation={activeConsultation}
         consultations={consultations}
       />
+
+      {/* MANUAL REIMBURSEMENT MODAL */}
+      <Modal
+        isOpen={isManualRembModalOpen}
+        onClose={() => {
+          setIsManualRembModalOpen(false);
+          setSelectedAssureId('');
+          setSelectedPendingSheetIds([]);
+          setManualPaymentMode('VIREMENT');
+        }}
+        title="Effectuer un remboursement"
+        size="lg"
+      >
+        <div className="space-y-6">
+          {/* Patient Selector */}
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-700">Sélectionner l'assuré (Patient)</label>
+            <select
+              value={selectedAssureId}
+              onChange={(e) => {
+                setSelectedAssureId(e.target.value);
+                setSelectedPendingSheetIds([]);
+              }}
+              className="dashboard-input bg-white w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">-- Choisir un assuré --</option>
+              {assures.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.nom} (ID: {a.idAssure})
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {selectedAssureId && (
+            <div className="space-y-4">
+              <label className="text-xs font-semibold text-slate-700 block mb-1">
+                Feuilles de maladie en attente pour cet assuré
+              </label>
+
+              {pendingSheetsForSelectedAssure.length === 0 ? (
+                <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-500">
+                  Aucune feuille de maladie en attente de remboursement pour cet assuré.
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Master Checkbox */}
+                  <div className="flex items-center gap-2 px-1 pb-2 border-b border-slate-100">
+                    <input
+                      type="checkbox"
+                      id="select-all-manual"
+                      className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
+                      checked={
+                        selectedPendingSheetIds.length === pendingSheetsForSelectedAssure.length
+                      }
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setSelectedPendingSheetIds(pendingSheetsForSelectedAssure.map((f) => f.id));
+                        } else {
+                          setSelectedPendingSheetIds([]);
+                        }
+                      }}
+                    />
+                    <label htmlFor="select-all-manual" className="text-xs font-semibold text-slate-650 cursor-pointer">
+                      Tout sélectionner ({pendingSheetsForSelectedAssure.length})
+                    </label>
+                  </div>
+
+                  {/* Checklist of sheets */}
+                  <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                    {pendingSheetsForSelectedAssure.map((f) => {
+                      const det = getRefundDetails(f);
+                      return (
+                        <div
+                          key={f.id}
+                          className="flex items-center justify-between p-3 bg-slate-50/50 hover:bg-slate-50 border border-slate-200/60 rounded-xl transition"
+                        >
+                          <div className="flex items-start gap-2.5">
+                            <input
+                              type="checkbox"
+                              id={`sheet-${f.id}`}
+                              className="rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer mt-0.5"
+                              checked={selectedPendingSheetIds.includes(f.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setSelectedPendingSheetIds([...selectedPendingSheetIds, f.id]);
+                                } else {
+                                  setSelectedPendingSheetIds(
+                                    selectedPendingSheetIds.filter((id) => id !== f.id)
+                                  );
+                                }
+                              }}
+                            />
+                            <label htmlFor={`sheet-${f.id}`} className="flex flex-col cursor-pointer">
+                              <span className="font-mono text-xs font-semibold text-slate-800">
+                                {f.idFeuille}
+                              </span>
+                              <span className="text-[10px] text-slate-500">
+                                Consultation par {det.doctorName}
+                              </span>
+                            </label>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-xs font-semibold text-slate-800 block">
+                              {formatFCFA(f.montantSoin)}
+                            </span>
+                            <span className="text-[10px] font-bold text-success block">
+                              Remb: {formatFCFA(det.amount)} ({det.rateLabel})
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Calculated Totals */}
+                  {selectedPendingSheetIds.length > 0 && (
+                    <div className="bg-primary-50/20 border border-primary-100 rounded-xl p-4 space-y-2 text-xs font-body">
+                      <div className="flex justify-between text-slate-600">
+                        <span>Frais de soins cumulés :</span>
+                        <span className="font-mono font-semibold">
+                          {formatFCFA(
+                            pendingSheetsForSelectedAssure
+                              .filter((f) => selectedPendingSheetIds.includes(f.id))
+                              .reduce((sum, f) => sum + f.montantSoin, 0)
+                          )}
+                        </span>
+                      </div>
+                      <div className="flex justify-between text-slate-800 font-bold text-sm">
+                        <span>Total à rembourser :</span>
+                        <span className="font-display font-extrabold text-success">
+                          {formatFCFA(
+                            pendingSheetsForSelectedAssure
+                              .filter((f) => selectedPendingSheetIds.includes(f.id))
+                              .reduce((sum, f) => sum + getRefundDetails(f).amount, 0)
+                          )}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payment Mode Selector */}
+                  <div className="space-y-2 pt-2">
+                    <label className="font-display font-semibold text-xs text-slate-600 tracking-wide">
+                      Mode de paiement
+                    </label>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div
+                        onClick={() => setManualPaymentMode('VIREMENT')}
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer select-none transition ${
+                          manualPaymentMode === 'VIREMENT'
+                            ? 'border-primary-600 bg-primary-50/50 text-primary-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="font-display font-semibold text-xs">Virement Bancaire</span>
+                        <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
+                          manualPaymentMode === 'VIREMENT' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
+                        }`}>
+                          {manualPaymentMode === 'VIREMENT' && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+
+                      <div
+                        onClick={() => setManualPaymentMode('CASH')}
+                        className={`p-3 rounded-xl border flex items-center justify-between cursor-pointer select-none transition ${
+                          manualPaymentMode === 'CASH'
+                            ? 'border-primary-600 bg-primary-50/50 text-primary-700'
+                            : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
+                        }`}
+                      >
+                        <span className="font-display font-semibold text-xs">En Espèces (Cash)</span>
+                        <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
+                          manualPaymentMode === 'CASH' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
+                        }`}>
+                          {manualPaymentMode === 'CASH' && <div className="h-2 w-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Modal Actions */}
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100 mt-6">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => {
+                setIsManualRembModalOpen(false);
+                setSelectedAssureId('');
+                setSelectedPendingSheetIds([]);
+                setManualPaymentMode('VIREMENT');
+              }}
+            >
+              Annuler
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleConfirmManualPayment}
+              isLoading={isSubmittingManualRemb}
+              disabled={!selectedAssureId || selectedPendingSheetIds.length === 0}
+            >
+              Confirmer le remboursement
+            </Button>
+          </div>
+        </div>
+      </Modal>
     </motion.div>
   );
 }
