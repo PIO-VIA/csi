@@ -21,7 +21,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesAssures, getMedecins, createConsultation, getApiErrorMessage, getAssureById, choisirMedecinTraitant } from '@/lib/api';
+import { getMesAssures, getMedecins, createConsultation, getApiErrorMessage, getAssureById, choisirMedecinTraitant, getMesOrientationsEnriched, type EnrichedOrientation } from '@/lib/api';
 import { AssurSService } from '@/lib2';
 import { mapAssure } from '@/lib/mappers';
 import { Assure, Medecin } from '@/types';
@@ -97,9 +97,10 @@ export default function NouvelleConsultationPage() {
   });
 
   useEffect(() => {
+    if (!user) return;
     const loadData = async () => {
       try {
-        const [resAssures, resMedecins] = await Promise.all([
+        const [resAssures, resMedecins, resOrientations] = await Promise.all([
           getMesAssures().catch((err) => {
             console.error('Failed to load assured patients:', err);
             return { data: [] };
@@ -108,9 +109,38 @@ export default function NouvelleConsultationPage() {
             console.error('Failed to load specialists:', err);
             return { data: [] };
           }),
+          user.role === 'SPECIALISTE'
+            ? getMesOrientationsEnriched().catch((err) => {
+                console.error('Failed to load orientations:', err);
+                return [] as EnrichedOrientation[];
+              })
+            : Promise.resolve([] as EnrichedOrientation[])
         ]);
 
         let loadedAssures = [...resAssures.data];
+
+        if (user.role === 'SPECIALISTE' && resOrientations) {
+          const orientedPatientsMap = new Map();
+          resOrientations.forEach((o) => {
+            if (!o.patientId) return;
+            orientedPatientsMap.set(o.patientId, {
+              id: o.patientId,
+              idAssure: o.patientIdAssure,
+              nom: o.patientName,
+              numTelephone: o.patientPhone,
+              email: o.consultation?.assure?.email || '',
+              groupeSanguin: o.consultation?.assure?.groupeSanguin || '',
+              photoUrl: o.consultation?.assure?.photoUrl || undefined,
+            });
+          });
+          const orientedPatients = Array.from(orientedPatientsMap.values()) as Assure[];
+          
+          orientedPatients.forEach((op) => {
+            if (!loadedAssures.some((la) => la.id === op.id)) {
+              loadedAssures.push(op);
+            }
+          });
+        }
 
         if (queryAssureId) {
           const assureIdNum = Number(queryAssureId);
@@ -158,7 +188,7 @@ export default function NouvelleConsultationPage() {
       }
     };
     loadData();
-  }, [queryAssureId, queryIdAssure, setValue]);
+  }, [queryAssureId, queryIdAssure, setValue, user]);
 
   if (!user) return null;
 
