@@ -156,6 +156,7 @@ export function buildConsultation(
   generaliste: Medecin,
   prescriptions: Prescription[] = [],
   feuilleMaladie?: FeuillemMaladie,
+  feuillesMaladie: FeuillemMaladie[] = [],
 ): Consultation {
   return {
     id: Number(raw.id),
@@ -164,6 +165,7 @@ export function buildConsultation(
     generaliste,
     prescriptions,
     feuilleMaladie,
+    feuillesMaladie,
     motif: raw.motif ? String(raw.motif) : undefined,
   };
 }

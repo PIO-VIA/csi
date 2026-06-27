@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Search, Activity, User, ShieldAlert, Plus } from 'lucide-react';
+import { Calendar, Search, Activity, User, ShieldAlert, Plus, FileText } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { getConsultations, createFeuille } from '@/lib/api';
@@ -15,6 +15,7 @@ import Modal from '@/components/ui/Modal';
 import Loader from '@/components/ui/Loader';
 import { formatDate } from '@/lib/utils';
 import { useToast } from '@/components/ui/Toast';
+import Input from '@/components/ui/Input';
 
 export default function ConsultationsAdminPage() {
   const { t } = useTranslation();
@@ -29,6 +30,7 @@ export default function ConsultationsAdminPage() {
   // Créer feuille modal
   const [selectedConsultForFeuille, setSelectedConsultForFeuille] = useState<Consultation | null>(null);
   const [isFeuilleModalOpen, setIsFeuilleModalOpen] = useState(false);
+  const [idFeuille, setIdFeuille] = useState('');
   const [montantSoin, setMontantSoin] = useState(0);
   const [isCreatingFeuille, setIsCreatingFeuille] = useState(false);
 
@@ -65,10 +67,15 @@ export default function ConsultationsAdminPage() {
     if (!selectedConsultForFeuille) return;
     setIsCreatingFeuille(true);
     try {
-      await createFeuille({ consultationId: selectedConsultForFeuille.id, montantSoin });
+      await createFeuille({
+        consultationId: selectedConsultForFeuille.id,
+        montantSoin,
+        idFeuille: idFeuille.trim() || undefined,
+      });
       success(t('admin.consultations.create_sheet_success') || 'La feuille de maladie a été créée avec succès.');
       setIsFeuilleModalOpen(false);
       setSelectedConsultForFeuille(null);
+      setIdFeuille('');
       setMontantSoin(0);
       loadData();
     } catch (e) {
@@ -203,23 +210,35 @@ export default function ConsultationsAdminPage() {
                       {c.motif || t('admin.consultations.not_set')}
                     </TableCell>
                     <TableCell>
-                      {c.feuilleMaladie ? (
-                        <Badge variant={c.feuilleMaladie.estRembourse ? 'success' : 'warning'}>
-                          {c.feuilleMaladie.idFeuille}
-                        </Badge>
-                      ) : (
+                      <div className="space-y-1.5 flex flex-col items-start">
+                        {c.feuillesMaladie && c.feuillesMaladie.length > 0 ? (
+                          <div className="flex flex-wrap gap-1">
+                            {c.feuillesMaladie.map((f) => (
+                              <Badge key={f.id} variant={f.estRembourse ? 'success' : 'warning'}>
+                                {f.idFeuille}
+                              </Badge>
+                            ))}
+                          </div>
+                        ) : c.feuilleMaladie ? (
+                          <Badge variant={c.feuilleMaladie.estRembourse ? 'success' : 'warning'}>
+                            {c.feuilleMaladie.idFeuille}
+                          </Badge>
+                        ) : null}
+                        
                         <Button
                           variant="outline"
                           size="sm"
-                          className="text-xs px-2 py-1"
+                          className="text-[10px] px-2 py-1 h-7"
                           onClick={() => {
                             setSelectedConsultForFeuille(c);
                             setIsFeuilleModalOpen(true);
                           }}
                         >
-                          {t('admin.consultations.create_sheet_btn') || '+ Créer feuille'}
+                          {c.feuilleMaladie || (c.feuillesMaladie && c.feuillesMaladie.length > 0)
+                            ? "+ Ajouter feuille"
+                            : t('admin.consultations.create_sheet_btn') || '+ Créer feuille'}
                         </Button>
-                      )}
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))
@@ -236,12 +255,21 @@ export default function ConsultationsAdminPage() {
           onClose={() => {
             setIsFeuilleModalOpen(false);
             setSelectedConsultForFeuille(null);
+            setIdFeuille('');
             setMontantSoin(0);
           }}
           title={t('admin.consultations.create_sheet_title') || 'Créer une feuille de maladie'}
           description={`Patient: ${selectedConsultForFeuille.assure.nom}`}
         >
           <div className="space-y-4">
+            <Input
+              id="input-admin-create-id-feuille"
+              label="Référence de la feuille (ID, optionnel)"
+              placeholder="Laisser vide pour génération automatique"
+              value={idFeuille}
+              onChange={(e) => setIdFeuille(e.target.value)}
+              leftIcon={<FileText size={16} className="text-slate-400" />}
+            />
             <div className="form-group">
               <label className="form-label">{t('admin.consultations.montant_soin_label') || 'Montant des soins (FCFA)'}</label>
               <input
@@ -260,6 +288,7 @@ export default function ConsultationsAdminPage() {
                 onClick={() => {
                   setIsFeuilleModalOpen(false);
                   setSelectedConsultForFeuille(null);
+                  setIdFeuille('');
                   setMontantSoin(0);
                 }}
               >

@@ -89,7 +89,13 @@ async function enrichConsultations(
 
   const assureMap = new Map(assures.map((a) => [a.id, a]));
   const medecinMap = new Map(medecins.map((m) => [m.id, m]));
-  const feuilleMap = new Map(feuilles.map((f) => [f.consultationId, f]));
+  
+  const feuillesMap = new Map<number, FeuillemMaladie[]>();
+  for (const f of feuilles) {
+    const list = feuillesMap.get(f.consultationId) || [];
+    list.push(f);
+    feuillesMap.set(f.consultationId, list);
+  }
 
   return Promise.all(
     rawConsultations.map(async (raw) => {
@@ -112,12 +118,16 @@ async function enrichConsultations(
         medecinMap.get(generalisteId) ??
         mapMedecin({ id: generalisteId, nom: `Médecin #${generalisteId}`, type: 'GENERALISTE' });
 
+      const cFeuilles = feuillesMap.get(id) || [];
+      const primaryFeuille = cFeuilles[0];
+
       return buildConsultation(
         raw,
         assure,
         generaliste,
         prescriptions,
-        feuilleMap.get(id),
+        primaryFeuille,
+        cFeuilles,
       );
     }),
   );

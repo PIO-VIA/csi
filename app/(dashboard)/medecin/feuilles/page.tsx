@@ -2,11 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { FileText, Search, Calendar, User, Edit } from 'lucide-react';
+import { FileText, Search, Calendar, User, Edit, Plus } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import '@/lib/i18n';
 import { useAuth } from '@/lib/authContext';
-import { getMesFeuilles, getConsultationsByMedecin, updateFeuille } from '@/lib/api';
+import { getMesFeuilles, getConsultationsByMedecin, updateFeuille, createFeuille } from '@/lib/api';
 import { Consultation, FeuillemMaladie } from '@/types';
 import Card, { CardBody } from '@/components/ui/Card';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
@@ -34,6 +34,14 @@ export default function MedecinFeuillesPage() {
   const [editIdFeuille, setEditIdFeuille] = useState('');
   const [editMontantSoin, setEditMontantSoin] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
+
+  // Create Modal State
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newConsultationId, setNewConsultationId] = useState('');
+  const [newIdFeuille, setNewIdFeuille] = useState('');
+  const [newMontantSoin, setNewMontantSoin] = useState(0);
+  const [isCreating, setIsCreating] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -63,6 +71,7 @@ export default function MedecinFeuillesPage() {
         });
         
         setFeuilles(list);
+        setConsultations(resConsults?.data || []);
       } catch (e) {
         console.error(e);
       } finally {
@@ -122,6 +131,57 @@ export default function MedecinFeuillesPage() {
     }
   };
 
+  const handleSaveCreate = async () => {
+    if (!newConsultationId) {
+      warning("Veuillez sélectionner une consultation.");
+      return;
+    }
+    if (newMontantSoin <= 0) {
+      warning("Le montant des soins doit être supérieur à 0.");
+      return;
+    }
+
+    setIsCreating(true);
+    try {
+      await createFeuille({
+        consultationId: Number(newConsultationId),
+        idFeuille: newIdFeuille.trim() || undefined,
+        montantSoin: newMontantSoin,
+      });
+
+      success("Feuille de maladie créée avec succès.");
+      setIsCreateModalOpen(false);
+      setNewConsultationId('');
+      setNewIdFeuille('');
+      setNewMontantSoin(0);
+      
+      // Reload page data
+      setLoading(true);
+      const [resFeuilles, resConsults] = await Promise.all([
+        getMesFeuilles().catch(() => ({ data: [] })),
+        getConsultationsByMedecin(user!.id).catch(() => ({ data: [] })),
+      ]);
+      const consultMap = new Map((resConsults?.data || []).map((c) => [c.id, c]));
+      const list = (resFeuilles?.data || []).map((f) => {
+        const c = consultMap.get(f.consultationId);
+        return {
+          ...f,
+          date: c ? c.date : '',
+          patient: c ? c.assure.nom : 'Inconnu',
+          consultation: c || null,
+        };
+      });
+      setFeuilles(list);
+      setConsultations(resConsults?.data || []);
+    } catch (err) {
+      console.error(err);
+      error("Erreur lors de la création de la feuille de maladie.");
+    } finally {
+      setIsCreating(false);
+      setLoading(false);
+    }
+  };
+
   const filtered = feuilles.filter((f) =>
     f.idFeuille.toLowerCase().includes(searchTerm.toLowerCase()) ||
     f.patient.toLowerCase().includes(searchTerm.toLowerCase())
@@ -135,13 +195,22 @@ export default function MedecinFeuillesPage() {
       animate={{ opacity: 1, y: 0 }}
       className="space-y-6"
     >
-      <div>
-        <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
-          {t('medecin.feuilles.title')}
-        </h1>
-        <p className="font-body text-sm text-slate-500 mt-1">
-          {t('medecin.feuilles.subtitle')}
-        </p>
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display font-extrabold text-2xl text-slate-900 tracking-tight">
+            {t('medecin.feuilles.title')}
+          </h1>
+          <p className="font-body text-sm text-slate-500 mt-1">
+            {t('medecin.feuilles.subtitle')}
+          </p>
+        </div>
+        <Button
+          variant="primary"
+          leftIcon={<Plus size={16} />}
+          onClick={() => setIsCreateModalOpen(true)}
+        >
+          Créer une feuille
+        </Button>
       </div>
 
       <Card>
@@ -292,6 +361,66 @@ export default function MedecinFeuillesPage() {
               isLoading={isSaving}
             >
               Enregistrer
+            </Button>
+          </div>
+        </div>
+      </Modal>
+
+      {/* Create Modal */}
+      <Modal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        title="Créer une feuille de maladie"
+        size="md"
+      >
+        <div className="space-y-4">
+          <div className="flex flex-col gap-1.5">
+            <label className="text-xs font-semibold text-slate-700">Sélectionner la consultation</label>
+            <select
+              value={newConsultationId}
+              onChange={(e) => setNewConsultationId(e.target.value)}
+              className="dashboard-input bg-white w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">-- Choisir une consultation --</option>
+              {consultations.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.assure.nom} - {formatDate(c.date)} {c.motif ? `(${c.motif})` : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Input
+            id="input-create-id-feuille"
+            label="Référence de la feuille (ID, optionnel)"
+            placeholder="Laisser vide pour génération automatique"
+            value={newIdFeuille}
+            onChange={(e) => setNewIdFeuille(e.target.value)}
+            leftIcon={<FileText size={16} className="text-slate-400" />}
+          />
+          <Input
+            id="input-create-montant-soin"
+            label="Montant des soins (FCFA)"
+            type="number"
+            value={newMontantSoin}
+            onChange={(e) => setNewMontantSoin(Number(e.target.value))}
+            leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
+          />
+
+          <div className="flex justify-end gap-3 pt-4 border-t border-slate-100">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setIsCreateModalOpen(false)}
+            >
+              {t('common.cancel')}
+            </Button>
+            <Button
+              type="button"
+              variant="primary"
+              onClick={handleSaveCreate}
+              isLoading={isCreating}
+            >
+              Créer la feuille
             </Button>
           </div>
         </div>

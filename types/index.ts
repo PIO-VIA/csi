@@ -58,6 +58,7 @@ export interface Consultation {
   generaliste: Medecin;
   prescriptions: Prescription[];
   feuilleMaladie?: FeuillemMaladie;
+  feuillesMaladie?: FeuillemMaladie[];
   motif?: string;
 }
 

@@ -289,13 +289,21 @@ export default function AssureDetailPage({ params }: PageProps) {
                               </div>
                             </TableCell>
                             <TableCell>
-                              {c.feuilleMaladie ? (
-                                <Badge variant={c.feuilleMaladie.estRembourse ? 'success' : 'warning'}>
-                                  {c.feuilleMaladie.idFeuille}
-                                </Badge>
-                              ) : (
-                                <span className="text-slate-500 text-xs">{t('common.none')}</span>
-                              )}
+                              <div className="flex flex-wrap gap-1">
+                                {c.feuillesMaladie && c.feuillesMaladie.length > 0 ? (
+                                  c.feuillesMaladie.map((f) => (
+                                    <Badge key={f.id} variant={f.estRembourse ? 'success' : 'warning'}>
+                                      {f.idFeuille}
+                                    </Badge>
+                                  ))
+                                ) : c.feuilleMaladie ? (
+                                  <Badge variant={c.feuilleMaladie.estRembourse ? 'success' : 'warning'}>
+                                    {c.feuilleMaladie.idFeuille}
+                                  </Badge>
+                                ) : (
+                                  <span className="text-slate-500 text-xs">{t('common.none')}</span>
+                                )}
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
