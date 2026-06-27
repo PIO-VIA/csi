@@ -239,7 +239,7 @@ export default function RemboursementsAdminPage() {
             </span>
             {checkedIds.length > 0 && (
               <Button
-                variant="success"
+                variant="primary"
                 size="sm"
                 onClick={() => {
                   const selected = pendingFeuilles.filter((f) => checkedIds.includes(f.id));
