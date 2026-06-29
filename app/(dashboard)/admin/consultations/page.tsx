@@ -225,19 +225,7 @@ export default function ConsultationsAdminPage() {
                           </Badge>
                         ) : null}
                         
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="text-[10px] px-2 py-1 h-7"
-                          onClick={() => {
-                            setSelectedConsultForFeuille(c);
-                            setIsFeuilleModalOpen(true);
-                          }}
-                        >
-                          {c.feuilleMaladie || (c.feuillesMaladie && c.feuillesMaladie.length > 0)
-                            ? "+ Ajouter feuille"
-                            : t('admin.consultations.create_sheet_btn') || '+ Créer feuille'}
-                        </Button>
+                        
                       </div>
                     </TableCell>
                   </TableRow>
