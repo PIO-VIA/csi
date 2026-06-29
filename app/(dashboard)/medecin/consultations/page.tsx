@@ -198,20 +198,6 @@ export default function MedecinConsultationsPage() {
                             {t('medecin.consultations.no_feuille')}
                           </span>
                         )}
-                        <button
-                          onClick={() => {
-                            setSelectedConsultForFeuille(c);
-                            setIsFeuilleModalOpen(true);
-                          }}
-                          className="text-[10px] font-semibold text-primary-600 hover:text-primary-850 flex items-center gap-1 cursor-pointer transition mt-0.5"
-                        >
-                          <Plus size={10} />
-                          <span>
-                            {c.feuilleMaladie || (c.feuillesMaladie && c.feuillesMaladie.length > 0)
-                              ? "Ajouter une feuille"
-                              : "Créer une feuille"}
-                          </span>
-                        </button>
                       </div>
                     </TableCell>
                   </TableRow>
