@@ -377,6 +377,7 @@ export const createMedecin = async (
       motDePasse: randomPassword(),
       matricule: data.matricule,
       estAssure: data.estAssure ?? false,
+      medecinTraitantId: data.medecinTraitantId,
     };
 
     const raw = await MDecinsService.enregistrer(payload);
@@ -408,6 +409,7 @@ export const updateMedecin = async (
     domaineSpecialisation: (data.domaineSpecialisation || null) as any,
     matricule: data.matricule,
     estAssure: data.estAssure,
+    medecinTraitantId: data.medecinTraitantId,
   };
   const raw = await MDecinsService.modifier1(id, payload as Parameters<typeof MDecinsService.modifier1>[1]);
   return { data: mapMedecin(raw as Record<string, unknown>) };

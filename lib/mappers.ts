@@ -53,6 +53,18 @@ export function mapBackendRole(role: string): UserRole {
 }
 
 export function mapMedecin(raw: RawRecord): Medecin {
+  const medecinTraitant = raw.medecinTraitantId
+    ? {
+        id: Number(raw.medecinTraitantId),
+        nom: String(raw.medecinTraitantNom ?? ''),
+        matricule: String(raw.medecinTraitantMatricule ?? ''),
+        email: '',
+        type: 'GENERALISTE' as const,
+        numTelephone: '',
+        estAssure: false,
+      }
+    : undefined;
+
   return {
     id: Number(raw.id),
     nom: String(raw.nom ?? ''),
@@ -68,6 +80,8 @@ export function mapMedecin(raw: RawRecord): Medecin {
     photoUrl: getFullPhotoUrl(raw.photoUrl ? String(raw.photoUrl) : undefined),
     dateNaissance: raw.dateNaissance ? String(raw.dateNaissance) : undefined,
     sexe: raw.sexe ? String(raw.sexe) : undefined,
+    medecinTraitant,
+    medecinTraitantId: raw.medecinTraitantId ? Number(raw.medecinTraitantId) : undefined,
   };
 }
 

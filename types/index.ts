@@ -38,6 +38,8 @@ export interface Medecin {
   photoUrl?: string;
   dateNaissance?: string;
   sexe?: string;
+  medecinTraitant?: Medecin;
+  medecinTraitantId?: number;
 }
 
 export interface CreateMedecinInput {
@@ -49,6 +51,7 @@ export interface CreateMedecinInput {
   domaineSpecialisation?: string;
   matricule?: string;
   estAssure?: boolean;
+  medecinTraitantId?: number;
 }
 
 export interface Consultation {

@@ -15,5 +15,6 @@ export type MedecinRequestDTO = {
     email?: string;
     motDePasse?: string;
     photoUrl?: string;
+    medecinTraitantId?: number;
 };
 

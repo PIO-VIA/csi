@@ -40,6 +40,7 @@ const medecinFormSchema = z.object({
   domaineSpecialisation: z.string().optional(),
   matricule: z.string().optional(),
   estAssure: z.boolean().optional(),
+  medecinTraitantId: z.string().optional(),
 });
 
 const editMedecinSchema = z.object({
@@ -52,6 +53,7 @@ const editMedecinSchema = z.object({
   domaineSpecialisation: z.string().optional(),
   matricule: z.string().optional(),
   estAssure: z.boolean().optional(),
+  medecinTraitantId: z.string().optional(),
 });
 
 type MedecinFormValues = z.infer<typeof medecinFormSchema>;
@@ -123,6 +125,7 @@ export default function MedecinsAdminPage() {
   });
 
   const watchType = watch('type');
+  const watchEstAssure = watch('estAssure');
 
   const onSubmit = async (data: MedecinFormValues) => {
     setIsSubmitting(true);
@@ -136,6 +139,7 @@ export default function MedecinsAdminPage() {
         domaineSpecialisation: data.type === 'SPECIALISTE' ? data.domaineSpecialisation : undefined,
         matricule: data.matricule || undefined,
         estAssure: data.estAssure,
+        medecinTraitantId: data.estAssure ? (data.medecinTraitantId ? Number(data.medecinTraitantId) : -1) : -1,
       };
 
       await createMedecin(payload);
@@ -155,10 +159,13 @@ export default function MedecinsAdminPage() {
     register: registerEdit,
     handleSubmit: handleSubmitEdit,
     reset: resetEdit,
+    watch: watchEdit,
     formState: { errors: editErrors },
   } = useForm<EditMedecinFormValues>({
     resolver: zodResolver(editMedecinSchema),
   });
+
+  const watchEstAssureEdit = watchEdit('estAssure');
 
   const openEditModal = (m: Medecin) => {
     setEditingMedecin(m);
@@ -172,6 +179,7 @@ export default function MedecinsAdminPage() {
       domaineSpecialisation: m.domaineSpecialisation ?? '',
       matricule: m.matricule ?? '',
       estAssure: m.estAssure,
+      medecinTraitantId: m.medecinTraitantId ? String(m.medecinTraitantId) : '',
     });
     setIsEditModalOpen(true);
   };
@@ -192,6 +200,7 @@ export default function MedecinsAdminPage() {
         type: editingMedecin.type,
         matricule: data.matricule || undefined,
         estAssure: data.estAssure,
+        medecinTraitantId: data.estAssure ? (data.medecinTraitantId ? Number(data.medecinTraitantId) : -1) : -1,
       });
       success('Informations du médecin mises à jour avec succès.');
       setIsEditModalOpen(false);
@@ -419,9 +428,16 @@ export default function MedecinsAdminPage() {
                         <div className="flex flex-col">
                           <span className="font-semibold text-slate-800">{m.nom}</span>
                           {m.estAssure && (
-                            <span className="inline-flex max-w-fit items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100 mt-0.5">
-                              Assuré
-                            </span>
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[9px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                Assuré
+                              </span>
+                              {m.medecinTraitant && (
+                                <span className="text-[10px] text-slate-500 font-body">
+                                  Traitant : {m.medecinTraitant.nom}
+                                </span>
+                              )}
+                            </div>
                           )}
                         </div>
                       </div>
@@ -568,6 +584,22 @@ export default function MedecinsAdminPage() {
             </label>
           </div>
 
+          {watchEstAssure && (
+            <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="form-group">
+              <label className="form-label">Médecin traitant (généraliste)</label>
+              <select className="dashboard-input" {...register('medecinTraitantId')}>
+                <option value="">-- Sélectionnez un médecin traitant --</option>
+                {medecins
+                  .filter((m) => m.type === 'GENERALISTE')
+                  .map((g) => (
+                    <option key={g.id} value={g.id}>
+                      {g.nom}
+                    </option>
+                  ))}
+              </select>
+            </motion.div>
+          )}
+
           {watchType === 'SPECIALISTE' && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
               <Input
@@ -689,6 +721,22 @@ export default function MedecinsAdminPage() {
                 Rendre ce médecin également assuré de l'organisme
               </label>
             </div>
+
+            {watchEstAssureEdit && (
+              <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="form-group">
+                <label className="form-label">Médecin traitant (généraliste)</label>
+                <select className="dashboard-input" {...registerEdit('medecinTraitantId')}>
+                  <option value="">-- Sélectionnez un médecin traitant --</option>
+                  {medecins
+                    .filter((m) => m.type === 'GENERALISTE' && m.id !== editingMedecin.id)
+                    .map((g) => (
+                      <option key={g.id} value={g.id}>
+                        {g.nom}
+                      </option>
+                    ))}
+                </select>
+              </motion.div>
+            )}
 
             {editingMedecin.type === 'SPECIALISTE' && (
               <Input

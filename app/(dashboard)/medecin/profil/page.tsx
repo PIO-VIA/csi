@@ -19,7 +19,7 @@ import Card, { CardHeader, CardBody } from '@/components/ui/Card';
 import Input from '@/components/ui/Input';
 import Button from '@/components/ui/Button';
 import Badge from '@/components/ui/Badge';
-import { getApiErrorMessage, getMedecinById, uploadMedecinPhoto, updateMedecin } from '@/lib/api';
+import { getApiErrorMessage, getMedecinById, uploadMedecinPhoto, updateMedecin, getGeneralistes } from '@/lib/api';
 import { Medecin } from '@/types';
 import { useToast } from '@/components/ui/Toast';
 import Loader from '@/components/ui/Loader';
@@ -43,6 +43,7 @@ const personalInfoSchema = z.object({
   dateNaissance: z.string().optional(),
   domaineSpecialisation: z.string().optional(),
   estAssure: z.boolean().optional(),
+  medecinTraitantId: z.string().optional(),
 });
 
 type ChangePasswordFormValues = z.infer<typeof changePasswordSchema>;
@@ -61,6 +62,19 @@ export default function MedecinProfilePage() {
   const [isUploading, setIsUploading] = useState(false);
   const [isUpdatingInfo, setIsUpdatingInfo] = useState(false);
   const [medecinInfo, setMedecinInfo] = useState<Medecin | null>(null);
+  const [generalistes, setGeneralistes] = useState<Medecin[]>([]);
+
+  useEffect(() => {
+    const loadGeneralistes = async () => {
+      try {
+        const res = await getGeneralistes();
+        setGeneralistes(res.data);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    loadGeneralistes();
+  }, []);
 
   useEffect(() => {
     if (!user) return;
@@ -90,10 +104,13 @@ export default function MedecinProfilePage() {
     register: registerInfo,
     handleSubmit: handleSubmitInfo,
     reset: resetInfo,
+    watch: watchInfo,
     formState: { errors: infoErrors },
   } = useForm<PersonalInfoFormValues>({
     resolver: zodResolver(personalInfoSchema),
   });
+
+  const watchEstAssureInfo = watchInfo('estAssure');
 
   useEffect(() => {
     if (medecinInfo) {
@@ -107,6 +124,7 @@ export default function MedecinProfilePage() {
         dateNaissance: medecinInfo.dateNaissance ?? '',
         domaineSpecialisation: medecinInfo.domaineSpecialisation ?? '',
         estAssure: medecinInfo.estAssure ?? false,
+        medecinTraitantId: medecinInfo.medecinTraitantId ? String(medecinInfo.medecinTraitantId) : '',
       });
     }
   }, [medecinInfo, resetInfo]);
@@ -139,6 +157,7 @@ export default function MedecinProfilePage() {
         domaineSpecialisation: data.domaineSpecialisation || undefined,
         type: medecinInfo?.type,
         estAssure: data.estAssure,
+        medecinTraitantId: data.estAssure ? (data.medecinTraitantId ? Number(data.medecinTraitantId) : -1) : -1,
       });
       success('Informations personnelles mises à jour avec succès.');
       setMedecinInfo(res.data);
@@ -245,6 +264,9 @@ export default function MedecinProfilePage() {
                   {medecinInfo?.domaineSpecialisation && (
                     <Badge variant="warning">{medecinInfo.domaineSpecialisation}</Badge>
                   )}
+                  {medecinInfo?.estAssure && (
+                    <Badge variant="success">Assuré</Badge>
+                  )}
                 </div>
               </div>
 
@@ -271,6 +293,14 @@ export default function MedecinProfilePage() {
                       <span className="text-slate-400">Téléphone</span>
                       <span className="text-slate-700 font-medium">
                         {medecinInfo.indicatifPays ? `${medecinInfo.indicatifPays} ` : ''}{medecinInfo.numTelephone}
+                      </span>
+                    </div>
+                  )}
+                  {medecinInfo.estAssure && medecinInfo.medecinTraitant && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Médecin traitant</span>
+                      <span className="text-slate-700 font-medium truncate max-w-[150px]">
+                        Dr. {medecinInfo.medecinTraitant.nom}
                       </span>
                     </div>
                   )}
@@ -409,6 +439,27 @@ export default function MedecinProfilePage() {
                       Je suis également assuré de l'organisme (Rendre assuré)
                     </label>
                   </div>
+
+                  {watchEstAssureInfo && (
+                    <div className="col-span-full">
+                      <label className="text-xs font-display font-semibold text-slate-700 block mb-1">
+                        Médecin traitant (généraliste)
+                      </label>
+                      <select
+                        {...registerInfo('medecinTraitantId')}
+                        className="w-full h-[38px] px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-primary-500 transition duration-150"
+                      >
+                        <option value="">-- Sélectionnez un médecin traitant --</option>
+                        {generalistes
+                          .filter((g) => g.id !== user.id)
+                          .map((g) => (
+                            <option key={g.id} value={g.id}>
+                              {g.nom}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  )}
 
                   {medecinInfo?.type === 'SPECIALISTE' && (
                     <Input
