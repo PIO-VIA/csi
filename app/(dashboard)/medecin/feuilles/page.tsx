@@ -209,7 +209,7 @@ export default function MedecinFeuillesPage() {
           leftIcon={<Plus size={16} />}
           onClick={() => setIsCreateModalOpen(true)}
         >
-          Créer une feuille
+          {t('medecin.feuilles.create_btn') || "Créer une feuille"}
         </Button>
       </div>
 
@@ -278,7 +278,7 @@ export default function MedecinFeuillesPage() {
                     </TableCell>
                     <TableCell>
                       {f.statut === 'ANNULE' ? (
-                        <Badge variant="danger">ANNULÉ</Badge>
+                        <Badge variant="danger">{t('common.cancelled') || 'ANNULÉ'}</Badge>
                       ) : (
                         <Badge variant={f.estRembourse ? 'success' : 'warning'}>
                           {f.estRembourse ? t('medecin.feuilles.reimbursed') : t('medecin.feuilles.pending')}
@@ -293,7 +293,7 @@ export default function MedecinFeuillesPage() {
                           className="text-xs px-3"
                           onClick={() => setSelectedSheet(f)}
                         >
-                          Visualiser
+                          {t('medecin.feuilles.visualize') || "Visualiser"}
                         </Button>
                         <Button
                           variant="outline"
@@ -303,7 +303,7 @@ export default function MedecinFeuillesPage() {
                           disabled={f.statut === 'ANNULE' || f.estRembourse}
                         >
                           <Edit size={13} className="mr-1 inline" />
-                          Modifier
+                          {t('medecin.feuilles.edit') || "Modifier"}
                         </Button>
                       </div>
                     </TableCell>
@@ -326,20 +326,20 @@ export default function MedecinFeuillesPage() {
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Modifier la feuille de maladie"
+        title={t('admin.feuilles.edit_title') || "Modifier la feuille de maladie"}
         size="md"
       >
         <div className="space-y-4">
           <Input
             id="input-edit-id-feuille"
-            label="Référence de la feuille (ID)"
+            label={t('admin.feuilles.sheet_id_label') || "Référence de la feuille (ID)"}
             value={editIdFeuille}
             onChange={(e) => setEditIdFeuille(e.target.value)}
             leftIcon={<FileText size={16} className="text-slate-400" />}
           />
           <Input
             id="input-edit-montant-soin"
-            label="Montant des soins (FCFA)"
+            label={t('medecin.consultations.montant_soin_label') || "Montant des soins (FCFA)"}
             type="number"
             value={editMontantSoin}
             onChange={(e) => setEditMontantSoin(Number(e.target.value))}
@@ -360,7 +360,7 @@ export default function MedecinFeuillesPage() {
               onClick={handleSaveEdit}
               isLoading={isSaving}
             >
-              Enregistrer
+              {t('common.save') || 'Enregistrer'}
             </Button>
           </div>
         </div>
@@ -370,18 +370,18 @@ export default function MedecinFeuillesPage() {
       <Modal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        title="Créer une feuille de maladie"
+        title={t('medecin.consultations.create_sheet_title') || "Créer une feuille de maladie"}
         size="md"
       >
         <div className="space-y-4">
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-700">Sélectionner la consultation</label>
+            <label className="text-xs font-semibold text-slate-700">{t('medecin.feuilles.select_consultation') || "Sélectionner la consultation"}</label>
             <select
               value={newConsultationId}
               onChange={(e) => setNewConsultationId(e.target.value)}
               className="dashboard-input bg-white w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="">-- Choisir une consultation --</option>
+              <option value="">{t('medecin.feuilles.choose_consultation') || "-- Choisir une consultation --"}</option>
               {consultations.map((c) => (
                 <option key={c.id} value={c.id}>
                   {c.assure.nom} - {formatDate(c.date)} {c.motif ? `(${c.motif})` : ''}
@@ -391,15 +391,15 @@ export default function MedecinFeuillesPage() {
           </div>
           <Input
             id="input-create-id-feuille"
-            label="Référence de la feuille (ID, optionnel)"
-            placeholder="Laisser vide pour génération automatique"
+            label={t('medecin.consultations.sheet_ref_label') || "Référence de la feuille (ID, optionnel)"}
+            placeholder={t('medecin.consultations.sheet_ref_placeholder') || "Laisser vide pour génération automatique"}
             value={newIdFeuille}
             onChange={(e) => setNewIdFeuille(e.target.value)}
             leftIcon={<FileText size={16} className="text-slate-400" />}
           />
           <Input
             id="input-create-montant-soin"
-            label="Montant des soins (FCFA)"
+            label={t('medecin.consultations.montant_soin_label') || "Montant des soins (FCFA)"}
             type="number"
             value={newMontantSoin}
             onChange={(e) => setNewMontantSoin(Number(e.target.value))}
@@ -420,7 +420,7 @@ export default function MedecinFeuillesPage() {
               onClick={handleSaveCreate}
               isLoading={isCreating}
             >
-              Créer la feuille
+              {t('medecin.consultations.create_sheet_submit') || 'Créer la feuille'}
             </Button>
           </div>
         </div>

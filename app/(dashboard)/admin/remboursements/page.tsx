@@ -262,26 +262,26 @@ export default function RemboursementsAdminPage() {
           onClick={() => setIsManualRembModalOpen(true)}
           className="shadow-sm hover:shadow-md transition-all font-semibold"
         >
-          Effectuer un remboursement
+          {t('admin.remboursements.modal_title')}
         </Button>
       </div>
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <StatCard
-          label="Total remboursé"
+          label={t('admin.remboursements.stat_total')}
           value={formatFCFA(totalRembourse)}
           icon={<DollarSign size={20} />}
           color="success"
         />
         <StatCard
-          label="Dossiers en attente"
+          label={t('admin.remboursements.stat_pending')}
           value={pendingFeuilles.length}
           icon={<Clock size={20} />}
           color="warning"
         />
         <StatCard
-          label="Remboursés ce mois"
+          label={t('admin.remboursements.stat_this_month')}
           value={formatFCFA(thisMonth)}
           icon={<Calendar size={20} />}
           color="primary"
@@ -309,11 +309,11 @@ export default function RemboursementsAdminPage() {
                 }}
                 className="ml-4 px-3.5 py-1.5 text-xs font-semibold shadow-sm hover:shadow-md transition-all"
               >
-                Rembourser la sélection ({checkedIds.length})
+                {t('admin.remboursements.reimburse_selection', { count: checkedIds.length })}
               </Button>
             )}
           </div>
-          <Badge variant="warning">{pendingFeuilles.length} dossiers</Badge>
+          <Badge variant="warning">{t('admin.remboursements.cases_count', { count: pendingFeuilles.length })}</Badge>
         </CardHeader>
         <CardBody className="p-0">
           <Table>
@@ -473,7 +473,7 @@ export default function RemboursementsAdminPage() {
                         className="px-2.5 py-1 text-xs flex items-center gap-1 text-slate-500 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200/50"
                         leftIcon={<Printer size={13} />}
                       >
-                        Reçu
+                        {t('admin.remboursements.receipt_btn')}
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -667,13 +667,13 @@ export default function RemboursementsAdminPage() {
           setSelectedPendingSheetIds([]);
           setManualPaymentMode('VIREMENT');
         }}
-        title="Effectuer un remboursement"
+        title={t('admin.remboursements.modal_title')}
         size="lg"
       >
         <div className="space-y-6">
           {/* Patient Selector */}
           <div className="flex flex-col gap-1.5">
-            <label className="text-xs font-semibold text-slate-700">Sélectionner l'assuré (Patient)</label>
+            <label className="text-xs font-semibold text-slate-700">{t('admin.remboursements.select_patient')}</label>
             <select
               value={selectedAssureId}
               onChange={(e) => {
@@ -682,7 +682,7 @@ export default function RemboursementsAdminPage() {
               }}
               className="dashboard-input bg-white w-full border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
             >
-              <option value="">-- Choisir un assuré --</option>
+              <option value="">{t('admin.remboursements.choose_patient')}</option>
               {assures.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.nom} (ID: {a.idAssure})
@@ -694,12 +694,12 @@ export default function RemboursementsAdminPage() {
           {selectedAssureId && (
             <div className="space-y-4">
               <label className="text-xs font-semibold text-slate-700 block mb-1">
-                Feuilles de maladie en attente pour cet assuré
+                {t('admin.remboursements.pending_sheets_for_patient')}
               </label>
 
               {pendingSheetsForSelectedAssure.length === 0 ? (
                 <div className="p-4 bg-slate-50 border border-slate-100 rounded-xl text-center text-xs text-slate-500">
-                  Aucune feuille de maladie en attente de remboursement pour cet assuré.
+                  {t('admin.remboursements.no_pending_sheets_for_patient')}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -721,7 +721,7 @@ export default function RemboursementsAdminPage() {
                       }}
                     />
                     <label htmlFor="select-all-manual" className="text-xs font-semibold text-slate-650 cursor-pointer">
-                      Tout sélectionner ({pendingSheetsForSelectedAssure.length})
+                      {t('admin.remboursements.select_all', { count: pendingSheetsForSelectedAssure.length })}
                     </label>
                   </div>
 
@@ -755,7 +755,7 @@ export default function RemboursementsAdminPage() {
                                 {f.idFeuille}
                               </span>
                               <span className="text-[10px] text-slate-500">
-                                Consultation par {det.doctorName}
+                                {t('admin.remboursements.consultation_by', { doctor: det.doctorName })}
                               </span>
                             </label>
                           </div>
@@ -764,7 +764,7 @@ export default function RemboursementsAdminPage() {
                               {formatFCFA(f.montantSoin)}
                             </span>
                             <span className="text-[10px] font-bold text-success block">
-                              Remb: {formatFCFA(det.amount)} ({det.rateLabel})
+                              {t('admin.remboursements.reimb_abbrev')} {formatFCFA(det.amount)} ({det.rateLabel})
                             </span>
                           </div>
                         </div>
@@ -776,7 +776,7 @@ export default function RemboursementsAdminPage() {
                   {selectedPendingSheetIds.length > 0 && (
                     <div className="bg-primary-50/20 border border-primary-100 rounded-xl p-4 space-y-2 text-xs font-body">
                       <div className="flex justify-between text-slate-600">
-                        <span>Frais de soins cumulés :</span>
+                        <span>{t('admin.remboursements.total_accumulated_fees')}</span>
                         <span className="font-mono font-semibold">
                           {formatFCFA(
                             pendingSheetsForSelectedAssure
@@ -786,7 +786,7 @@ export default function RemboursementsAdminPage() {
                         </span>
                       </div>
                       <div className="flex justify-between text-slate-800 font-bold text-sm">
-                        <span>Total à rembourser :</span>
+                        <span>{t('admin.remboursements.total_to_reimburse')}</span>
                         <span className="font-display font-extrabold text-success">
                           {formatFCFA(
                             pendingSheetsForSelectedAssure
@@ -801,7 +801,7 @@ export default function RemboursementsAdminPage() {
                   {/* Payment Mode Selector */}
                   <div className="space-y-2 pt-2">
                     <label className="font-display font-semibold text-xs text-slate-600 tracking-wide">
-                      Mode de paiement
+                      {t('admin.remboursements.modal_mode')}
                     </label>
                     <div className="grid grid-cols-2 gap-4">
                       <div
@@ -812,7 +812,7 @@ export default function RemboursementsAdminPage() {
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="font-display font-semibold text-xs">Virement Bancaire</span>
+                        <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_virement')}</span>
                         <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
                           manualPaymentMode === 'VIREMENT' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                         }`}>
@@ -828,7 +828,7 @@ export default function RemboursementsAdminPage() {
                             : 'border-slate-200 bg-white text-slate-600 hover:border-slate-300 hover:bg-slate-50'
                         }`}
                       >
-                        <span className="font-display font-semibold text-xs">En Espèces (Cash)</span>
+                        <span className="font-display font-semibold text-xs">{t('admin.remboursements.modal_cash')}</span>
                         <div className={`h-4.5 w-4.5 rounded-full border flex items-center justify-center ${
                           manualPaymentMode === 'CASH' ? 'border-primary-600 bg-primary-600' : 'border-slate-300'
                         }`}>
@@ -854,7 +854,7 @@ export default function RemboursementsAdminPage() {
                 setManualPaymentMode('VIREMENT');
               }}
             >
-              Annuler
+              {t('common.cancel')}
             </Button>
             <Button
               type="button"
@@ -863,7 +863,7 @@ export default function RemboursementsAdminPage() {
               isLoading={isSubmittingManualRemb}
               disabled={!selectedAssureId || selectedPendingSheetIds.length === 0}
             >
-              Confirmer le remboursement
+              {t('admin.remboursements.modal_confirm')}
             </Button>
           </div>
         </div>

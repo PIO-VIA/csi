@@ -236,8 +236,8 @@ export default function MedecinsAdminPage() {
   const handleResetPassword = (id: number) => {
     setConfirmModal({
       isOpen: true,
-      title: 'Réinitialiser le mot de passe',
-      description: "Êtes-vous sûr de vouloir générer un nouveau mot de passe et l'envoyer par e-mail à ce médecin ?",
+      title: t('admin.medecins.reset_password') || 'Réinitialiser le mot de passe',
+      description: t('admin.medecins.reset_password_confirm') || "Êtes-vous sûr de vouloir générer un nouveau mot de passe et l'envoyer par e-mail à ce médecin ?",
       onConfirm: async () => {
         setConfirmModal((prev) => ({ ...prev, isOpen: false }));
         setResettingId(id);
@@ -245,7 +245,7 @@ export default function MedecinsAdminPage() {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const { MDecinsService } = (await import('@/lib2')) as any;
           await MDecinsService.resetPassword(id);
-          success('Nouveau mot de passe envoyé par email.');
+          success(t('admin.medecins.reset_password_success') || 'Nouveau mot de passe envoyé par email.');
         } catch (e) {
           error(getApiErrorMessage(e));
         } finally {
@@ -478,7 +478,7 @@ export default function MedecinsAdminPage() {
                           variant="ghost"
                           size="sm"
                           className="p-1.5 h-8 w-8 text-primary-600 hover:bg-primary-50"
-                          title="Modifier les informations"
+                          title={t('common.edit') || "Modifier les informations"}
                           onClick={() => openEditModal(m)}
                         >
                           <Pencil size={15} />
@@ -487,7 +487,7 @@ export default function MedecinsAdminPage() {
                           variant="ghost"
                           size="sm"
                           className="p-1.5 h-8 w-8 text-success hover:bg-success/10"
-                          title="Réinitialiser le mot de passe"
+                          title={t('admin.medecins.reset_password') || "Réinitialiser le mot de passe"}
                           onClick={() => handleResetPassword(m.id)}
                           isLoading={resettingId === m.id}
                         >
@@ -580,15 +580,15 @@ export default function MedecinsAdminPage() {
               className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
             />
             <label htmlFor="estAssure" className="text-xs font-semibold text-slate-700 cursor-pointer">
-              Rendre ce médecin également assuré de l'organisme
+              {t('admin.medecins.make_insured') || "Rendre ce médecin également assuré de l'organisme"}
             </label>
           </div>
 
           {watchEstAssure && (
             <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="form-group">
-              <label className="form-label">Médecin traitant (généraliste)</label>
+              <label className="form-label">{t('admin.medecins.family_doctor') || "Médecin traitant (généraliste)"}</label>
               <select className="dashboard-input" {...register('medecinTraitantId')}>
-                <option value="">-- Sélectionnez un médecin traitant --</option>
+                <option value="">{t('admin.medecins.family_doctor_select') || "-- Sélectionnez un médecin traitant --"}</option>
                 {medecins
                   .filter((m) => m.type === 'GENERALISTE')
                   .map((g) => (
@@ -640,31 +640,31 @@ export default function MedecinsAdminPage() {
           setIsEditModalOpen(false);
           setEditingMedecin(null);
         }}
-        title="Modifier les informations du médecin"
+        title={t('admin.medecins.edit_title') || "Modifier les informations du médecin"}
         description={
           editingMedecin
-            ? `Mise à jour du profil de ${editingMedecin.nom} (${editingMedecin.matricule}) — le mot de passe ne peut pas être modifié ici.`
+            ? t('admin.medecins.edit_desc', { name: editingMedecin.nom, matricule: editingMedecin.matricule }) || `Mise à jour du profil de ${editingMedecin.nom} (${editingMedecin.matricule}) — le mot de passe ne peut pas être modifié ici.`
             : ''
         }
       >
         {editingMedecin && (
           <form onSubmit={handleSubmitEdit(onEditSubmit)} className="space-y-4">
             <Input
-              label="Nom complet"
+              label={t('auth.full_name') || "Nom complet"}
               placeholder="Ex: Dr. Célestin Etoa"
               error={editErrors.nom?.message ? String(editErrors.nom.message) : undefined}
               {...registerEdit('nom')}
             />
 
             <Input
-              label="Matricule professionnel"
+              label={t('admin.medecins.col_matricule') || "Matricule professionnel"}
               placeholder="Ex: MED-12345"
               error={editErrors.matricule?.message ? String(editErrors.matricule.message) : undefined}
               {...registerEdit('matricule')}
             />
 
             <Input
-              label="Email"
+              label={t('admin.medecins.col_email') || "Email"}
               type="email"
               placeholder="medecin@csi.cm"
               leftIcon={<Mail size={16} />}
@@ -675,7 +675,7 @@ export default function MedecinsAdminPage() {
             <div className="grid grid-cols-3 gap-2">
               <div className="col-span-1">
                 <Input
-                  label="Indicatif"
+                  label={t('admin.medecins.form_country_code') || "Indicatif"}
                   placeholder="+237"
                   error={editErrors.indicatifPays?.message ? String(editErrors.indicatifPays.message) : undefined}
                   {...registerEdit('indicatifPays')}
@@ -683,7 +683,7 @@ export default function MedecinsAdminPage() {
               </div>
               <div className="col-span-2">
                 <Input
-                  label="Téléphone"
+                  label={t('admin.medecins.col_phone') || "Téléphone"}
                   placeholder="6xx xx xx xx"
                   error={editErrors.numTelephone?.message ? String(editErrors.numTelephone.message) : undefined}
                   {...registerEdit('numTelephone')}
@@ -693,16 +693,16 @@ export default function MedecinsAdminPage() {
 
             <div className="grid grid-cols-2 gap-3">
               <div className="form-group">
-                <label className="form-label-inline">Genre</label>
+                <label className="form-label-inline">{t('auth.gender') || "Genre"}</label>
                 <select className="dashboard-input" {...registerEdit('sexe')}>
-                  <option value="">— Non précisé —</option>
-                  <option value="Homme">Masculin</option>
-                  <option value="Femme">Féminin</option>
+                  <option value="">— {t('auth.not_specified') || "Non précisé"} —</option>
+                  <option value="Homme">{t('auth.gender_m') || "Masculin"}</option>
+                  <option value="Femme">{t('auth.gender_f') || "Féminin"}</option>
                 </select>
               </div>
               <div>
                 <Input
-                  label="Date de naissance"
+                  label={t('auth.birth_date') || "Date de naissance"}
                   type="date"
                   error={editErrors.dateNaissance?.message ? String(editErrors.dateNaissance.message) : undefined}
                   {...registerEdit('dateNaissance')}
@@ -718,15 +718,15 @@ export default function MedecinsAdminPage() {
                 className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
               />
               <label htmlFor="estAssureEdit" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                Rendre ce médecin également assuré de l'organisme
+                {t('admin.medecins.make_insured') || "Rendre ce médecin également assuré de l'organisme"}
               </label>
             </div>
 
             {watchEstAssureEdit && (
               <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="form-group">
-                <label className="form-label">Médecin traitant (généraliste)</label>
+                <label className="form-label">{t('admin.medecins.family_doctor') || "Médecin traitant (généraliste)"}</label>
                 <select className="dashboard-input" {...registerEdit('medecinTraitantId')}>
-                  <option value="">-- Sélectionnez un médecin traitant --</option>
+                  <option value="">{t('admin.medecins.family_doctor_select') || "-- Sélectionnez un médecin traitant --"}</option>
                   {medecins
                     .filter((m) => m.type === 'GENERALISTE' && m.id !== editingMedecin.id)
                     .map((g) => (
@@ -740,7 +740,7 @@ export default function MedecinsAdminPage() {
 
             {editingMedecin.type === 'SPECIALISTE' && (
               <Input
-                label="Domaine de spécialisation"
+                label={t('admin.medecins.form_domain') || "Domaine de spécialisation"}
                 placeholder="Ex: Cardiologie, Pédiatrie"
                 error={
                   editErrors.domaineSpecialisation?.message
@@ -755,8 +755,7 @@ export default function MedecinsAdminPage() {
             <div className="flex items-center gap-2 p-3 bg-amber-50 border border-amber-100 rounded-xl text-xs text-amber-700">
               <KeyRound size={13} className="shrink-0" />
               <span>
-                Le mot de passe ne peut pas être modifié ici. Utilisez le bouton{' '}
-                <strong>Réinitialiser</strong> pour envoyer un nouveau mot de passe par email.
+                {t('admin.medecins.reset_password_hint') || "Le mot de passe ne peut pas être modifié ici. Utilisez le bouton Réinitialiser pour envoyer un nouveau mot de passe par email."}
               </span>
             </div>
 

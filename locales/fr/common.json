@@ -33,9 +33,15 @@
       "assures": "Assurés Actifs",
       "consultations": "Consultations Digitales",
       "reimbursements": "Remboursés"
-    }
+    },
+    "hero_title": "Votre santé, notre priorité nationale",
+    "health_coverage": "Couverture santé",
+    "republic_of_cameroon": "République du Cameroun",
+    "security_sociale": "Sécurité Sociale"
   },
   "auth": {
+    "redirect_login": "Redirection vers la page de connexion...",
+    "credentials_title": "Identifiants de connexion",
     "login_title": "Connexion à votre espace",
     "login_subtitle": "Accédez à votre espace professionnel sécurisé de la Sécurité Sociale",
     "username_label": "Nom d'utilisateur",
@@ -172,7 +178,10 @@
       "new_assure": "Nouvel assuré",
       "filter_all_blood": "Tous les groupes sanguins",
       "col_telephone": "Téléphone",
-      "status_active": "Actif"
+      "status_active": "Actif",
+    "create_success": "Dossier assuré créé avec succès.",
+    "update_success": "Dossier assuré mis à jour avec succès.",
+    "delete_success": "Dossier assuré supprimé avec succès."
     },
     "medecins": {
       "title": "Gestion des Médecins",
@@ -220,7 +229,17 @@
       "form_submit": "Enregistrer le médecin",
       "success_msg": "Médecin enregistré. Un mot de passe provisoire sera envoyé par le backend.",
       "generaliste": "Généraliste",
-      "specialiste": "Spécialiste"
+      "specialiste": "Spécialiste",
+    "form_success": "Médecin enregistré. Les identifiants de connexion ont été envoyés à l'adresse email : {{email}}",
+    "edit_title": "Modifier les informations du médecin",
+    "edit_desc": "Mise à jour du profil de {{name}} ({{matricule}}) — le mot de passe ne peut pas être modifié ici.",
+    "reset_password": "Réinitialiser le mot de passe",
+    "reset_password_hint": "Le mot de passe ne peut pas être modifié ici. Utilisez le bouton Réinitialiser pour envoyer un nouveau mot de passe par email.",
+    "make_insured": "Rendre ce médecin également assuré de l'organisme",
+    "family_doctor": "Médecin traitant (généraliste)",
+    "family_doctor_select": "-- Sélectionnez un médecin traitant --",
+    "reset_password_confirm": "Êtes-vous sûr de vouloir générer un nouveau mot de passe et l'envoyer par e-mail à ce médecin ?",
+    "reset_password_success": "Nouveau mot de passe envoyé par email."
     },
     "consultations": {
       "title": "Suivi des Consultations",
@@ -245,7 +264,10 @@
       "create_sheet_btn": "+ Créer feuille",
       "create_sheet_title": "Créer une feuille de maladie",
       "montant_soin_label": "Montant des soins (FCFA)",
-      "create_sheet_submit": "Créer la feuille"
+      "create_sheet_submit": "Créer la feuille",
+    "results_count": "consultation(s) trouvée(s)",
+    "sheet_ref_label": "Référence de la feuille (ID, optionnel)",
+    "sheet_ref_placeholder": "Laisser vide pour génération automatique"
     },
     "remboursements": {
       "payment_success": "Remboursement effectué avec succès.",
@@ -290,7 +312,23 @@
       "status_reimbursed": "Remboursé",
       "status_pending": "En attente",
       "coverage_100": "Couverture 100%",
-      "coverage_80": "Couverture 80%"
+      "coverage_80": "Couverture 80%",
+    "modal_details": "Détails / Posologie",
+    "stat_total": "Total remboursé",
+    "stat_pending": "Dossiers en attente",
+    "stat_this_month": "Remboursés ce mois",
+    "reimburse_selection": "Rembourser la sélection ({{count}})",
+    "cases_count": "{{count}} dossiers",
+    "receipt_btn": "Reçu",
+    "select_patient": "Sélectionner l'assuré (Patient)",
+    "choose_patient": "-- Choisir un assuré --",
+    "pending_sheets_for_patient": "Feuilles de maladie en attente pour cet assuré",
+    "no_pending_sheets_for_patient": "Aucune feuille de maladie en attente de remboursement pour cet assuré.",
+    "select_all": "Tout sélectionner ({{count}})",
+    "consultation_by": "Consultation par {{doctor}}",
+    "reimb_abbrev": "Remb:",
+    "total_accumulated_fees": "Frais de soins cumulés :",
+    "total_to_reimburse": "Total à rembourser :"
     },
     "feuilles": {
       "title": "Feuilles de Maladie",
@@ -301,7 +339,13 @@
       "col_amount": "Montant soin",
       "col_status": "Statut",
       "search_placeholder": "Rechercher par référence, patient...",
-      "empty_list": "Aucune feuille de maladie trouvée."
+      "empty_list": "Aucune feuille de maladie trouvée.",
+      "total_sheets": "Total feuilles",
+      "stat_reimbursed": "Remboursées",
+      "stat_pending": "En attente",
+      "stat_cancelled": "Annulées",
+      "edit_title": "Modifier la feuille de maladie",
+      "sheet_id_label": "Référence de la feuille (ID)"
     }
   },
   "medecin": {
@@ -311,7 +355,25 @@
       "new_consultation": "Nouvelle consultation",
       "recent_consultations": "Consultations récentes",
       "see_all": "Voir tout",
-      "no_consultation": "Aucune consultation enregistrée."
+      "no_consultation": "Aucune consultation enregistrée.",
+      "consultations": "Consultations",
+      "declared_patients_hint": "{{count}} assuré(s) vous ont déclaré comme médecin traitant.",
+      "today_consultations": "Consultations d'aujourd'hui",
+      "today_consultations_count": "{{count}} consultation(s)",
+      "no_consultation_today": "Aucune consultation enregistrée pour aujourd'hui.",
+      "motif_colon": "Motif : ",
+      "no_motif": "Aucun motif renseigné",
+      "orientations_today": "Orientations reçues aujourd'hui",
+      "today_orientations_count": "{{count}} orientation(s)",
+      "no_orientation_today": "Aucune orientation reçue pour aujourd'hui.",
+      "prescribed_by": "Prescrit par : ",
+      "consult_btn": "Consulter",
+      "consultations_per_week": "Consultations / semaine",
+      "recent_orientations": "Orientations récentes reçues",
+      "col_orientation_date": "Date Orientation",
+      "col_orientation_reason": "Motif de l'orientation",
+      "col_prescribing_doctor": "Médecin Prescripteur",
+      "no_recent_orientations": "Aucune orientation récente reçue."
     },
     "patients": {
       "title": "Mes patients",
@@ -337,7 +399,13 @@
       "col_actions": "Actions",
       "not_found": "Aucune consultation trouvée.",
       "not_set": "Non renseigné",
-      "no_feuille": "Non générée"
+      "no_feuille": "Non générée",
+      "generate_sheet_hint": "Permet le remboursement automatique de l'assuré social",
+      "create_sheet_title": "Créer une feuille de maladie",
+      "sheet_ref_label": "Référence de la feuille (ID, optionnel)",
+      "sheet_ref_placeholder": "Laisser vide pour génération automatique",
+      "montant_soin_label": "Montant des soins (FCFA)",
+      "create_sheet_submit": "Créer la feuille"
     },
     "nouvelle_consultation": {
       "title": "Nouvelle Consultation",
@@ -393,7 +461,10 @@
       "create_success": "Consultation enregistrée avec succès.",
       "error_patient": "Veuillez sélectionner un patient.",
       "error_motif": "Veuillez saisir un motif de consultation détaillé (min. 5 caractères).",
-      "error_montant": "Le montant doit être supérieur ou égal à 0."
+      "error_montant": "Le montant doit être supérieur ou égal à 0.",
+      "referral_reason": "Motif de référence",
+      "search_patient_by_id": "Rechercher un patient par identifiant (ASS-XXXXXXXX)",
+      "consultation_amount": "Montant de la consultation"
     },
     "prescriptions": {
       "title": "Prescriptions",
@@ -405,7 +476,9 @@
       "col_details": "Détails",
       "not_found": "Aucune prescription trouvée.",
       "type_medicament": "Médicament",
-      "type_specialiste": "Référence spécialiste"
+      "type_specialiste": "Référence spécialiste",
+      "type_med": "Médicament",
+      "type_spec": "Spécialiste"
     },
     "feuilles": {
       "title": "Feuilles de Maladie",
@@ -418,7 +491,12 @@
       "search_placeholder": "Rechercher par référence, patient...",
       "empty_list": "Aucune feuille de maladie trouvée.",
       "reimbursed": "Remboursé",
-      "pending": "En attente"
+      "pending": "En attente",
+      "create_btn": "Créer une feuille",
+      "select_consultation": "Sélectionner la consultation",
+      "choose_consultation": "-- Choisir une consultation --",
+      "visualize": "Visualiser",
+      "edit": "Modifier"
     }
   },
   "assure": {
@@ -549,7 +627,14 @@
     "showing": "Affichage",
     "not_found_title": "Page introuvable",
     "not_found_desc": "Désolé, la page que vous recherchez n'existe pas ou a été déplacée.",
-    "home": "Accueil"
+    "home": "Accueil",
+    "academic_project": "ENSPY Yaoundé — Projet Académique © 2026 CSI",
+    "view": "Voir",
+    "french": "Français",
+    "english": "English",
+    "save_changes": "Enregistrer les modifications",
+    "select": "Sélectionner",
+    "cancelled": "Annulé"
   },
   "profile": {
     "title": "Paramètres du Profil",
@@ -561,6 +646,23 @@
     "new_password": "Nouveau mot de passe",
     "confirm_password": "Confirmer le nouveau mot de passe",
     "password_success": "Mot de passe changé avec succès !",
-    "update_btn": "Mettre à jour le mot de passe"
+    "update_btn": "Mettre à jour le mot de passe",
+    "personal_info": "Informations personnelles",
+    "job_title": "Fonction / Rôle",
+    "gender": "Genre",
+    "phone": "Téléphone",
+    "birth_date": "Date de naissance",
+    "indicatif": "Indicatif",
+    "matricule": "Matricule professionnel",
+    "make_insured": "Je suis également assuré de l'organisme (Rendre assuré)",
+    "family_doctor": "Médecin traitant (généraliste)",
+    "family_doctor_select": "-- Sélectionnez un médecin traitant --",
+    "specialisation": "Spécialisation",
+    "specialist_domain": "Domaine de spécialisation",
+    "modify": "Modifier",
+    "insured_badge": "Assuré",
+    "photo_success": "Photo de profil mise à jour.",
+    "photo_error": "La mise à jour de la photo a échoué.",
+    "info_success": "Informations personnelles mises à jour avec succès."
   }
 }

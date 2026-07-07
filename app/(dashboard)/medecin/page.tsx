@@ -37,7 +37,7 @@ import { formatDate } from '@/lib/utils';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '@/components/ui/Table';
 
 export default function MedecinDashboardPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { user } = useAuth();
   const router = useRouter();
   const [loading, setLoading] = useState(true);
@@ -104,7 +104,7 @@ export default function MedecinDashboardPage() {
       ? `${t('dashboard.role.specialiste')}${medecinInfo.domaineSpecialisation ? ` — ${medecinInfo.domaineSpecialisation}` : ''}`
       : t('dashboard.role.generaliste');
 
-  const dateLabel = new Date().toLocaleDateString('fr-FR', {
+  const dateLabel = new Date().toLocaleDateString(i18n.language === 'en' ? 'en-US' : 'fr-FR', {
     weekday: 'long',
     day: 'numeric',
     month: 'long',
@@ -206,8 +206,7 @@ export default function MedecinDashboardPage() {
           <CardBody className="p-4 flex items-center gap-3 text-sm text-slate-655">
             <Stethoscope size={18} className="text-primary-600 shrink-0" />
             <span>
-              <strong className="text-slate-800">{declaredPatientsCount}</strong> assuré(s) vous ont
-              déclaré comme médecin traitant.
+              {t('medecin.dashboard.declared_patients_hint', { count: declaredPatientsCount })}
             </span>
           </CardBody>
         </Card>
@@ -217,22 +216,22 @@ export default function MedecinDashboardPage() {
           <CardHeader className="flex justify-between items-center">
             <div>
               <span className="font-display font-bold text-sm text-slate-800 block">
-                Consultations d'aujourd'hui
+                {t('medecin.dashboard.today_consultations')}
               </span>
               <span className="text-[10px] text-slate-450 font-body block mt-0.5">
                 {dateLabel}
               </span>
             </div>
             <Badge variant={todayConsultations.length > 0 ? 'info' : 'neutral'}>
-              {todayConsultations.length} {todayConsultations.length > 1 ? 'consultations' : 'consultation'}
+              {t('medecin.dashboard.today_consultations_count', { count: todayConsultations.length })}
             </Badge>
           </CardHeader>
           <CardBody>
             {todayConsultations.length === 0 ? (
               <EmptyState
-                title="Pas de consultation"
-                description="Aucune consultation enregistrée pour aujourd'hui."
-                actionText="Nouvelle consultation"
+                title={t('medecin.dashboard.no_consultation')}
+                description={t('medecin.dashboard.no_consultation_today')}
+                actionText={t('medecin.dashboard.new_consultation')}
                 onAction={() => router.push('/medecin/consultations/nouvelle')}
               />
             ) : (
@@ -269,7 +268,7 @@ export default function MedecinDashboardPage() {
                               </span>
                             </div>
                             <p className="text-[10px] text-slate-500 font-body">
-                              Motif : {c.motif || 'Aucun motif renseigné'}
+                              {t('medecin.dashboard.motif_colon')}{c.motif || t('medecin.dashboard.no_motif')}
                             </p>
                           </div>
                         </div>
@@ -295,21 +294,21 @@ export default function MedecinDashboardPage() {
             <CardHeader className="flex justify-between items-center">
               <div>
                 <span className="font-display font-bold text-sm text-slate-800 block">
-                  Orientations reçues aujourd'hui
+                  {t('medecin.dashboard.orientations_today')}
                 </span>
                 <span className="text-[10px] text-slate-450 font-body block mt-0.5">
                   {dateLabel}
                 </span>
               </div>
               <Badge variant={todayOrientations.length > 0 ? 'warning' : 'neutral'}>
-                {todayOrientations.length} {todayOrientations.length > 1 ? 'orientations' : 'orientation'}
+                {t('medecin.dashboard.today_orientations_count', { count: todayOrientations.length })}
               </Badge>
             </CardHeader>
             <CardBody>
               {todayOrientations.length === 0 ? (
                 <EmptyState
-                  title="Pas d'orientation"
-                  description="Aucune orientation reçue pour aujourd'hui."
+                  title={t('medecin.dashboard.no_orientation_today')}
+                  description={t('medecin.dashboard.no_orientation_today')}
                 />
               ) : (
                 <div className="relative border-l-2 border-slate-100 pl-4 ml-3 space-y-6 my-2">
@@ -340,7 +339,7 @@ export default function MedecinDashboardPage() {
                                 </span>
                               </div>
                               <p className="text-[10px] text-slate-500 font-body">
-                                Prescrit par : <strong className="text-slate-700">{o.medecinPrescripteur}</strong> &bull; Motif : {o.motif || 'Non renseigné'}
+                                {t('medecin.dashboard.prescribed_by')}<strong className="text-slate-700">{o.medecinPrescripteur}</strong> &bull; {t('medecin.dashboard.motif_colon')}{o.motif || t('medecin.dashboard.no_motif')}
                               </p>
                             </div>
                           </div>
@@ -350,7 +349,7 @@ export default function MedecinDashboardPage() {
                             </span>
                             <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
                               <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
-                                Consulter
+                                {t('medecin.dashboard.consult_btn')}
                               </Button>
                             </Link>
                           </div>
@@ -423,7 +422,7 @@ export default function MedecinDashboardPage() {
           <Card variant="solid" className="h-full">
             <CardHeader>
               <span className="font-display font-semibold text-sm text-slate-800">
-                Consultations / semaine
+                {t('medecin.dashboard.consultations_per_week')}
               </span>
             </CardHeader>
             <CardBody className="h-64 pt-2">
@@ -454,25 +453,25 @@ export default function MedecinDashboardPage() {
         <Card variant="solid">
           <CardHeader className="flex justify-between items-center">
             <span className="font-display font-semibold text-sm text-slate-800">
-              Orientations récentes reçues
+              {t('medecin.dashboard.recent_orientations')}
             </span>
           </CardHeader>
           <CardBody className="p-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Date Orientation</TableHead>
-                  <TableHead>Patient</TableHead>
-                  <TableHead>Motif de l'orientation</TableHead>
-                  <TableHead>Médecin Prescripteur</TableHead>
-                  <TableHead>Action</TableHead>
+                  <TableHead>{t('medecin.dashboard.col_orientation_date')}</TableHead>
+                  <TableHead>{t('common.patient')}</TableHead>
+                  <TableHead>{t('medecin.dashboard.col_orientation_reason')}</TableHead>
+                  <TableHead>{t('medecin.dashboard.col_prescribing_doctor')}</TableHead>
+                  <TableHead>{t('medecin.feuilles.col_actions') || 'Action'}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {latestOrientations.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-12 text-slate-400 text-xs">
-                      Aucune orientation récente reçue.
+                      {t('medecin.dashboard.no_recent_orientations')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -494,7 +493,7 @@ export default function MedecinDashboardPage() {
                       <TableCell>
                         <Link href={`/medecin/consultations/nouvelle?assureId=${o.patientId}&idAssure=${encodeURIComponent(o.patientIdAssure)}`}>
                           <Button size="sm" variant="primary" className="text-[10px] h-7 px-2.5">
-                            Consulter
+                            {t('medecin.dashboard.consult_btn')}
                           </Button>
                         </Link>
                       </TableCell>

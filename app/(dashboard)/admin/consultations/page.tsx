@@ -252,8 +252,8 @@ export default function ConsultationsAdminPage() {
           <div className="space-y-4">
             <Input
               id="input-admin-create-id-feuille"
-              label="Référence de la feuille (ID, optionnel)"
-              placeholder="Laisser vide pour génération automatique"
+              label={t('admin.consultations.sheet_ref_label') || "Référence de la feuille (ID, optionnel)"}
+              placeholder={t('admin.consultations.sheet_ref_placeholder') || "Laisser vide pour génération automatique"}
               value={idFeuille}
               onChange={(e) => setIdFeuille(e.target.value)}
               leftIcon={<FileText size={16} className="text-slate-400" />}

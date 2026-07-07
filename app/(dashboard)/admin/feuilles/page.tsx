@@ -179,25 +179,25 @@ export default function AdminFeuillesPage() {
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <StatCard
-          label="Total feuilles"
+          label={t('admin.feuilles.total_sheets') || "Total feuilles"}
           value={feuilles.length}
           icon={<FileText size={20} />}
           color="primary"
         />
         <StatCard
-          label="Remboursées"
+          label={t('admin.feuilles.stat_reimbursed') || "Remboursées"}
           value={feuilles.filter((f) => f.estRembourse && f.statut !== 'ANNULE').length}
           icon={<CheckCircle size={20} />}
           color="success"
         />
         <StatCard
-          label="En attente"
+          label={t('admin.feuilles.stat_pending') || "En attente"}
           value={feuilles.filter((f) => !f.estRembourse && f.statut !== 'ANNULE').length}
           icon={<Clock size={20} />}
           color="warning"
         />
         <StatCard
-          label="Annulées"
+          label={t('admin.feuilles.stat_cancelled') || "Annulées"}
           value={feuilles.filter((f) => f.statut === 'ANNULE').length}
           icon={<X size={20} />}
           color="danger"
@@ -245,7 +245,7 @@ export default function AdminFeuillesPage() {
                   ? t('admin.remboursements.status_reimbursed') || 'Remboursés'
                   : status === 'PENDING'
                   ? t('admin.remboursements.pending_title') || 'En attente'
-                  : 'Annulées'}
+                  : t('admin.feuilles.stat_cancelled') || 'Annulées'}
               </button>
             ))}
           </div>
@@ -299,7 +299,7 @@ export default function AdminFeuillesPage() {
                       </TableCell>
                       <TableCell>
                         {f.statut === 'ANNULE' ? (
-                          <Badge variant="danger">Annulé</Badge>
+                          <Badge variant="danger">{t('common.cancelled') || 'Annulé'}</Badge>
                         ) : (
                           <Badge variant={f.estRembourse ? 'success' : 'warning'}>
                             {f.estRembourse ? t('admin.remboursements.status_reimbursed') || 'Remboursé' : t('admin.remboursements.pending_title') || 'En attente'}
@@ -317,7 +317,7 @@ export default function AdminFeuillesPage() {
                             Visualiser
                           </Button>
                           {f.statut === 'ANNULE' ? (
-                            <span className="text-xs text-slate-400 italic">Annulé</span>
+                            <span className="text-xs text-slate-400 italic">{t('common.cancelled') || 'Annulé'}</span>
                           ) : f.estRembourse ? (
                             <Badge variant="success">Remboursé</Badge>
                           ) : (
@@ -371,20 +371,20 @@ export default function AdminFeuillesPage() {
       <Modal
         isOpen={isEditModalOpen}
         onClose={() => setIsEditModalOpen(false)}
-        title="Modifier la feuille de maladie"
+        title={t('admin.feuilles.edit_title') || "Modifier la feuille de maladie"}
         size="md"
       >
         <div className="space-y-4">
           <Input
             id="input-edit-id-feuille"
-            label="Référence de la feuille (ID)"
+            label={t('admin.feuilles.sheet_id_label') || "Référence de la feuille (ID)"}
             value={editIdFeuille}
             onChange={(e) => setEditIdFeuille(e.target.value)}
             leftIcon={<FileText size={16} className="text-slate-400" />}
           />
           <Input
             id="input-edit-montant-soin"
-            label="Montant des soins (FCFA)"
+            label={t('admin.consultations.montant_soin_label') || "Montant des soins (FCFA)"}
             type="number"
             value={editMontantSoin}
             onChange={(e) => setEditMontantSoin(Number(e.target.value))}
@@ -405,7 +405,7 @@ export default function AdminFeuillesPage() {
               onClick={handleSaveEdit}
               isLoading={isSaving}
             >
-              Enregistrer
+              {t('common.save') || 'Enregistrer'}
             </Button>
           </div>
         </div>

@@ -166,11 +166,11 @@ function AssureForm({
       {showCredentials && (
         <>
           <div className="pt-2 pb-1">
-            <p className="text-xs font-display font-semibold text-slate-500 uppercase tracking-wider">Identifiants de connexion</p>
+            <p className="text-xs font-display font-semibold text-slate-500 uppercase tracking-wider">{t('auth.credentials_title')}</p>
             <div className="h-px bg-slate-100 mt-1" />
           </div>
           <Input
-            label="Adresse email"
+            label={t('auth.email_label')}
             type="email"
             placeholder="Ex: jean.fosso@email.com"
             error={errors.email?.message ? String(errors.email.message) : undefined}

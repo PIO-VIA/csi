@@ -173,12 +173,12 @@ export default function AdminDashboard() {
       <div className="flex gap-3 flex-wrap">
         <Link href="/admin/assures">
           <Button variant="primary" leftIcon={<Plus size={16} />}>
-            Nouvel assuré
+            {t('admin.assures.new_assure') || 'Nouvel assuré'}
           </Button>
         </Link>
         <Link href="/admin/medecins">
           <Button variant="secondary" leftIcon={<Stethoscope size={16} />}>
-            Enregistrer médecin
+            {t('admin.medecins.new') || 'Enregistrer médecin'}
           </Button>
         </Link>
       </div>
@@ -360,7 +360,7 @@ export default function AdminDashboard() {
                     <TableCell className="text-right">
                       <Link href={`/admin/assures/${a.id}`}>
                         <Button variant="ghost" size="sm" leftIcon={<Eye size={13} />}>
-                          Voir
+                          {t('common.view') || 'Voir'}
                         </Button>
                       </Link>
                     </TableCell>

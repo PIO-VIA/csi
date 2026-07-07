@@ -159,7 +159,7 @@ export default function MedecinProfilePage() {
         estAssure: data.estAssure,
         medecinTraitantId: data.estAssure ? (data.medecinTraitantId ? Number(data.medecinTraitantId) : -1) : -1,
       });
-      success('Informations personnelles mises à jour avec succès.');
+      success(t('profile.info_success') || 'Informations personnelles mises à jour avec succès.');
       setMedecinInfo(res.data);
       updateUserInfo({
         nom: res.data.nom,
@@ -183,9 +183,9 @@ export default function MedecinProfilePage() {
       if (res.photoUrl) {
         updateUserPhotoUrl(res.photoUrl);
         setMedecinInfo((prev) => (prev ? { ...prev, photoUrl: res.photoUrl } : null));
-        success('Photo de profil mise à jour.');
+        success(t('profile.photo_success') || 'Photo de profil mise à jour.');
       } else {
-        error('La mise à jour de la photo a échoué.');
+        error(t('profile.photo_error') || 'La mise à jour de la photo a échoué.');
       }
     } catch (err) {
       error(getApiErrorMessage(err));
@@ -234,7 +234,7 @@ export default function MedecinProfilePage() {
                 )}
                 <label className="absolute inset-0 flex flex-col items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 transition rounded-2xl cursor-pointer duration-200">
                   <Camera size={18} className="mb-0.5" />
-                  <span className="text-[9px] font-semibold font-display">Modifier</span>
+                  <span className="text-[9px] font-semibold font-display">{t('profile.modify') || 'Modifier'}</span>
                   <input
                     type="file"
                     accept="image/*"
@@ -265,7 +265,7 @@ export default function MedecinProfilePage() {
                     <Badge variant="warning">{medecinInfo.domaineSpecialisation}</Badge>
                   )}
                   {medecinInfo?.estAssure && (
-                    <Badge variant="success">Assuré</Badge>
+                    <Badge variant="success">{t('profile.insured_badge') || 'Assuré'}</Badge>
                   )}
                 </div>
               </div>
@@ -274,7 +274,7 @@ export default function MedecinProfilePage() {
                 <div className="w-full border-t border-slate-100 pt-4 mt-4 space-y-3 text-xs font-body text-left">
                   {medecinInfo.dateNaissance && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Date de naissance</span>
+                      <span className="text-slate-400">{t('auth.birth_date') || 'Date de naissance'}</span>
                       <span className="text-slate-700 font-medium">
                         {new Date(medecinInfo.dateNaissance).toLocaleDateString('fr-FR')}
                       </span>
@@ -282,15 +282,15 @@ export default function MedecinProfilePage() {
                   )}
                   {medecinInfo.sexe && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Genre</span>
+                      <span className="text-slate-400">{t('auth.gender') || 'Genre'}</span>
                       <span className="text-slate-700 font-medium">
-                        {medecinInfo.sexe === 'Homme' ? 'Masculin' : medecinInfo.sexe === 'Femme' ? 'Féminin' : medecinInfo.sexe}
+                        {medecinInfo.sexe === 'Homme' ? t('auth.gender_m') : medecinInfo.sexe === 'Femme' ? t('auth.gender_f') : medecinInfo.sexe}
                       </span>
                     </div>
                   )}
                   {medecinInfo.numTelephone && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Téléphone</span>
+                      <span className="text-slate-400">{t('auth.phone') || 'Téléphone'}</span>
                       <span className="text-slate-700 font-medium">
                         {medecinInfo.indicatifPays ? `${medecinInfo.indicatifPays} ` : ''}{medecinInfo.numTelephone}
                       </span>
@@ -298,7 +298,7 @@ export default function MedecinProfilePage() {
                   )}
                   {medecinInfo.estAssure && medecinInfo.medecinTraitant && (
                     <div className="flex items-center justify-between">
-                      <span className="text-slate-400">Médecin traitant</span>
+                      <span className="text-slate-400">{t('profile.family_doctor') || 'Médecin traitant'}</span>
                       <span className="text-slate-700 font-medium truncate max-w-[150px]">
                         Dr. {medecinInfo.medecinTraitant.nom}
                       </span>
@@ -331,7 +331,7 @@ export default function MedecinProfilePage() {
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    Français
+                    {t('common.french') || 'Français'}
                   </button>
                   <button
                     onClick={() => changeLanguage('en')}
@@ -341,7 +341,7 @@ export default function MedecinProfilePage() {
                         : 'border-slate-200 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    English
+                    {t('common.english') || 'English'}
                   </button>
                 </div>
               </div>
@@ -356,21 +356,21 @@ export default function MedecinProfilePage() {
             <CardHeader className="flex items-center gap-2 border-b border-slate-100 pb-3">
               <User size={16} className="text-primary-600" />
               <span className="font-display font-semibold text-xs text-slate-800 uppercase tracking-wider">
-                Informations personnelles
+                {t('profile.personal_info') || 'Informations personnelles'}
               </span>
             </CardHeader>
             <CardBody className="p-5">
               <form onSubmit={handleSubmitInfo(onInfoSubmit)} className="space-y-4">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <Input
-                    label="Nom complet"
+                    label={t('auth.full_name') || 'Nom complet'}
                     placeholder="Ex: Dr. Célestin Etoa"
                     error={infoErrors.nom?.message ? String(infoErrors.nom.message) : undefined}
                     {...registerInfo('nom')}
                   />
 
                   <Input
-                    label="Adresse email"
+                    label={t('auth.email_label') || 'Adresse email'}
                     type="email"
                     placeholder="Ex: email@domaine.com"
                     error={infoErrors.email?.message ? String(infoErrors.email.message) : undefined}
@@ -382,7 +382,7 @@ export default function MedecinProfilePage() {
                   <div className="grid grid-cols-3 gap-2">
                     <div className="col-span-1">
                       <Input
-                        label="Indicatif"
+                        label={t('admin.medecins.form_country_code') || 'Indicatif'}
                         placeholder="+237"
                         error={infoErrors.indicatifPays?.message ? String(infoErrors.indicatifPays.message) : undefined}
                         {...registerInfo('indicatifPays')}
@@ -390,7 +390,7 @@ export default function MedecinProfilePage() {
                     </div>
                     <div className="col-span-2">
                       <Input
-                        label="N° Téléphone"
+                        label={t('auth.phone') || 'N° Téléphone'}
                         placeholder="699000000"
                         error={infoErrors.numTelephone?.message ? String(infoErrors.numTelephone.message) : undefined}
                         {...registerInfo('numTelephone')}
@@ -399,7 +399,7 @@ export default function MedecinProfilePage() {
                   </div>
 
                   <Input
-                    label="Matricule professionnel"
+                    label={t('admin.medecins.col_matricule') || 'Matricule professionnel'}
                     placeholder="Ex: MED-12345"
                     error={infoErrors.matricule?.message ? String(infoErrors.matricule.message) : undefined}
                     {...registerInfo('matricule')}
@@ -409,20 +409,20 @@ export default function MedecinProfilePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                   <div>
                     <label className="text-xs font-display font-semibold text-slate-700 block mb-1">
-                      Genre
+                      {t('auth.gender') || 'Genre'}
                     </label>
                     <select
                       {...registerInfo('sexe')}
                       className="w-full h-[38px] px-3 rounded-xl border border-slate-200 bg-white text-xs text-slate-700 focus:outline-none focus:border-primary-500 transition duration-150"
                     >
-                      <option value="">Sélectionner</option>
-                      <option value="Homme">Homme</option>
-                      <option value="Femme">Femme</option>
+                      <option value="">{t('common.select') || 'Sélectionner'}</option>
+                      <option value="Homme">{t('auth.gender_m') || 'Homme'}</option>
+                      <option value="Femme">{t('auth.gender_f') || 'Femme'}</option>
                     </select>
                   </div>
 
                   <Input
-                    label="Date de naissance"
+                    label={t('auth.birth_date') || 'Date de naissance'}
                     type="date"
                     error={infoErrors.dateNaissance?.message ? String(infoErrors.dateNaissance.message) : undefined}
                     {...registerInfo('dateNaissance')}
@@ -436,14 +436,14 @@ export default function MedecinProfilePage() {
                       className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                     />
                     <label htmlFor="estAssure" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                      Je suis également assuré de l'organisme (Rendre assuré)
+                      {t('profile.make_insured') || "Je suis également assuré de l'organisme (Rendre assuré)"}
                     </label>
                   </div>
 
                   {watchEstAssureInfo && (
                     <div className="col-span-full">
                       <label className="text-xs font-display font-semibold text-slate-700 block mb-1">
-                        Médecin traitant (généraliste)
+                        {t('profile.family_doctor') || 'Médecin traitant (généraliste)'}
                       </label>
                       <select
                         {...registerInfo('medecinTraitantId')}
@@ -463,7 +463,7 @@ export default function MedecinProfilePage() {
 
                   {medecinInfo?.type === 'SPECIALISTE' && (
                     <Input
-                      label="Spécialisation"
+                      label={t('profile.specialisation') || 'Spécialisation'}
                       placeholder="Ex: Cardiologie"
                       error={infoErrors.domaineSpecialisation?.message ? String(infoErrors.domaineSpecialisation.message) : undefined}
                       {...registerInfo('domaineSpecialisation')}
@@ -478,7 +478,7 @@ export default function MedecinProfilePage() {
                     isLoading={isUpdatingInfo}
                     className="w-full sm:w-auto text-xs"
                   >
-                    Enregistrer les modifications
+                    {t('common.save_changes') || 'Enregistrer les modifications'}
                   </Button>
                 </div>
               </form>

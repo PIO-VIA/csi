@@ -105,14 +105,14 @@ export default function LoginPage() {
               <p className="font-display font-extrabold text-xl text-white tracking-tight">
                 {t('landing.title')}
               </p>
-              <p className="text-xs text-primary-100/80">République du Cameroun</p>
+              <p className="text-xs text-primary-100/80">{t('landing.republic_of_cameroon')}</p>
             </div>
           </div>
 
           <div className="space-y-8 max-w-lg">
             <div>
               <h2 className="font-display font-extrabold text-3xl xl:text-4xl text-white leading-tight tracking-tight">
-                Votre santé, notre priorité nationale
+                {t('landing.hero_title')}
               </h2>
               <p className="mt-4 text-sm text-primary-100/90 leading-relaxed">
                 {t('landing.tagline')}
@@ -121,7 +121,7 @@ export default function LoginPage() {
 
             <div className="grid grid-cols-2 gap-4">
               {[
-                { icon: Heart, label: 'Couverture santé', value: '100%' },
+                { icon: Heart, label: t('landing.health_coverage'), value: '100%' },
                 { icon: Activity, label: t('dashboard.stats.consultations'), value: '12K+' },
                 { icon: Users, label: t('landing.metrics.assures'), value: '8 500' },
                 { icon: CheckCircle2, label: t('landing.metrics.reimbursements'), value: '98%' },
@@ -139,7 +139,7 @@ export default function LoginPage() {
           </div>
 
           <p className="text-[11px] text-primary-200/60">
-            ENSPY Yaoundé — Projet Académique © 2026 CSI
+            {t('common.academic_project')}
           </p>
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function LoginPage() {
           <div className="lg:hidden flex items-center gap-2.5">
             <Shield className="h-8 w-8 text-primary-600" />
             <span className="font-display font-extrabold text-lg text-slate-900">
-              CSI <span className="text-primary-600 font-normal">Sécurité Sociale</span>
+              CSI <span className="text-primary-600 font-normal">{t('landing.security_sociale')}</span>
             </span>
           </div>
 

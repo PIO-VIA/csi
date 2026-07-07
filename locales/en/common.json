@@ -33,9 +33,15 @@
       "assures": "Active Insureds",
       "consultations": "Digital Consultations",
       "reimbursements": "Reimbursed"
-    }
+    },
+    "hero_title": "Your health, our national priority",
+    "health_coverage": "Health coverage",
+    "republic_of_cameroon": "Republic of Cameroon",
+    "security_sociale": "Social Security"
   },
   "auth": {
+    "redirect_login": "Redirecting to login page...",
+    "credentials_title": "Login credentials",
     "login_title": "Login to your space",
     "login_subtitle": "Access your secure Social Security professional account",
     "username_label": "Username",
@@ -172,7 +178,10 @@
       "new_assure": "New insured",
       "filter_all_blood": "All blood groups",
       "col_telephone": "Phone",
-      "status_active": "Active"
+      "status_active": "Active",
+    "create_success": "Insured profile created successfully.",
+    "update_success": "Insured profile updated successfully.",
+    "delete_success": "Insured profile deleted successfully."
     },
     "medecins": {
       "title": "Manage Doctors",
@@ -220,7 +229,17 @@
       "form_submit": "Register doctor",
       "success_msg": "Doctor registered. A temporary password will be sent by the backend.",
       "generaliste": "GP",
-      "specialiste": "Specialist"
+      "specialiste": "Specialist",
+    "form_success": "Doctor registered. Login credentials have been sent to the email address: {{email}}",
+    "edit_title": "Edit Doctor Information",
+    "edit_desc": "Updating profile of {{name}} ({{matricule}}) — the password cannot be modified here.",
+    "reset_password": "Reset Password",
+    "reset_password_hint": "The password cannot be modified here. Use the Reset button to send a new password by email.",
+    "make_insured": "Make this doctor also an insured member of the organization",
+    "family_doctor": "Family doctor (GP)",
+    "family_doctor_select": "-- Select a family doctor --",
+    "reset_password_confirm": "Are you sure you want to generate a new password and email it to this doctor?",
+    "reset_password_success": "New password sent by email."
     },
     "consultations": {
       "title": "Consultation Monitoring",
@@ -245,7 +264,10 @@
       "create_sheet_btn": "+ Create sheet",
       "create_sheet_title": "Create a health sheet",
       "montant_soin_label": "Care amount (FCFA)",
-      "create_sheet_submit": "Create sheet"
+      "create_sheet_submit": "Create sheet",
+    "results_count": "consultation(s) found",
+    "sheet_ref_label": "Sheet reference (ID, optional)",
+    "sheet_ref_placeholder": "Leave blank for automatic generation"
     },
     "remboursements": {
       "payment_success": "Reimbursement completed successfully.",
@@ -290,7 +312,23 @@
       "status_reimbursed": "Reimbursed",
       "status_pending": "Pending",
       "coverage_100": "100% coverage",
-      "coverage_80": "80% coverage"
+      "coverage_80": "80% coverage",
+    "modal_details": "Details / Dosage",
+    "stat_total": "Total reimbursed",
+    "stat_pending": "Pending cases",
+    "stat_this_month": "Reimbursed this month",
+    "reimburse_selection": "Reimburse selection ({{count}})",
+    "cases_count": "{{count}} cases",
+    "receipt_btn": "Receipt",
+    "select_patient": "Select the insured (Patient)",
+    "choose_patient": "-- Choose an insured --",
+    "pending_sheets_for_patient": "Pending health sheets for this insured",
+    "no_pending_sheets_for_patient": "No pending health sheets to reimburse for this insured.",
+    "select_all": "Select all ({{count}})",
+    "consultation_by": "Consultation by {{doctor}}",
+    "reimb_abbrev": "Reimb:",
+    "total_accumulated_fees": "Accumulated care fees:",
+    "total_to_reimburse": "Total to reimburse:"
     },
     "feuilles": {
       "title": "Health Sheets",
@@ -301,7 +339,13 @@
       "col_amount": "Care amount",
       "col_status": "Status",
       "search_placeholder": "Search by reference, patient...",
-      "empty_list": "No health sheets found."
+      "empty_list": "No health sheets found.",
+      "total_sheets": "Total sheets",
+      "stat_reimbursed": "Reimbursed",
+      "stat_pending": "Pending",
+      "stat_cancelled": "Cancelled",
+      "edit_title": "Edit health sheet",
+      "sheet_id_label": "Sheet reference (ID)"
     }
   },
   "medecin": {
@@ -311,7 +355,25 @@
       "new_consultation": "New consultation",
       "recent_consultations": "Recent consultations",
       "see_all": "See all",
-      "no_consultation": "No consultation recorded."
+      "no_consultation": "No consultation recorded.",
+      "consultations": "Consultations",
+      "declared_patients_hint": "{{count}} insured patient(s) have declared you as their family doctor.",
+      "today_consultations": "Today's Consultations",
+      "today_consultations_count": "{{count}} consultation(s)",
+      "no_consultation_today": "No consultations recorded for today.",
+      "motif_colon": "Reason: ",
+      "no_motif": "No reason specified",
+      "orientations_today": "Orientations received today",
+      "today_orientations_count": "{{count}} orientation(s)",
+      "no_orientation_today": "No orientations received for today.",
+      "prescribed_by": "Prescribed by: ",
+      "consult_btn": "Consult",
+      "consultations_per_week": "Consultations / week",
+      "recent_orientations": "Recent orientations received",
+      "col_orientation_date": "Orientation Date",
+      "col_orientation_reason": "Referral Reason",
+      "col_prescribing_doctor": "Prescribing Doctor",
+      "no_recent_orientations": "No recent orientations received."
     },
     "patients": {
       "title": "My patients",
@@ -337,7 +399,13 @@
       "col_actions": "Actions",
       "not_found": "No consultation found.",
       "not_set": "Not specified",
-      "no_feuille": "Not generated"
+      "no_feuille": "Not generated",
+      "generate_sheet_hint": "Enables automatic reimbursement for the insured patient",
+      "create_sheet_title": "Create health sheet",
+      "sheet_ref_label": "Sheet reference (ID, optional)",
+      "sheet_ref_placeholder": "Leave empty for auto-generation",
+      "montant_soin_label": "Care amount (FCFA)",
+      "create_sheet_submit": "Create sheet"
     },
     "nouvelle_consultation": {
       "title": "New Consultation",
@@ -393,7 +461,10 @@
       "create_success": "Consultation successfully saved.",
       "error_patient": "Please select a patient.",
       "error_motif": "Please enter a detailed consultation reason (min. 5 chars).",
-      "error_montant": "The amount must be greater than or equal to 0."
+      "error_montant": "The amount must be greater than or equal to 0.",
+      "referral_reason": "Referral reason",
+      "search_patient_by_id": "Search patient by ID (ASS-XXXXXXXX)",
+      "consultation_amount": "Consultation amount"
     },
     "prescriptions": {
       "title": "Prescriptions",
@@ -405,7 +476,9 @@
       "col_details": "Details",
       "not_found": "No prescription found.",
       "type_medicament": "Medication",
-      "type_specialiste": "Specialist referral"
+      "type_specialiste": "Specialist referral",
+      "type_med": "Medication",
+      "type_spec": "Specialist"
     },
     "feuilles": {
       "title": "Health Sheets",
@@ -418,7 +491,12 @@
       "search_placeholder": "Search by reference, patient...",
       "empty_list": "No health sheet found.",
       "reimbursed": "Reimbursed",
-      "pending": "Pending"
+      "pending": "Pending",
+      "create_btn": "Create health sheet",
+      "select_consultation": "Select consultation",
+      "choose_consultation": "-- Choose a consultation --",
+      "visualize": "View Details",
+      "edit": "Edit"
     }
   },
   "assure": {
@@ -549,7 +627,14 @@
     "showing": "Showing",
     "not_found_title": "Page not found",
     "not_found_desc": "Sorry, the page you are looking for does not exist or has been moved.",
-    "home": "Home"
+    "home": "Home",
+    "academic_project": "ENSPY Yaoundé — Academic Project © 2026 CSI",
+    "view": "View",
+    "french": "Français",
+    "english": "English",
+    "save_changes": "Save Changes",
+    "select": "Select",
+    "cancelled": "Cancelled"
   },
   "profile": {
     "title": "Profile Settings",
@@ -561,6 +646,23 @@
     "new_password": "New password",
     "confirm_password": "Confirm new password",
     "password_success": "Password changed successfully!",
-    "update_btn": "Update Password"
+    "update_btn": "Update Password",
+    "personal_info": "Personal Information",
+    "job_title": "Job Title",
+    "gender": "Gender",
+    "phone": "Phone",
+    "birth_date": "Birth Date",
+    "indicatif": "Country code",
+    "matricule": "Professional ID",
+    "make_insured": "I am also an insured member of the organization",
+    "family_doctor": "Family doctor (GP)",
+    "family_doctor_select": "-- Select a family doctor --",
+    "specialisation": "Specialisation",
+    "specialist_domain": "Specialisation domain",
+    "modify": "Edit",
+    "insured_badge": "Insured",
+    "photo_success": "Profile picture updated.",
+    "photo_error": "Profile picture update failed.",
+    "info_success": "Personal information updated successfully."
   }
 }

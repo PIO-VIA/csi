@@ -218,20 +218,20 @@ export default function MedecinConsultationsPage() {
             setIdFeuille('');
             setMontantSoin(0);
           }}
-          title="Créer une feuille de maladie"
-          description={`Patient: ${selectedConsultForFeuille.assure.nom}`}
+          title={t('medecin.consultations.create_sheet_title') || "Créer une feuille de maladie"}
+          description={`${t('medecin.consultations.col_patient')}: ${selectedConsultForFeuille.assure.nom}`}
         >
           <div className="space-y-4">
             <Input
               id="input-create-id-feuille"
-              label="Référence de la feuille (ID, optionnel)"
-              placeholder="Laisser vide pour génération automatique"
+              label={t('medecin.consultations.sheet_ref_label') || "Référence de la feuille (ID, optionnel)"}
+              placeholder={t('medecin.consultations.sheet_ref_placeholder') || "Laisser vide pour génération automatique"}
               value={idFeuille}
               onChange={(e) => setIdFeuille(e.target.value)}
               leftIcon={<FileText size={16} className="text-slate-400" />}
             />
             <div className="form-group">
-              <label className="form-label font-semibold text-xs text-slate-700 block mb-1">Montant des soins (FCFA)</label>
+              <label className="form-label font-semibold text-xs text-slate-700 block mb-1">{t('medecin.consultations.montant_soin_label') || "Montant des soins (FCFA)"}</label>
               <input
                 type="number"
                 min={0}
@@ -260,7 +260,7 @@ export default function MedecinConsultationsPage() {
                 isLoading={isCreatingFeuille}
                 onClick={handleCreateFeuille}
               >
-                Créer la feuille
+                {t('medecin.consultations.create_sheet_submit') || 'Créer la feuille'}
               </Button>
             </div>
           </div>

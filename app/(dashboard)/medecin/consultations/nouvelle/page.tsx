@@ -343,7 +343,7 @@ export default function NouvelleConsultationPage() {
                 {/* Search Patient Box */}
                 <div className="bg-slate-50 border border-slate-200/80 rounded-2xl p-3.5 space-y-2 mb-2">
                   <span className="font-display font-semibold text-xs text-slate-850 block">
-                    Rechercher un patient par identifiant (ASS-XXXXXXXX)
+                    {t('medecin.nouvelle_consultation.search_patient_by_id') || "Rechercher un patient par identifiant (ASS-XXXXXXXX)"}
                   </span>
                   <div className="flex gap-2">
                     <div className="relative flex-1">
@@ -366,7 +366,7 @@ export default function NouvelleConsultationPage() {
                       isLoading={isSearchingPatient}
                       className="text-xs h-10 px-4"
                     >
-                      Rechercher
+                      {t('common.search') || 'Rechercher'}
                     </Button>
                   </div>
                 </div>
@@ -442,7 +442,7 @@ export default function NouvelleConsultationPage() {
                     <div className="h-px bg-primary-200/50 my-1" />
                     <Input
                       id="input-montant-soin"
-                      label="Montant de la consultation"
+                      label={t('medecin.nouvelle_consultation.consultation_amount') || "Montant de la consultation"}
                       type="number"
                       placeholder="Ex: 15000"
                       leftIcon={<span className="text-xs font-bold text-slate-400">FCFA</span>}
